@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1006454812188",
+    "project_id": "rewardly-new",
+    "storage_bucket": "rewardly-new.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006454812188:android:7a056e3d370f309194f9d9",
+        "android_client_info": {
+          "package_name": "com.example.rewardly_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQRbos-m9BLMQFaK-nAafAi_BGPGIDvNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006454812188:android:3e5d7908b377359194f9d9",
+        "android_client_info": {
+          "package_name": "com.supreet.rewardly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQRbos-m9BLMQFaK-nAafAi_BGPGIDvNg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
