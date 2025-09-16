@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rewardly_app/providers/user_data_provider.dart';
-import 'package:rewardly_app/auth_service.dart'; // Assuming AuthService is used for sign out
+import 'package:rewardly_app/auth_service.dart';
 import 'package:rewardly_app/shared/shimmer_loading.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -15,97 +15,89 @@ class ProfileScreen extends StatelessWidget {
     final userData = userDataProvider.userData;
 
     if (user == null || userData == null) {
-      return const ProfileScreenLoading(); // Show loading indicator
+      return const ProfileScreenLoading();
     }
 
     return Scaffold(
-      // AppBar removed as per request
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            // Profile Header (can be customized to include user info without an AppBar)
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.deepPurple,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+            const SizedBox(height: 50),
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: userData['profile_picture'] != null
+                  ? NetworkImage(userData['profile_picture'])
+                  : null,
+              child: userData['profile_picture'] == null
+                  ? Icon(Icons.person, size: 60, color: Colors.grey.shade600)
+                  : null,
+            ),
+            const SizedBox(height: 15),
+            Text(
+              user.email ?? 'No Email',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87),
+            ),
+            const SizedBox(height: 30),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  'Account',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha((0.2 * 255).round()),
-                    spreadRadius: 2,
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40), // Space for status bar
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.white,
-                    backgroundImage: userData['profile_picture'] != null
-                        ? NetworkImage(userData['profile_picture'])
-                        : null,
-                    child: userData['profile_picture'] == null
-                        ? Icon(Icons.person, size: 60, color: Colors.deepPurple.shade300)
-                        : null,
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    userData['name'] ?? 'Guest User',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    user.email ?? 'No Email',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withAlpha((0.8 * 255).round())),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Coins: ${userData['coins'] ?? 0}',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.amberAccent),
-                  ),
-                ],
               ),
             ),
-            const SizedBox(height: 20),
-            // Profile Options
-            _buildProfileOption(
+            const SizedBox(height: 10),
+            _buildAccountOption(
               context,
-              icon: Icons.edit,
-              title: 'Edit Profile',
+              title: 'Coins',
+              value: '${userData['coins'] ?? 0}',
+              icon: Icons.monetization_on,
+            ),
+            const SizedBox(height: 30),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  'Settings',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            _buildSettingsOption(
+              context,
+              title: 'Notifications',
               onTap: () {
-                // Navigate to edit profile screen
+                // Navigate to notifications settings
               },
             ),
-            _buildProfileOption(
+            _buildSettingsOption(
               context,
-              icon: Icons.history,
-              title: 'Transaction History',
+              title: 'Privacy',
               onTap: () {
-                // Navigate to transaction history screen
+                // Navigate to privacy settings
               },
             ),
-            _buildProfileOption(
+            _buildSettingsOption(
               context,
-              icon: Icons.settings,
-              title: 'Settings',
+              title: 'Security',
               onTap: () {
-                // Navigate to settings screen
+                // Navigate to security settings
               },
             ),
-            _buildProfileOption(
+            _buildSettingsOption(
               context,
-              icon: Icons.logout,
               title: 'Logout',
               onTap: () async {
                 await AuthService().signOut();
               },
+              isLogout: true,
             ),
           ],
         ),
@@ -113,17 +105,58 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileOption(BuildContext context, {required IconData icon, required String title, required VoidCallback onTap}) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: ListTile(
-        leading: Icon(icon, color: Colors.deepPurple),
-        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
-        onTap: onTap,
+  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required IconData icon}) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Row(
+            children: [
+              Icon(icon, color: Colors.amber, size: 20),
+              const SizedBox(width: 5),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsOption(BuildContext context, {required String title, required VoidCallback onTap, bool isLogout = false}) {
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: ListTile(
+            title: Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: isLogout ? Colors.red : Colors.black87,
+              ),
+            ),
+            trailing: isLogout ? null : const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+            onTap: onTap,
+          ),
+        ),
+        if (!isLogout) const SizedBox(height: 5), // Add a small space between settings options
+      ],
     );
   }
 }
@@ -134,55 +167,54 @@ class ProfileScreenLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Container(
-              padding: const EdgeInsets.all(20.0),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.deepPurple,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha((0.2 * 255).round()),
-                    spreadRadius: 2,
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-                  ShimmerLoading.circular(width: 120, height: 120),
-                  const SizedBox(height: 15),
-                  ShimmerLoading.rectangular(height: 24, width: 150),
-                  const SizedBox(height: 5),
-                  ShimmerLoading.rectangular(height: 16, width: 200),
-                  const SizedBox(height: 10),
-                  ShimmerLoading.rectangular(height: 20, width: 100),
-                ],
+            const SizedBox(height: 50),
+            ShimmerLoading.circular(width: 120, height: 120),
+            const SizedBox(height: 15),
+            ShimmerLoading.rectangular(height: 20, width: 200),
+            const SizedBox(height: 30),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: ShimmerLoading.rectangular(height: 16, width: 80),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ShimmerLoading.rectangular(height: 60, width: double.infinity),
             ),
+            const SizedBox(height: 30),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: ShimmerLoading.rectangular(height: 16, width: 80),
+              ),
+            ),
+            const SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ShimmerLoading.rectangular(height: 60, width: double.infinity),
             ),
+            const SizedBox(height: 5),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ShimmerLoading.rectangular(height: 60, width: double.infinity),
             ),
+            const SizedBox(height: 5),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ShimmerLoading.rectangular(height: 60, width: double.infinity),
+            ),
+            const SizedBox(height: 5),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ShimmerLoading.rectangular(height: 60, width: double.infinity),
             ),
           ],

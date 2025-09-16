@@ -12,23 +12,25 @@ class ReferralScreenLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: ShimmerLoading.rectangular(height: 24, width: 120),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Align(
-              alignment: Alignment.topLeft,
-              child: ShimmerLoading.circular(width: 40, height: 40),
-            ),
-            const SizedBox(height: 10),
-            ShimmerLoading.circular(width: 150, height: 150),
+            const SizedBox(height: 20),
+            ShimmerLoading.circular(width: 120, height: 120),
             const SizedBox(height: 30),
-            ShimmerLoading.rectangular(height: 24, width: double.infinity),
+            ShimmerLoading.rectangular(height: 28, width: 250),
             const SizedBox(height: 15),
-            ShimmerLoading.rectangular(height: 16, width: double.infinity),
+            ShimmerLoading.rectangular(height: 18, width: 300),
             const SizedBox(height: 40),
-            ShimmerLoading.rectangular(height: 20, width: 150),
+            ShimmerLoading.rectangular(height: 22, width: 180),
             const SizedBox(height: 10),
             ShimmerLoading.rectangular(height: 60, width: double.infinity),
             const SizedBox(height: 30),
@@ -49,42 +51,43 @@ class ReferralScreen extends StatelessWidget {
     final userData = userDataProvider.userData;
 
     if (userData == null) {
-      return const ReferralScreenLoading(); // Show loading indicator
+      return const ReferralScreenLoading();
     }
 
     final referralCode = userData['referral_code'] ?? 'Loading...';
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // AppBar removed as per request
+      appBar: AppBar(
+        title: Text(
+          'Invite Friends',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            // Custom header to replace AppBar functionality
-            Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Icon(
-              Icons.people_alt_rounded,
-              size: 150,
-              color: Colors.deepPurple.shade300,
+              Icons.card_giftcard, // Changed icon to something more referral-like
+              size: 120,
+              color: Colors.deepPurple.shade400,
             ),
             const SizedBox(height: 30),
             Text(
-              'Invite your friends and earn rewards!',
+              'Share the love, earn rewards!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 15),
             Text(
-              'Share your referral code with your friends and you both will get 500 coins when they sign up!',
+              'Invite your friends to Rewardly using your unique code and both of you will get 500 coins!',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54),
             ),
@@ -102,42 +105,41 @@ class ReferralScreen extends StatelessWidget {
                   const SnackBar(content: Text('Referral code copied to clipboard!')),
                 );
               },
-              child: Card(
-                elevation: 4.0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-                child: Container(
-                  padding: const EdgeInsets.all(15.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15.0),
-                    border: Border.all(color: Colors.grey.withAlpha(51)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        referralCode,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2),
-                      ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.copy, color: Colors.deepPurple),
-                    ],
-                  ),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      referralCode,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(Icons.copy, color: Colors.deepPurple.shade400),
+                  ],
                 ),
               ),
             ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
-              icon: const Icon(Icons.share),
-              label: Text('Share Now', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white)),
+              icon: const Icon(Icons.share, color: Colors.white),
+              label: Text('Share Now', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Sharing functionality is currently disabled.')),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                backgroundColor: Colors.deepPurple.shade400,
+                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                elevation: 3,
               ),
             ),
           ],
