@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/auth_service.dart';
-import 'package:rewardly_app/firebase_options.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import 'auth_service.dart';
+import 'firebase_options.dart';
+import 'providers/user_data_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/wrapper.dart';
+import 'remote_config_service.dart';
+import 'wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

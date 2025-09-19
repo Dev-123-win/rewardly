@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tunnel Runner</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
+        #gameCanvas { display: block; }
+        #hud {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: #00FFFF; /* Cyan */
+            font-size: 20px;
+            text-shadow: 0 0 5px #00FFFF;
+            z-index: 10;
+        }
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #FF00FF; /* Magenta */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            text-shadow: 0 0 10px #FF00FF;
+            z-index: 100;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.5s linear;
+        }
+        #gameOverScreen.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        #gameOverScreen button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #00FFFF; /* Cyan */
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        #gameOverScreen button:hover {
+            background-color: #00E0E0;
+        }
+        #gameOverScreen button.red {
+            background-color: #FF0000; /* Red */
+        }
+        #gameOverScreen button.red:hover {
+            background-color: #E00000;
+        }
+        #menuScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #00FF00; /* Green */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            text-shadow: 0 0 10px #00FF00;
+            z-index: 101;
+        }
+        #menuScreen button {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #00FF00; /* Green */
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        #menuScreen button:hover {
+            background-color: #00E000;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="hud">Distance: 0m | Coins: 0</div>
+    <div id="gameOverScreen">
+        <h1>GAME OVER</h1>
+        <p>Final Distance: <span id="finalDistance">0</span>m</p>
+        <p>Coins Earned: <span id="finalCoins">0</span></p>
+        <p>Best Distance: <span id="bestDistance">0</span>m</p>
+        <button id="reviveButton">WATCH AD TO CONTINUE</button>
+        <button id="bonusAdButton">WATCH AD FOR BONUS COINS</button>
+        <button id="restartButton">RESTART</button>
+    </div>
+    <div id="menuScreen">
+        <h1>TUNNEL RUNNER</h1>
+        <button id="startButton">START GAME</button>
+        <button id="settingsButton">SETTINGS</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-addons@1.0.0/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-addons@1.0.0/geometries/TextGeometry.js"></script>
+    <script>
+        // --- Game State Variables ---
+        let scene, camera, renderer;
+        let tunnelSegments = [];
+        let obstacles = [];
+        let coins = [];
+        let particles = [];
+        let gameSpeed = 0.2;
+        let distance = 0;
+        let coinsCollected = 0;
+        let bestDistance = 0;
+        let isGameOver = true;
+        let isGameStarted = false;
+        let playerX = 0; // Player's horizontal position in the tunnel
+        const tunnelRadius = 8;
+        const playerCollisionRadius = 1.5;
+        const maxPlayerX = 6; // Max horizontal movement for player
+
+        // UI Elements
+        const hud = document.getElementById('hud');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const menuScreen = document.getElementById('menuScreen');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const reviveButton = document.getElementById('reviveButton');
+        const bonusAdButton = document.getElementById('bonusAdButton');
+
+        // Ad related state
+        let adTypeRequested = null; // 'revive' or 'bonus'
+
+        // --- Initialization ---
+        init();
+        animate();
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x000000, 10, 100); // Dark space environment with fog
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 0); // Player is at (0,0,0) relative to tunnel start
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting (Neon color scheme)
+            const ambientLight = new THREE.AmbientLight(0x404040); // Dim white light
+            scene.add(ambientLight);
+            const pointLightCyan = new THREE.PointLight(0x00FFFF, 1, 100); // Cyan light
+            pointLightCyan.position.set(0, 5, -10);
+            scene.add(pointLightCyan);
+            const pointLightMagenta = new THREE.PointLight(0xFF00FF, 1, 100); // Magenta light
+            pointLightMagenta.position.set(5, -5, -10);
+            scene.add(pointLightMagenta);
+            const pointLightYellow = new THREE.PointLight(0xFFFF00, 1, 100); // Yellow light
+            pointLightYellow.position.set(-5, -5, -10);
+            scene.add(pointLightYellow);
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            startButton.addEventListener('click', startGame);
+            restartButton.addEventListener('click', startGame);
+            reviveButton.addEventListener('click', () => requestAd('revive'));
+            bonusAdButton.addEventListener('click', () => requestAd('bonus'));
+
+            // Mouse/Touch controls for player movement
+            let startDragX = 0;
+            let currentMouseX = 0;
+            window.addEventListener('mousedown', (event) => {
+                startDragX = event.clientX;
+                currentMouseX = event.clientX;
+            });
+            window.addEventListener('mousemove', (event) => {
+                if (event.buttons === 1) { // Left mouse button pressed
+                    const deltaX = event.clientX - currentMouseX;
+                    playerX += deltaX * 0.05; // Adjust sensitivity
+                    playerX = Math.max(-maxPlayerX, Math.min(maxPlayerX, playerX));
+                    currentMouseX = event.clientX;
+                }
+            });
+            window.addEventListener('touchstart', (event) => {
+                startDragX = event.touches[0].clientX;
+                currentMouseX = event.touches[0].clientX;
+            });
+            window.addEventListener('touchmove', (event) => {
+                const deltaX = event.touches[0].clientX - currentMouseX;
+                playerX += deltaX * 0.05; // Adjust sensitivity
+                playerX = Math.max(-maxPlayerX, Math.min(maxPlayerX, playerX));
+                currentMouseX = event.touches[0].clientX;
+            });
+
+            // DEBUG: Add Three.js helpers
+            const axesHelper = new THREE.AxesHelper(10); // X, Y, Z axes
+            scene.add(axesHelper); // DEBUG
+            const gridHelper = new THREE.GridHelper(20, 20); // Grid on XZ plane
+            scene.add(gridHelper); // DEBUG
+            const cameraHelper = new THREE.CameraHelper(camera); // DEBUG: Visualize camera frustum
+            scene.add(cameraHelper); // DEBUG
+
+            console.log('// DEBUG: Game initialized.'); // DEBUG
+            showMenu();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            // DEBUG: console.log('// DEBUG: Window resized.'); // DEBUG
+        }
+
+        // --- Game Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isGameStarted && !isGameOver) {
+                updateGame();
+            }
+            renderer.render(scene, camera);
+        }
+
+        function updateGame() {
+            // Move camera forward
+            camera.position.z -= gameSpeed;
+            distance += gameSpeed; // Update distance based on speed
+            // DEBUG: console.log(`// DEBUG: Camera Z: ${camera.position.z.toFixed(2)}, Distance: ${Math.floor(distance)}m`); // DEBUG
+
+            // Update player X position smoothly
+            camera.position.x = lerp(camera.position.x, playerX, 0.15);
+            // DEBUG: console.log(`// DEBUG: Player X: ${camera.position.x.toFixed(2)}`); // DEBUG
+
+            // Tunnel generation and removal
+            generateTunnelSegments();
+            removeOldSegments();
+
+            // Obstacle and Coin generation
+            generateObstaclesAndCoins();
+            updateObstaclesAndCoins();
+
+            // Particle effects
+            updateParticles();
+
+            // Collision detection
+            checkCollisions();
+
+            // Update HUD
+            updateHud();
+
+            // Difficulty ramp (increase speed)
+            gameSpeed = 0.2 + (distance / 1000) * 0.6; // Max speed 0.8 at 1000m
+            gameSpeed = Math.min(gameSpeed, 0.8);
+        }
+
+        // --- Tunnel Functions ---
+        function createTunnelSegment(zPos, hue) {
+            const segmentGroup = new THREE.Group();
+
+            // Outer cylinder (wall)
+            const outerGeometry = new THREE.CylinderGeometry(tunnelRadius, tunnelRadius, 20, 32, 1, true);
+            const outerMaterial = new THREE.MeshPhongMaterial({
+                color: new THREE.Color().setHSL(hue, 1, 0.5),
+                side: THREE.BackSide,
+                emissive: new THREE.Color().setHSL(hue, 1, 0.5),
+                emissiveIntensity: 0.5
+            });
+            const outerCylinder = new THREE.Mesh(outerGeometry, outerMaterial);
+            outerCylinder.rotation.x = Math.PI / 2;
+            segmentGroup.add(outerCylinder);
+
+            segmentGroup.position.z = zPos;
+            segmentGroup.userData.isTunnelSegment = true; // Tag for identification
+            scene.add(segmentGroup);
+            tunnelSegments.push(segmentGroup);
+        }
+
+        function generateTunnelSegments() {
+            const lastSegmentZ = tunnelSegments.length > 0 ? tunnelSegments[tunnelSegments.length - 1].position.z : camera.position.z;
+            while (lastSegmentZ > camera.position.z - 20 * 20) { // Generate 20 segments ahead
+                const newZ = lastSegmentZ - 20;
+                const hue = (distance / 100 + newZ / 20) % 1; // HSL color cycling
+                createTunnelSegment(newZ, hue);
+            }
+        }
+
+        function removeOldSegments() {
+            for (let i = 0; i < tunnelSegments.length; i++) {
+                if (tunnelSegments[i].position.z > camera.position.z + 20) { // Remove segments behind camera
+                    scene.remove(tunnelSegments[i]);
+                    tunnelSegments.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // --- Obstacle Functions ---
+        function createObstacle(type, zPos, xPos = 0, rotation = 0) {
+            let obstacleMesh;
+            const obstacleMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000, emissive: 0xFF0000, emissiveIntensity: 0.7 }); // Bright warning color
+
+            switch (type) {
+                case 'wallBarrier':
+                    const wallGeometry = new THREE.BoxGeometry(tunnelRadius * 2, tunnelRadius * 2, 2);
+                    obstacleMesh = new THREE.Mesh(wallGeometry, obstacleMaterial);
+                    obstacleMesh.position.set(xPos, 0, zPos);
+                    obstacleMesh.scale.set(0.5, 0.5, 1); // Example size
+                    break;
+                case 'spinningCross':
+                    const crossGeometry = new THREE.BoxGeometry(2, 2, 0.5);
+                    const cross1 = new THREE.Mesh(crossGeometry, obstacleMaterial);
+                    const cross2 = new THREE.Mesh(crossGeometry, obstacleMaterial);
+                    cross2.rotation.z = Math.PI / 2;
+                    obstacleMesh = new THREE.Group();
+                    obstacleMesh.add(cross1);
+                    obstacleMesh.add(cross2);
+                    obstacleMesh.position.set(xPos, 0, zPos);
+                    obstacleMesh.userData.isSpinning = true;
+                    break;
+                case 'movingBlock':
+                    const blockGeometry = new THREE.BoxGeometry(3, 3, 1);
+                    obstacleMesh = new THREE.Mesh(blockGeometry, obstacleMaterial);
+                    obstacleMesh.position.set(xPos, 0, zPos);
+                    obstacleMesh.userData.isMoving = true;
+                    obstacleMesh.userData.moveDirection = Math.random() > 0.5 ? 1 : -1;
+                    obstacleMesh.userData.moveSpeed = 0.05;
+                    break;
+                case 'ringGate':
+                    const ringGeometry = new THREE.TorusGeometry(tunnelRadius - 1, 0.5, 16, 100);
+                    obstacleMesh = new THREE.Mesh(ringGeometry, obstacleMaterial);
+                    obstacleMesh.position.set(0, 0, zPos);
+                    obstacleMesh.rotation.x = Math.PI / 2;
+                    // Create a gap by scaling or positioning
+                    // For simplicity, let's just make it a full ring for now, and player navigates through center
+                    break;
+            }
+            obstacleMesh.userData.isObstacle = true;
+            obstacleMesh.position.z = zPos;
+            scene.add(obstacleMesh);
+            obstacles.push(obstacleMesh);
+            // DEBUG: Add BoxHelper for obstacle
+            const boxHelper = new THREE.BoxHelper(obstacleMesh, 0xFFFF00); // Yellow helper // DEBUG
+            scene.add(boxHelper); // DEBUG
+            obstacleMesh.userData.boxHelper = boxHelper; // Store helper for removal // DEBUG
+            // DEBUG: console.log(`// DEBUG: Created obstacle type: ${type} at Z: ${zPos.toFixed(2)}, X: ${xPos.toFixed(2)}`); // DEBUG
+        }
+
+        function generateObstaclesAndCoins() {
+            const lastObstacleZ = obstacles.length > 0 ? obstacles[obstacles.length - 1].position.z : camera.position.z - 50;
+            const spawnRate = 0.3 + (distance / 1000) * 0.4; // Increase frequency with distance
+
+            if (Math.random() < spawnRate && lastObstacleZ > camera.position.z - 25) { // Spawn every 15-25 units
+                // DEBUG: console.log('// DEBUG: Attempting to generate new obstacle/coin.'); // DEBUG
+                const obstacleZ = lastObstacleZ - (15 + Math.random() * 10);
+                const obstacleTypes = ['wallBarrier', 'spinningCross', 'movingBlock', 'ringGate'];
+                const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+                const randomX = (Math.random() * 2 - 1) * (maxPlayerX - 2); // Random X position within bounds
+
+                createObstacle(randomType, obstacleZ, randomX);
+
+                // Also spawn some coins around obstacles or in clear paths
+                if (Math.random() > 0.5) { // 50% chance to spawn a coin
+                    createCoin(obstacleZ - 5 - Math.random() * 5, (Math.random() * 2 - 1) * (maxPlayerX - 1));
+                }
+            }
+        }
+
+        function updateObstaclesAndCoins() {
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                if (obstacle.userData.isSpinning) {
+                    obstacle.rotation.z += 0.05;
+                }
+                if (obstacle.userData.isMoving) {
+                    obstacle.position.x += obstacle.userData.moveDirection * obstacle.userData.moveSpeed;
+                    if (obstacle.position.x > maxPlayerX || obstacle.position.x < -maxPlayerX) {
+                        obstacle.userData.moveDirection *= -1; // Reverse direction
+                    }
+                }
+                // DEBUG: Update BoxHelper position
+                if (obstacle.userData.boxHelper) { // DEBUG
+                    obstacle.userData.boxHelper.update(); // DEBUG
+                } // DEBUG
+                if (obstacle.position.z > camera.position.z + 10) {
+                    scene.remove(obstacle);
+                    // DEBUG: Remove BoxHelper
+                    if (obstacle.userData.boxHelper) { // DEBUG
+                        scene.remove(obstacle.userData.boxHelper); // DEBUG
+                    } // DEBUG
+                    obstacles.splice(i, 1);
+                    i--;
+                    // DEBUG: console.log('// DEBUG: Removed old obstacle.'); // DEBUG
+                }
+            }
+            for (let i = 0; i < coins.length; i++) {
+                const coin = coins[i];
+                coin.rotation.y += 0.05; // Spin coins
+                // DEBUG: Update BoxHelper position
+                if (coin.userData.boxHelper) { // DEBUG
+                    coin.userData.boxHelper.update(); // DEBUG
+                } // DEBUG
+                if (coin.position.z > camera.position.z + 10) {
+                    scene.remove(coin);
+                    // DEBUG: Remove BoxHelper
+                    if (coin.userData.boxHelper) { // DEBUG
+                        scene.remove(coin.userData.boxHelper); // DEBUG
+                    } // DEBUG
+                    coins.splice(i, 1);
+                    i--;
+                    // DEBUG: console.log('// DEBUG: Removed old coin.'); // DEBUG
+                }
+            }
+        }
+
+        // --- Coin Functions ---
+        function createCoin(zPos, xPos) {
+            const coinGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16);
+            const coinMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFF00, emissive: 0xFFFF00, emissiveIntensity: 0.8 }); // Yellow glow
+            const coinMesh = new THREE.Mesh(coinGeometry, coinMaterial);
+            coinMesh.position.set(xPos, 0, zPos);
+            coinMesh.rotation.x = Math.PI / 2;
+            coinMesh.userData.isCoin = true;
+            scene.add(coinMesh);
+            coins.push(coinMesh);
+            // DEBUG: Add BoxHelper for coin
+            const boxHelper = new THREE.BoxHelper(coinMesh, 0x00FF00); // Green helper // DEBUG
+            scene.add(boxHelper); // DEBUG
+            coinMesh.userData.boxHelper = boxHelper; // Store helper for removal // DEBUG
+            // DEBUG: console.log(`// DEBUG: Created coin at Z: ${zPos.toFixed(2)}, X: ${xPos.toFixed(2)}`); // DEBUG
+        }
+
+        // --- Particle Functions (Simplified for now) ---
+        function updateParticles() {
+            // Placeholder for particle system updates
+        }
+
+        // --- Collision Detection ---
+        function checkCollisions() {
+            const playerBoundingSphere = new THREE.Sphere(camera.position, playerCollisionRadius);
+
+            // Check obstacle collisions
+            for (let i = 0; i < obstacles.length; i++) {
+                const obstacle = obstacles[i];
+                const obstacleBoundingBox = new THREE.Box3().setFromObject(obstacle);
+                if (playerBoundingSphere.intersectsBox(obstacleBoundingBox)) {
+                    console.log('// DEBUG: Collision detected with obstacle!'); // DEBUG
+                    gameOver();
+                    return;
+                }
+            }
+
+            // Check coin collisions
+            for (let i = 0; i < coins.length; i++) {
+                const coin = coins[i];
+                const coinBoundingBox = new THREE.Box3().setFromObject(coin);
+                if (playerBoundingSphere.intersectsBox(coinBoundingBox)) {
+                    coinsCollected += 1; // Each coin is 1 unit
+                    // DEBUG: console.log(`// DEBUG: Collected 1 coin. Total: ${coinsCollected}`); // DEBUG
+                    if (window.FlutterChannel) {
+                        window.FlutterChannel.postMessage(JSON.stringify({ type: 'collectCoin', amount: 1 }));
+                    }
+                    scene.remove(coin);
+                    // DEBUG: Remove BoxHelper
+                    if (coin.userData.boxHelper) { // DEBUG
+                        scene.remove(coin.userData.boxHelper); // DEBUG
+                    } // DEBUG
+                    coins.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // --- Game State Management ---
+        function startGame() {
+            // Reset game state
+            isGameOver = false;
+            isGameStarted = true;
+            distance = 0;
+            coinsCollected = 0;
+            gameSpeed = 0.2;
+            playerX = 0;
+            camera.position.set(0, 0, 0);
+
+            // Clear existing elements
+            tunnelSegments.forEach(s => scene.remove(s));
+            obstacles.forEach(o => { // DEBUG: Remove BoxHelper for obstacles
+                scene.remove(o);
+                if (o.userData.boxHelper) scene.remove(o.userData.boxHelper); // DEBUG
+            });
+            coins.forEach(c => { // DEBUG: Remove BoxHelper for coins
+                scene.remove(c);
+                if (c.userData.boxHelper) scene.remove(c.userData.boxHelper); // DEBUG
+            });
+            tunnelSegments = [];
+            obstacles = [];
+            coins = [];
+            console.log('// DEBUG: Game state reset.'); // DEBUG
+
+            // Initial generation
+            generateTunnelSegments();
+            generateObstaclesAndCoins();
+
+            hideGameOver();
+            hideMenu();
+            updateHud();
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            isGameStarted = false;
+            if (distance > bestDistance) {
+                bestDistance = distance;
+            }
+            console.log(`// DEBUG: Game Over! Final Distance: ${Math.floor(distance)}, Coins: ${coinsCollected}`); // DEBUG
+            showGameOver();
+            if (window.FlutterChannel) {
+                window.FlutterChannel.postMessage(JSON.stringify({ type: 'gameOver', distance: Math.floor(distance), coins: coinsCollected }));
+            }
+        }
+
+        // --- UI Functions ---
+        function updateHud() {
+            hud.textContent = `Distance: ${Math.floor(distance)}m | Coins: ${coinsCollected}`;
+        }
+
+        function showGameOver() {
+            document.getElementById('finalDistance').textContent = Math.floor(distance);
+            document.getElementById('finalCoins').textContent = coinsCollected;
+            document.getElementById('bestDistance').textContent = Math.floor(bestDistance);
+            gameOverScreen.classList.add('visible');
+        }
+
+        function hideGameOver() {
+            gameOverScreen.classList.remove('visible');
+        }
+
+        function showMenu() {
+            menuScreen.classList.add('visible');
+            gameOverScreen.classList.remove('visible');
+        }
+
+        function hideMenu() {
+            menuScreen.classList.remove('visible');
+        }
+
+        // --- Flutter Communication Functions ---
+        function requestAd(type) {
+            if (window.FlutterChannel) {
+                adTypeRequested = type;
+                window.FlutterChannel.postMessage(JSON.stringify({ type: 'requestAd', adType: type }));
+            } else {
+                console.log('FlutterChannel not available. Cannot request ad.');
+                showMessage('FlutterChannel not available. Cannot request ad.');
+            }
+        }
+
+        // Called by Flutter to inform about ad result
+        window.handleAdResult = function(success, adType, rewardAmount = 0) {
+            console.log(`// DEBUG: Ad Result - Type: ${adType}, Success: ${success}, Reward: ${rewardAmount}`); // DEBUG
+            if (adType === 'revive') {
+                if (success) {
+                    // Continue game logic
+                    isGameOver = false;
+                    isGameStarted = true;
+                    hideGameOver();
+                    showMessage('Revived! Good luck!');
+                    // Optionally give a small coin bonus for reviving
+                    if (window.FlutterChannel) {
+                        window.FlutterChannel.postMessage(JSON.stringify({ type: 'collectCoin', amount: rewardAmount }));
+                    }
+                } else {
+                    showMessage('Ad not completed. Game Over.');
+                    // Game remains over
+                }
+            } else if (adType === 'bonus') {
+                if (success) {
+                    showMessage(`Bonus! You earned ${rewardAmount} coins!`);
+                    if (window.FlutterChannel) {
+                        window.FlutterChannel.postMessage(JSON.stringify({ type: 'collectCoin', amount: rewardAmount }));
+                    }
+                } else {
+                    showMessage('Ad not completed. No bonus coins.');
+                }
+            } else if (adType === 'interstitial') { // DEBUG: Handle interstitial ad result
+                if (success) {
+                    console.log('// DEBUG: Interstitial ad dismissed successfully.'); // DEBUG
+                } else {
+                    console.log('// DEBUG: Interstitial ad failed to show or was dismissed prematurely.'); // DEBUG
+                }
+            }
+            adTypeRequested = null; // Reset ad type
+        };
+
+        // Helper for linear interpolation
+        function lerp(start, end, amount) {
+            return start * (1 - amount) + end * amount;
+        }
+    </script>
+</body>
+</html>

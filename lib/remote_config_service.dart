@@ -19,7 +19,19 @@ class RemoteConfigService {
       fetchTimeout: const Duration(minutes: 1),
       minimumFetchInterval: const Duration(hours: 1),
     ));
+    _setDefaults(); // Set default values
     await fetchAndActivate();
+  }
+
+  // Set default values for Remote Config parameters
+  void _setDefaults() {
+    _remoteConfig.setDefaults(const {
+      'daily_ad_limit': 5, // Existing default
+      'coins_per_ad': 10, // Existing default
+      'admin_email': 'admin@example.com', // Existing default
+      'spin_wheel_daily_ad_limit': 10, // New default for spin wheel game
+      'max_bonus_coins_per_milestone': 50, // New default for tunnel runner game
+    });
   }
 
   Future<void> fetchAndActivate() async {
@@ -33,8 +45,6 @@ class RemoteConfigService {
   int get dailyAdLimit => _remoteConfig.getInt('daily_ad_limit');
   int get coinsPerAd => _remoteConfig.getInt('coins_per_ad');
   String get adminEmail => _remoteConfig.getString('admin_email');
-
-  Future<void> setConfigDefaults(Map<String, dynamic> defaults) async {
-    await _remoteConfig.setDefaults(defaults);
-  }
+  int get spinWheelDailyAdLimit => _remoteConfig.getInt('spin_wheel_daily_ad_limit');
+  int get maxBonusCoinsPerMilestone => _remoteConfig.getInt('max_bonus_coins_per_milestone');
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
-import 'package:rewardly_app/auth_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
+import '../../auth_service.dart';
+import '../../shared/shimmer_loading.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -28,12 +28,8 @@ class ProfileScreen extends StatelessWidget {
             CircleAvatar(
               radius: 60,
               backgroundColor: Colors.grey.shade200,
-              backgroundImage: userData['profile_picture'] != null
-                  ? NetworkImage(userData['profile_picture'])
-                  : null,
-              child: userData['profile_picture'] == null
-                  ? Icon(Icons.person, size: 60, color: Colors.grey.shade600)
-                  : null,
+              // Always show a default icon, as fetching profile pictures from Firebase is not desired.
+              child: Icon(Icons.person, size: 60, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 15),
             Text(

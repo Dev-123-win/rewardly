@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
-import 'package:rewardly_app/screens/home/admin_panel.dart';
-import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
-import 'package:rewardly_app/screens/home/referral_screen.dart';
-import 'package:rewardly_app/screens/home/profile_screen.dart';
-import 'package:rewardly_app/screens/home/withdraw_screen.dart';
-import 'package:rewardly_app/screens/home/aqua_blast_screen.dart';
-import 'package:rewardly_app/screens/home/offer_pro_screen.dart';
-import 'package:rewardly_app/screens/home/read_and_earn_screen.dart';
-import 'package:rewardly_app/screens/home/play_game_screen.dart';
-import 'package:rewardly_app/screens/home/daily_stream_screen.dart';
-import 'package:rewardly_app/screens/empty_screen.dart';
+import '../../remote_config_service.dart';
+import '../../user_service.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
+import 'admin_panel.dart';
+import 'earn_coins_screen.dart';
+import 'referral_screen.dart';
+import 'profile_screen.dart';
+import 'withdraw_screen.dart';
+// Removed import for play_game_screen.dart
+import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'tunnel_runner_game_screen.dart'; // New import for Tunnel Runner Game
+// Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -253,63 +251,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             const SizedBox(height: 20),
-            // Super Offer Card
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0),
-              elevation: 4.0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).primaryColor.withAlpha(204),
-                      Theme.of(context).primaryColor.withAlpha(153),
-                    ], // Primary color gradient
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.white, size: 30),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Super Offer',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'Get coin Upto ${RemoteConfigService().coinsPerAd * RemoteConfigService().dailyAdLimit}k', // Example, adjust as needed
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const EmptyScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Text('Get now!', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).primaryColor)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
             // Offer Grid
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -322,57 +263,24 @@ class _HomeState extends State<Home> {
                 children: [
                   _buildOfferCard(
                     context,
-                    title: 'Aqua Blast',
-                    subtitle: 'Get coin Upto ∞',
-                    icon: Icons.gamepad,
-                    startColor: const Color(0xFF6A5ACD), // SlateBlue
-                    endColor: const Color(0xFF836FFF), // LightSlateBlue
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const AquaBlastScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
-                    title: 'OfferPro',
-                    subtitle: 'Get coin Upto 100K',
-                    icon: Icons.local_offer,
-                    startColor: const Color(0xFF483D8B), // DarkSlateBlue
-                    endColor: const Color(0xFF6A5ACD), // SlateBlue
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const OfferProScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
-                    title: 'Read & Earn',
-                    subtitle: 'Earn Upto',
-                    icon: Icons.menu_book,
-                    startColor: const Color(0xFFDAA520), // GoldenRod
-                    endColor: const Color(0xFFFFD700), // Gold
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
                     title: 'Play Game!',
-                    subtitle: 'Earn Upto',
+                    subtitle: 'Spin & Win!',
                     icon: Icons.sports_esports,
                     startColor: const Color(0xFF8B008B), // DarkMagenta
                     endColor: const Color(0xFFBA55D3), // MediumPurple
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const PlayGameScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
                     },
                   ),
                   _buildOfferCard(
                     context,
-                    title: 'Daily Stream',
-                    subtitle: 'Earn Upto',
-                    icon: Icons.stream,
+                    title: 'Tunnel Runner',
+                    subtitle: 'Endless 3D Fun!',
+                    icon: Icons.directions_run,
                     startColor: const Color(0xFF00CED1), // DarkTurquoise
                     endColor: const Color(0xFF40E0D0), // Turquoise
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const DailyStreamScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const TunnelRunnerGameScreen()));
                     },
                   ),
                   _buildOfferCard(

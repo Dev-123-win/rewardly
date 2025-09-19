@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:rewardly_app/auth_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/widgets/custom_button.dart';
-import 'package:rewardly_app/screens/auth/auth_card.dart';
-import 'package:rewardly_app/screens/auth/forgot_password.dart';
+import '../../auth_service.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../widgets/custom_button.dart';
+import 'auth_card.dart';
+import 'forgot_password.dart';
 
 class SignIn extends StatefulWidget {
   final Function toggleView;

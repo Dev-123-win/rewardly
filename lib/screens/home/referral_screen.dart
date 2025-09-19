@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../providers/user_data_provider.dart';
 // import 'package:share_plus/share_plus.dart'; // Removed share_plus import
-import 'package:rewardly_app/shared/shimmer_loading.dart';
+import '../../shared/shimmer_loading.dart';
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -54,7 +54,7 @@ class ReferralScreen extends StatelessWidget {
       return const ReferralScreenLoading();
     }
 
-    final referralCode = userData['referral_code'] ?? 'Loading...';
+    final referralCode = userData['referralCode'] ?? 'Loading...';
 
     return Scaffold(
       backgroundColor: Colors.white,

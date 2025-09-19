@@ -1,4 +1,4 @@
-import 'package:rewardly_app/user_service.dart';
+import 'user_service.dart';
 
 class WithdrawalService {
   final UserService _userService = UserService();

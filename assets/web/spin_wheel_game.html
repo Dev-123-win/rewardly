@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spin the Wheel</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f0f0f0; }
+        #spinButton {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background-color: #6A5ACD; /* SlateBlue */
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+        #spinButton:hover:not(:disabled) {
+            background-color: #836FFF; /* LightSlateBlue */
+        }
+        #spinButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #messageOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s linear;
+        }
+        #messageOverlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <button id="spinButton">SPIN</button>
+    <div id="messageOverlay"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-addons@1.0.0/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three-addons@1.0.0/geometries/TextGeometry.js"></script>
+    <script>
+        let scene, camera, renderer, wheel, pointer;
+        let isSpinning = false;
+        let currentWinningReward = 0; // Store the reward determined by the spin
+        const spinButton = document.getElementById('spinButton');
+        const messageOverlay = document.getElementById('messageOverlay');
+
+        const rewards = [10, 20, 50, 100, 200, 10, 20, 50, 100, 200]; // Example rewards
+        const segmentAngle = (2 * Math.PI) / rewards.length;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 1, 1);
+            scene.add(directionalLight);
+
+            // Wheel
+            const wheelRadius = 5;
+            const wheelHeight = 0.5;
+            const segments = rewards.length;
+
+            wheel = new THREE.Group();
+            scene.add(wheel);
+
+            const fontLoader = new THREE.FontLoader();
+            fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+                for (let i = 0; i < segments; i++) {
+                    const color = new THREE.Color().setHSL(i / segments, 0.8, 0.6);
+                    const geometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelHeight, 32, 1, false, i * segmentAngle, segmentAngle);
+                    const material = new THREE.MeshPhongMaterial({ color: color, side: THREE.DoubleSide });
+                    const segment = new THREE.Mesh(geometry, material);
+                    segment.rotation.x = Math.PI / 2;
+                    wheel.add(segment);
+
+                    // Add text for reward
+                    const textGeometry = new THREE.TextGeometry(rewards[i].toString(), {
+                        font: font,
+                        size: 0.8,
+                        height: 0.1,
+                    });
+                    textGeometry.computeBoundingBox();
+                    textGeometry.center();
+                    const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+
+                    textMesh.position.set(
+                        (wheelRadius / 2) * Math.cos(i * segmentAngle + segmentAngle / 2),
+                        (wheelRadius / 2) * Math.sin(i * segmentAngle + segmentAngle / 2),
+                        wheelHeight / 2 + 0.1
+                    );
+                    textMesh.rotation.z = i * segmentAngle + segmentAngle / 2 + Math.PI / 2;
+                    wheel.add(textMesh);
+                }
+            });
+
+            // Pointer
+            const pointerGeometry = new THREE.ConeGeometry(0.5, 1.5, 32);
+            const pointerMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+            pointer = new THREE.Mesh(pointerGeometry, pointerMaterial);
+            pointer.position.set(0, wheelRadius + 1, 0);
+            pointer.rotation.z = Math.PI / 2; // Pointing downwards
+            scene.add(pointer);
+
+            camera.position.z = 10;
+            camera.position.y = 5;
+            camera.lookAt(0, 0, 0);
+
+            window.addEventListener('resize', onWindowResize, false);
+            spinButton.addEventListener('click', requestSpinFromFlutter);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        let targetRotation = 0;
+        let currentRotation = 0;
+        let spinSpeed = 0;
+        const maxSpinSpeed = 0.2;
+        const decelerationRate = 0.98; // How fast the wheel slows down
+
+        function requestSpinFromFlutter() {
+            if (isSpinning) return;
+            spinButton.disabled = true;
+            hideMessage();
+            if (window.FlutterChannel) {
+                window.FlutterChannel.postMessage(JSON.stringify({ type: 'requestSpin' }));
+            } else {
+                console.log('FlutterChannel not available. Cannot request spin.');
+                showMessage('FlutterChannel not available. Cannot request spin.');
+                spinButton.disabled = false;
+            }
+        }
+
+        // Function called by Flutter to start the spin animation
+        window.startSpinAnimation = function(isFreeSpin) {
+            isSpinning = true;
+            spinButton.disabled = true;
+            hideMessage();
+
+            // Inform Flutter that spin has started (for UI feedback)
+            if (window.FlutterChannel) {
+                window.FlutterChannel.postMessage(JSON.stringify({ type: 'spinStarted' }));
+            }
+
+            // Determine a random reward index
+            const winningIndex = Math.floor(Math.random() * rewards.length);
+            currentWinningReward = rewards[winningIndex]; // Store the winning reward
+
+            // Calculate target rotation to land on the winning segment
+            const baseTargetAngle = (Math.PI / 2) - (winningIndex * segmentAngle + segmentAngle / 2);
+            targetRotation = baseTargetAngle + (Math.PI * 2 * 5); // 5 full spins + target
+
+            currentRotation = wheel.rotation.z;
+            spinSpeed = maxSpinSpeed;
+
+            animateSpin();
+        }
+
+        function animateSpin() {
+            if (!isSpinning) return;
+
+            currentRotation += spinSpeed;
+            spinSpeed *= decelerationRate; // Decelerate
+
+            // If spinSpeed is very low, snap to target and stop
+            if (spinSpeed < 0.001 && Math.abs(currentRotation % (Math.PI * 2) - targetRotation % (Math.PI * 2)) < 0.01) {
+                isSpinning = false;
+                wheel.rotation.z = targetRotation; // Snap to final position
+                console.log('Wheel stopped. Winning reward:', currentWinningReward);
+
+                // Send reward to Flutter
+                if (window.FlutterChannel) {
+                    window.FlutterChannel.postMessage(JSON.stringify({ type: 'spinComplete', rewardAmount: currentWinningReward }));
+                } else {
+                    // Fallback for testing in browser
+                    showMessage(`You won ${currentWinningReward} coins! (Ad skipped for demo)`);
+                    spinButton.disabled = false;
+                }
+                return;
+            }
+
+            wheel.rotation.z = currentRotation;
+            requestAnimationFrame(animateSpin);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        // Function to be called from Flutter to show ad result
+        window.handleAdResult = function(success, rewardAmount) {
+            if (success) {
+                showMessage(`Congratulations! You earned ${rewardAmount} coins!`);
+            } else {
+                showMessage('Ad not completed. No reward this time.');
+            }
+            // The button state will be updated by updateSpinButton after this
+        };
+
+        // Function to be called from Flutter to update the spin button UI
+        window.updateSpinButton = function(canSpinFree, canSpinAd) {
+            spinButton.disabled = false; // Re-enable button
+            if (canSpinFree) {
+                spinButton.textContent = 'SPIN (Free)';
+                spinButton.style.backgroundColor = '#6A5ACD'; // SlateBlue
+            } else if (canSpinAd) {
+                spinButton.textContent = 'WATCH AD FOR SPIN';
+                spinButton.style.backgroundColor = '#FFD700'; // Gold
+                spinButton.style.color = '#333333';
+            } else {
+                spinButton.textContent = 'NO MORE SPINS TODAY';
+                spinButton.style.backgroundColor = '#cccccc';
+                spinButton.style.color = '#666666';
+                spinButton.disabled = true;
+            }
+        };
+
+        // Function to be called from Flutter when no more spins are available
+        window.showNoMoreSpinsMessage = function() {
+            showMessage('You have exhausted all spins for today. Come back tomorrow!');
+            spinButton.disabled = true;
+            spinButton.textContent = 'NO MORE SPINS TODAY';
+            spinButton.style.backgroundColor = '#cccccc';
+            spinButton.style.color = '#666666';
+        };
+
+        function showMessage(msg) {
+            messageOverlay.textContent = msg;
+            messageOverlay.classList.add('visible');
+        }
+
+        function hideMessage() {
+            messageOverlay.classList.remove('visible');
+        }
+    </script>
+</body>
+</html>

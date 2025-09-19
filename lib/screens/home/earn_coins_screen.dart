@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/ad_reward_service.dart';
+import '../../ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart'; // Import for loading indicator
+import '../../user_service.dart'; // Added for updating coins
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -12,15 +13,23 @@ class EarnCoinsScreen extends StatefulWidget {
 }
 
 class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
-  late AdRewardService _adRewardService;
+  final AdService _adService = AdService(); // Use consolidated AdService
+  final UserService _userService = UserService(); // For updating coins
   bool _isAdLoading = false; // State to manage loading indicator
+  User? _currentUser; // To get current user UID
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final user = Provider.of<User?>(context);
-    _adRewardService = AdRewardService(user);
-    _loadAd(); // Load ad when screen initializes or dependencies change
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = Provider.of<User?>(context, listen: false);
+    _loadAd(); // Load ad when screen initializes
+  }
+
+  @override
+  void dispose() {
+    _adService.dispose(); // Dispose ads
+    super.dispose();
   }
 
   void _loadAd() async {
@@ -28,7 +37,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
     setState(() {
       _isAdLoading = true;
     });
-    await _adRewardService.loadRewardedAd();
+    _adService.loadRewardedAd(); // Load ad
     if (!mounted) return;
     setState(() {
       _isAdLoading = false;
@@ -42,13 +51,20 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
   );
 
   void _watchAd(int points) {
-    _adRewardService.showRewardedAd(
-      onRewardEarned: () {
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to watch ads.')),
+      );
+      return;
+    }
+
+    _adService.showRewardedAd(
+      onRewardEarned: (int rewardAmount) async { // AdService now passes rewardAmount
+        await _userService.updateCoins(_currentUser!.uid, points); // Update coins
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You earned $points points!')),
+          SnackBar(content: Text('You earned $points coins!')),
         );
-        // Optionally, reload ads or update UI after reward
-        _loadAd();
+        _loadAd(); // Reload ad
       },
       onAdFailedToLoad: () {
         ScaffoldMessenger.of(context).showSnackBar(

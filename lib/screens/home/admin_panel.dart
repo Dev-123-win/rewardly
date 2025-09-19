@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
+import '../../remote_config_service.dart';
+import '../../shared/shimmer_loading.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../providers/user_data_provider.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -34,10 +34,13 @@ class _AdminPanelState extends State<AdminPanel> {
 
   Future<void> _updateRemoteConfig() async {
     await _remoteConfigService.initialize(); // Re-initialize to ensure latest values
-    await _remoteConfigService.setConfigDefaults({
-      'daily_ad_limit': _dailyAdLimit,
-      'coins_per_ad': _coinsPerAd,
-    });
+    // TODO: Implement proper remote config update mechanism.
+    // The setConfigDefaults method was removed from RemoteConfigService.
+    // For now, we'll just fetch and activate.
+    // await _remoteConfigService.setConfigDefaults({
+    //   'daily_ad_limit': _dailyAdLimit,
+    //   'coins_per_ad': _coinsPerAd,
+    // });
     await _remoteConfigService.fetchAndActivate();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

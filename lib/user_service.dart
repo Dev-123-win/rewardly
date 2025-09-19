@@ -28,7 +28,43 @@ class UserService {
       'referralCode': uid.substring(0, 8), // Simple referral code from UID
       'referredBy': actualReferredBy,
       'isAdmin': false,
+      'spinWheelFreeSpinsToday': 3, // Initial free spins
+      'spinWheelAdSpinsToday': 0, // Initial ad-watched spins
+      'lastSpinWheelDate': DateTime.now().toIso8601String().substring(0, 10), // Current date
     });
+  }
+
+  // Decrement free spin wheel spins
+  Future<void> decrementFreeSpinWheelSpins(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'spinWheelFreeSpinsToday': FieldValue.increment(-1),
+    });
+  }
+
+  // Increment ad-watched spin wheel spins
+  Future<void> incrementAdSpinWheelSpins(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'spinWheelAdSpinsToday': FieldValue.increment(1),
+    });
+  }
+
+  // Reset daily spin wheel counts if date has changed
+  Future<void> resetSpinWheelDailyCounts(String uid) async {
+    final userDataSnapshot = await _firestore.collection('users').doc(uid).get();
+    final userData = userDataSnapshot.data();
+
+    if (userData != null) {
+      final lastSpinWheelDate = userData['lastSpinWheelDate'];
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+
+      if (lastSpinWheelDate == null || lastSpinWheelDate != today) {
+        await _firestore.collection('users').doc(uid).update({
+          'spinWheelFreeSpinsToday': 3,
+          'spinWheelAdSpinsToday': 0,
+          'lastSpinWheelDate': today,
+        });
+      }
+    }
   }
 
   // Get user data stream
@@ -74,5 +110,10 @@ class UserService {
       return querySnapshot.docs.first;
     }
     return null;
+  }
+
+  // Update specific user data fields
+  Future<void> updateUserData(String uid, Map<String, dynamic> data) async {
+    await _firestore.collection('users').doc(uid).update(data);
   }
 }
