@@ -40,6 +40,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     200,
   ];
   int _selectedItem = 0; // Index of the selected item after spin
+  ThemeProvider? _themeProvider;
 
   @override
   void initState() {
@@ -51,6 +52,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     // Listen to user data changes
     Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
     _updateSpinState(); // Initial load of spin state
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _themeProvider = Provider.of<ThemeProvider>(context, listen: false);
   }
 
   @override

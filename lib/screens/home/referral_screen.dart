@@ -50,11 +50,12 @@ class ReferralScreen extends StatelessWidget {
     final userDataProvider = Provider.of<UserDataProvider>(context);
     final userData = userDataProvider.userData;
 
-    if (userData == null) {
+    if (userData == null || userData.data() == null) {
       return const ReferralScreenLoading();
     }
 
-    final referralCode = userData['referralCode'] ?? 'Loading...';
+    final data = userData.data() as Map<String, dynamic>?;
+    final referralCode = data?['referralCode'] ?? 'Loading...';
 
     return Scaffold(
       backgroundColor: Colors.white,
