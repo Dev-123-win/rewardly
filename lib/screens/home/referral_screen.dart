@@ -48,6 +48,11 @@ class ReferralScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final userDataProvider = Provider.of<UserDataProvider>(context);
+
+    if (userDataProvider.isLoading) {
+      return const ReferralScreenLoading();
+    }
+
     final userData = userDataProvider.userData;
 
     if (userData == null || userData.data() == null) {
