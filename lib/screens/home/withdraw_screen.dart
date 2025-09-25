@@ -188,13 +188,13 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18.0),
                   gradient: LinearGradient(
-                    colors: [Theme.of(context).primaryColor.withOpacity(0.8), Theme.of(context).primaryColor.withOpacity(0.5)], // Using primary color with opacity
+                    colors: [Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()), Theme.of(context).primaryColor.withAlpha((255 * 0.5).round())], // Using primary color with opacity
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).primaryColor.withOpacity(0.3),
+                      color: Theme.of(context).primaryColor.withAlpha((255 * 0.3).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -361,7 +361,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                                 : 'Withdraw via UPI',
                             onPressed: _submitWithdrawal,
                             startColor: Theme.of(context).primaryColor,
-                            endColor: Theme.of(context).primaryColor.withOpacity(0.8),
+                            endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()),
                             height: 55, // Consistent button height
                             borderRadius: 12.0, // More rounded button
                           ),
@@ -417,7 +417,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           width: 130, // Slightly wider cards
           padding: const EdgeInsets.all(18.0), // Increased padding
           decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.15) : Colors.white, // More prominent selected color
+            color: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.15).round()) : Colors.white, // More prominent selected color
             borderRadius: BorderRadius.circular(18.0),
           ),
           child: Column(

@@ -104,14 +104,16 @@ class _SignInState extends State<SignIn> {
                                   if (_formKey.currentState!.validate()) {
                                     setState(() => loading = true);
                                     final scaffoldMessenger = ScaffoldMessenger.of(context);
+									final theme = Theme.of(context);
                                     dynamic result = await _auth.signInWithEmailAndPassword(email, password);
+									if (!mounted) return;
                                     if (result is String) {
                                       setState(() {
                                         loading = false;
                                       });
                                       scaffoldMessenger.showSnackBar(
                                         SnackBar(
-                                          content: Text(result, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                          content: Text(result, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                           backgroundColor: Colors.red,
                                         ),
                                       );

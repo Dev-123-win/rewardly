@@ -84,26 +84,33 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                 onPressed: () async {
                                   if (_formKey.currentState!.validate()) {
                                     setState(() => loading = true);
-                                    final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                    final navigator = Navigator.of(context);
+                                    String? errorMessage;
+                                    bool success = false;
                                     try {
                                       await _auth.sendPasswordResetEmail(email: email);
-                                      _showSnackBar('Password reset link sent to $email');
-                                      navigator.pop();
+                                      success = true;
                                     } on FirebaseAuthException catch (e) {
-                                      setState(() {
-                                        error = e.message ?? 'An unknown error occurred.';
-                                        loading = false;
-                                      });
-                                      scaffoldMessenger.showSnackBar(
-                                          SnackBar(content: Text(error, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)), backgroundColor: Colors.red));
+                                      errorMessage = e.message ?? 'An unknown error occurred.';
                                     } catch (e) {
-                                      setState(() {
-                                        error = 'An unexpected error occurred.';
-                                        loading = false;
-                                      });
-                                      scaffoldMessenger.showSnackBar(
-                                          SnackBar(content: Text(error, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)), backgroundColor: Colors.red));
+                                      errorMessage = 'An unexpected error occurred.';
+                                    }
+
+                                    if (!mounted) return;
+
+                                    setState(() {
+                                      loading = false;
+                                      if (errorMessage != null) {
+                                        error = errorMessage;
+                                      }
+                                    });
+
+                                    if (success) {
+                                      _showSnackBar('Password reset link sent to $email');
+                                      Navigator.of(context).pop();
+                                    } else if (errorMessage != null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content: Text(errorMessage, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                          backgroundColor: Colors.red));
                                     }
                                   }
                                 },
