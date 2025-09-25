@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../remote_config_service.dart';
-import '../../user_service.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
-import 'admin_panel.dart';
-import 'earn_coins_screen.dart';
-import 'referral_screen.dart';
-import 'profile_screen.dart';
-import 'withdraw_screen.dart';
+import 'package:rewardly_app/remote_config_service.dart';
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
+import 'package:rewardly_app/screens/home/admin_panel.dart';
+import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
+import 'package:rewardly_app/screens/home/referral_screen.dart';
+import 'package:rewardly_app/screens/home/profile_screen.dart';
+import 'package:rewardly_app/screens/home/withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
-import 'tunnel_runner_game_screen.dart'; // New import for Tunnel Runner Game
+import 'package:rewardly_app/screens/home/spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'package:rewardly_app/screens/home/tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {
@@ -102,7 +102,7 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    Map<String, dynamic> userData = userDataProvider.userData!.data() as Map<String, dynamic>;
+    Map<String, dynamic> userData = (userDataProvider.userData!.data() as Map<String, dynamic>?) ?? {};
     int coins = userData['coins'] ?? 0;
     double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
 
@@ -263,6 +263,17 @@ class _HomeState extends State<Home> {
                 children: [
                   _buildOfferCard(
                     context,
+                    title: 'Tic Tac Toe',
+                    subtitle: 'Play against NPC!',
+                    icon: Icons.grid_on,
+                    startColor: const Color(0xFF4CAF50), // Green
+                    endColor: const Color(0xFF8BC34A), // Light Green
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                    },
+                  ),
+                  _buildOfferCard(
+                    context,
                     title: 'Play Game!',
                     subtitle: 'Spin & Win!',
                     icon: Icons.sports_esports,
@@ -270,17 +281,6 @@ class _HomeState extends State<Home> {
                     endColor: const Color(0xFFBA55D3), // MediumPurple
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
-                    title: 'Tunnel Runner',
-                    subtitle: 'Endless 3D Fun!',
-                    icon: Icons.directions_run,
-                    startColor: const Color(0xFF00CED1), // DarkTurquoise
-                    endColor: const Color(0xFF40E0D0), // Turquoise
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const TunnelRunnerGameScreen()));
                     },
                   ),
                   _buildOfferCard(

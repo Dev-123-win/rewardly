@@ -18,6 +18,12 @@ class AdService {
   int _numInterstitialLoadAttempts = 0;
   final String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test Ad Unit ID
 
+  // Banner Ad
+  BannerAd? _bannerAd;
+  final String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test Ad Unit ID
+
+  BannerAd? get bannerAd => _bannerAd;
+
   // Load Rewarded Ad
   void loadRewardedAd() {
     if (_rewardedAd != null) return; // Ad already loaded
@@ -136,9 +142,32 @@ class AdService {
     _interstitialAd = null; // Clear ad after showing
   }
 
+  // Load Banner Ad
+  void loadBannerAd() {
+    _bannerAd = BannerAd(
+      adUnitId: _bannerAdUnitId,
+      request: const AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          log('$ad loaded.');
+          _bannerAd = ad as BannerAd;
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          log('$ad failed to load: $error');
+          ad.dispose();
+        },
+        onAdOpened: (Ad ad) => log('$ad opened.'),
+        onAdClosed: (Ad ad) => log('$ad closed.'),
+        onAdImpression: (Ad ad) => log('$ad impression.'),
+      ),
+    )..load();
+  }
+
   // Dispose of all ads
   void dispose() {
     _rewardedAd?.dispose();
     _interstitialAd?.dispose();
+    _bannerAd?.dispose();
   }
 }

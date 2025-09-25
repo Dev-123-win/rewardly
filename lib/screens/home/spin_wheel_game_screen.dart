@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../user_service.dart';
-import '../../ad_service.dart'; // Consolidated AdService
-import '../../remote_config_service.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
-import 'dart:convert'; // For JSON encoding/decoding
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
+import 'package:rewardly_app/remote_config_service.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
+import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
+import 'dart:async'; // For StreamController
 
 class SpinWheelGameScreen extends StatefulWidget {
   const SpinWheelGameScreen({super.key});
@@ -17,7 +17,6 @@ class SpinWheelGameScreen extends StatefulWidget {
 }
 
 class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
-  late final WebViewController _controller;
   final UserService _userService = UserService();
   final AdService _adService = AdService(); // Use consolidated AdService
   final RemoteConfigService _remoteConfigService = RemoteConfigService();
@@ -27,10 +26,20 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   int _adSpinsWatchedToday = 0;
   int _spinWheelDailyAdLimit = 10; // Default, will be updated by RemoteConfig
 
-  bool _isLoading = true;
+  bool _isLoading = true; // Keep for initial data loading
   bool _isSpinning = false;
   String? _resultMessage;
-  // int? _lastRewardAmount; // Removed as it was unused
+
+  final StreamController<int> _fortuneWheelController = StreamController<int>();
+  final List<int> _fortuneItems = [
+    0, // No reward
+    10,
+    20,
+    50,
+    100,
+    200,
+  ];
+  int _selectedItem = 0; // Index of the selected item after spin
 
   @override
   void initState() {
@@ -38,57 +47,17 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     _currentUser = Provider.of<User?>(context, listen: false);
     _adService.loadRewardedAd(); // Pre-load an ad
     _adService.loadInterstitialAd(); // Pre-load interstitial if needed for other features
-    // Note: AdService is a singleton, so no need to pass _currentUser to its constructor.
-    // AdService handles user context internally or expects it to be passed to show methods.
-
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000))
-      ..addJavaScriptChannel(
-        'FlutterChannel',
-        onMessageReceived: (message) {
-          _handleJavaScriptMessage(message.message);
-        },
-      )
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // print('WebView is loading (progress : $progress%)');
-          },
-          onPageStarted: (String url) {
-            // print('Page started loading: $url');
-            setState(() {
-              _isLoading = true;
-            });
-          },
-          onPageFinished: (String url) {
-            // print('Page finished loading: $url');
-            setState(() {
-              _isLoading = false;
-            });
-            _updateSpinState(); // Send initial spin state to web
-          },
-          onWebResourceError: (WebResourceError error) {
-            // print('''
-            // Page resource error:
-            //   code: ${error.errorCode}
-            //   description: ${error.description}
-            //   errorType: ${error.errorType}
-            //   isForMainFrame: ${error.isForMainFrame}
-            //           ''');
-          },
-        ),
-      )
-      ..loadFlutterAsset('assets/web/spin_wheel_game.html');
 
     // Listen to user data changes
     Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
+    _updateSpinState(); // Initial load of spin state
   }
 
   @override
   void dispose() {
     Provider.of<UserDataProvider>(context, listen: false).removeListener(_onUserDataChanged);
     _adService.dispose(); // Dispose all ads managed by the singleton AdService
+    _fortuneWheelController.close();
     super.dispose();
   }
 
@@ -97,7 +66,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   }
 
   Future<void> _updateSpinState() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
 
     // Ensure daily counts are reset if date has changed
     await _userService.resetSpinWheelDailyCounts(_currentUser!.uid);
@@ -109,90 +83,68 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
         _freeSpinsToday = data['spinWheelFreeSpinsToday'] ?? 0;
         _adSpinsWatchedToday = data['spinWheelAdSpinsToday'] ?? 0;
         _spinWheelDailyAdLimit = _remoteConfigService.spinWheelDailyAdLimit;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
       });
     }
-    _sendSpinAvailabilityToWeb();
   }
 
-  void _sendSpinAvailabilityToWeb() {
-    final canSpinFree = _freeSpinsToday > 0;
-    final canSpinAd = _adSpinsWatchedToday < _spinWheelDailyAdLimit;
-
-    _controller.runJavaScript('''
-      if (window.updateSpinButton) {
-        window.updateSpinButton(${jsonEncode(canSpinFree)}, ${jsonEncode(canSpinAd)});
-      }
-    ''');
-  }
-
-  void _handleJavaScriptMessage(String message) {
-    final Map<String, dynamic> data = jsonDecode(message);
-    final String type = data['type'];
-
-    switch (type) {
-      case 'spinComplete':
-        final int rewardAmount = data['rewardAmount'];
-        _handleSpinComplete(rewardAmount);
-        break;
-      case 'requestSpin':
-        _handleSpinRequest();
-        break;
-      case 'spinStarted':
-        setState(() {
-          _isSpinning = true;
-          _resultMessage = null;
-          // _lastRewardAmount = null; // Removed as it was unused
-        });
-        break;
-    }
-  }
-
-  Future<void> _handleSpinRequest() async {
+  Future<void> _handleSpinRequest({required bool isFreeSpin}) async {
     if (_currentUser == null || _isSpinning) return;
 
-    if (_freeSpinsToday > 0) {
-      // Use a free spin
+    if (isFreeSpin && _freeSpinsToday > 0) {
+      setState(() {
+        _isSpinning = true;
+        _resultMessage = null;
+      });
       await _userService.decrementFreeSpinWheelSpins(_currentUser!.uid);
-      _controller.runJavaScript('window.startSpinAnimation(true);'); // Tell web to spin
-    } else if (_adSpinsWatchedToday < _spinWheelDailyAdLimit) {
-      // Offer ad for a spin
+      _startSpin();
+    } else if (!isFreeSpin && _adSpinsWatchedToday < _spinWheelDailyAdLimit) {
       _showRewardedAdForSpin();
     } else {
-      // No more spins today
-      _controller.runJavaScript('window.showNoMoreSpinsMessage();');
+      _showResultOverlay(false, null, 'No more spins today. Come back tomorrow!');
     }
   }
 
   void _showRewardedAdForSpin() {
     _adService.showRewardedAd(
-      onRewardEarned: (int rewardAmount) async { // AdService now passes rewardAmount
+      onRewardEarned: (int rewardAmount) async {
         if (_currentUser != null) {
+          setState(() {
+            _isSpinning = true;
+            _resultMessage = null;
+          });
           await _userService.incrementAdSpinWheelSpins(_currentUser!.uid);
-          _controller.runJavaScript('window.startSpinAnimation(true);'); // Tell web to spin
+          _startSpin();
         }
       },
       onAdFailedToLoad: () {
-        _controller.runJavaScript('window.handleAdResult(false, "ad_for_spin", 0);'); // Inform web of ad failure
         _showResultOverlay(false, null, 'Failed to load ad. Try again later.');
       },
       onAdFailedToShow: () {
-        _controller.runJavaScript('window.handleAdResult(false, "ad_for_spin", 0);'); // Inform web of ad failure
         _showResultOverlay(false, null, 'Ad could not be shown. Try again later.');
       },
     );
   }
 
+  void _startSpin() {
+    setState(() {
+      _selectedItem = Fortune.randomInt(0, _fortuneItems.length);
+    });
+    _fortuneWheelController.add(_selectedItem);
+  }
+
   Future<void> _handleSpinComplete(int rewardAmount) async {
     if (_currentUser == null) return;
 
-    // Reward user with coins
     await _userService.updateCoins(_currentUser!.uid, rewardAmount);
 
     setState(() {
       _isSpinning = false;
-      // _lastRewardAmount = rewardAmount; // Removed as it was unused
     });
-    _controller.runJavaScript('window.handleAdResult(true, $rewardAmount);'); // Inform web of reward
     _showResultOverlay(true, rewardAmount);
     _updateSpinState(); // Refresh spin state after reward
   }
@@ -220,43 +172,158 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
         backgroundColor: Colors.deepPurple.shade400,
         foregroundColor: Colors.white,
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
-            const Center(
-              child: ShimmerLoading.rectangular(height: 50, width: 200), // Placeholder for loading
-            ),
-          if (_resultMessage != null)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withAlpha((0.7 * 255).round()), // Fixed deprecated withOpacity
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _resultMessage!,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
-                        textAlign: TextAlign.center,
+      body: _isLoading
+          ? const Center(
+              child: ShimmerLoading.rectangular(height: 50, width: 200),
+            )
+          : Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: FortuneWheel(
+                          selected: _fortuneWheelController.stream,
+                          items: [
+                            for (var item in _fortuneItems)
+                              FortuneItem(
+                                child: Text(
+                                  item == 0 ? 'Try Again' : '$item Coins',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                style: FortuneItemStyle(
+                                  color: item == 0 ? Colors.redAccent.shade700 : Colors.deepPurple.shade700,
+                                  borderColor: Colors.deepPurple.shade900,
+                                  borderWidth: 3,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                          ],
+                          onAnimationEnd: () {
+                            _handleSpinComplete(_fortuneItems[_selectedItem]);
+                          },
+                          indicators: <FortuneIndicator>[
+                            FortuneIndicator(
+                              alignment: Alignment.topCenter,
+                              child: const Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.amber,
+                                size: 50,
+                              ),
+                            ),
+                          ],
+                          animateFirst: false,
+                          rotationCount: 8, // More rotations for a better visual effect
+                          duration: const Duration(seconds: 5), // Longer spin duration
+                          hapticImpact: HapticImpact.heavy,
+                          physics: NoPanPhysics(), // Prevent manual scrolling
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            _resultMessage = null;
-                          });
-                          _sendSpinAvailabilityToWeb(); // Refresh button state
-                        },
-                        child: const Text('OK'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Free Spins Today: $_freeSpinsToday',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade800, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Ad Spins Today: $_adSpinsWatchedToday / $_spinWheelDailyAdLimit',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade800, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _freeSpinsToday > 0 && !_isSpinning
+                                      ? () => _handleSpinRequest(isFreeSpin: true)
+                                      : null,
+                                  icon: const Icon(Icons.redeem, color: Colors.white),
+                                  label: const Text('Free Spin', style: TextStyle(color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.deepPurple.shade600,
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _adSpinsWatchedToday < _spinWheelDailyAdLimit && !_isSpinning
+                                      ? () => _handleSpinRequest(isFreeSpin: false)
+                                      : null,
+                                  icon: const Icon(Icons.play_arrow, color: Colors.white),
+                                  label: const Text('Watch Ad for Spin', style: TextStyle(color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green.shade600,
+                                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    elevation: 5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
+                if (_resultMessage != null)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withAlpha((0.7 * 255).round()),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _resultMessage!,
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _resultMessage = null;
+                                });
+                                _updateSpinState(); // Refresh button state
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amber.shade700,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: const Text('OK', style: TextStyle(fontSize: 18)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_isSpinning)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withAlpha((0.5 * 255).round()),
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.amber),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

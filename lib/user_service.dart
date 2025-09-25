@@ -99,8 +99,12 @@ class UserService {
 
   // Check if user is admin
   Future<bool> isAdmin(String uid) async {
-    final userData = await _firestore.collection('users').doc(uid).get();
-    return userData['isAdmin'] ?? false;
+    final userDataSnapshot = await _firestore.collection('users').doc(uid).get();
+    if (userDataSnapshot.exists) {
+      final userData = userDataSnapshot.data();
+      return (userData != null && userData['isAdmin'] == true);
+    }
+    return false;
   }
 
   // Get user by referral code

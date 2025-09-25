@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../ad_service.dart'; // Consolidated AdService
+import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart'; // Import for loading indicator
-import '../../user_service.dart'; // Added for updating coins
+import 'package:rewardly_app/user_service.dart'; // Added for updating coins
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});

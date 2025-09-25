@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'screens/auth/authenticate.dart';
-import 'screens/home/home.dart';
-import 'widgets/exit_confirmation_overlay.dart'; // Import the new overlay
+import 'package:rewardly_app/screens/auth/authenticate.dart';
+import 'package:rewardly_app/screens/home/home.dart';
+import 'package:rewardly_app/widgets/exit_confirmation_overlay.dart'; // Import the new overlay
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});

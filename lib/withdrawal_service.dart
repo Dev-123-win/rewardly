@@ -1,4 +1,5 @@
-import 'user_service.dart';
+import 'package:flutter/foundation.dart'; // Import for debugPrint
+import 'package:rewardly_app/user_service.dart';
 
 class WithdrawalService {
   final UserService _userService = UserService();
@@ -7,7 +8,7 @@ class WithdrawalService {
     required String uid,
     required int amount,
     required String paymentMethod,
-    required String paymentDetails,
+    required Map<String, dynamic> paymentDetails, // Changed to Map<String, dynamic>
   }) async {
     if (amount <= 0) {
       return 'Please enter a valid amount.';
@@ -21,8 +22,17 @@ class WithdrawalService {
     }
 
     if (paymentDetails.isEmpty) {
-      return 'Please enter payment details.';
+      return 'Please enter payment details.'; // This check might need to be more specific now
     }
+
+    // In a real application, you would store paymentDetails in Firestore
+    // or send them to a backend for processing.
+    // For this simulation, we'll just log them.
+    debugPrint('Withdrawal Request:');
+    debugPrint('  UID: $uid');
+    debugPrint('  Amount: $amount coins');
+    debugPrint('  Method: $paymentMethod');
+    debugPrint('  Details: $paymentDetails');
 
     // Simulate withdrawal process
     await Future.delayed(const Duration(seconds: 2));
