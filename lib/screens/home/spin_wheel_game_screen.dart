@@ -8,6 +8,8 @@ import 'package:rewardly_app/shared/shimmer_loading.dart';
 import 'package:rewardly_app/providers/user_data_provider.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'dart:async'; // For StreamController
+import 'package:rewardly_app/theme_provider.dart';
+import 'dart:developer' as developer;
 
 class SpinWheelGameScreen extends StatefulWidget {
   const SpinWheelGameScreen({super.key});
@@ -65,6 +67,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     Provider.of<UserDataProvider>(context, listen: false).removeListener(_onUserDataChanged);
     _adService.dispose(); // Dispose all ads managed by the singleton AdService
     _fortuneWheelController.close();
+    developer.log('ThemeProvider in dispose: $_themeProvider');
     super.dispose();
   }
 

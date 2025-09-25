@@ -8,6 +8,7 @@ import 'package:rewardly_app/providers/user_data_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:rewardly_app/remote_config_service.dart';
 import 'package:rewardly_app/wrapper.dart';
+import 'package:rewardly_app/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,12 @@ void main() async {
   );
   MobileAds.instance.initialize(); // Initialize AdMob
   await RemoteConfigService().initialize(); // Initialize Remote Config
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -37,8 +43,9 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Rewardly App',
         theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+          useMaterial3: true,
+          colorSchemeSeed: Colors.deepPurple,
+          brightness: Brightness.light,
           fontFamily: 'Lato', // Default font for body text
           textTheme: const TextTheme(
             displayLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
@@ -55,6 +62,27 @@ class MyApp extends StatelessWidget {
             labelLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
           ),
         ),
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          colorSchemeSeed: Colors.deepPurple,
+          brightness: Brightness.dark,
+          fontFamily: 'Lato',
+          textTheme: const TextTheme(
+            displayLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            displayMedium: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            displaySmall: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            headlineLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            headlineMedium: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            headlineSmall: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            titleLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+            titleMedium: TextStyle(fontFamily: 'Lato'),
+            titleSmall: TextStyle(fontFamily: 'Lato'),
+            bodyLarge: TextStyle(fontFamily: 'Lato'),
+            bodyMedium: TextStyle(fontFamily: 'Lato'),
+            labelLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+          ),
+        ),
+        themeMode: Provider.of<ThemeProvider>(context).themeMode,
         home: const Wrapper(),
       ),
     );
