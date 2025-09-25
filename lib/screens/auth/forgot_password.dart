@@ -17,16 +17,6 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   String error = '';
   bool loading = false;
 
-  void _showSnackBar(String message, {Color backgroundColor = Colors.green}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: backgroundColor,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,6 +76,11 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                     setState(() => loading = true);
                                     String? errorMessage;
                                     bool success = false;
+
+                                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                    final navigator = Navigator.of(context);
+                                    final theme = Theme.of(context);
+
                                     try {
                                       await _auth.sendPasswordResetEmail(email: email);
                                       success = true;
@@ -105,11 +100,14 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                     });
 
                                     if (success) {
-                                      _showSnackBar('Password reset link sent to $email');
-                                      Navigator.of(context).pop();
+                                      scaffoldMessenger.showSnackBar(SnackBar(
+                                        content: Text('Password reset link sent to $email'),
+                                        backgroundColor: Colors.green,
+                                      ));
+                                      navigator.pop();
                                     } else if (errorMessage != null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text(errorMessage, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                      scaffoldMessenger.showSnackBar(SnackBar(
+                                          content: Text(errorMessage, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                           backgroundColor: Colors.red));
                                     }
                                   }

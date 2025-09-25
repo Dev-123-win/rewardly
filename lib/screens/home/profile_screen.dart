@@ -12,11 +12,14 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     final userDataProvider = Provider.of<UserDataProvider>(context);
-    final userData = userDataProvider.userData;
+    final userData = userDataProvider.userData; // This is a DocumentSnapshot
 
     if (user == null || userData == null) {
       return const ProfileScreenLoading();
     }
+
+    // Safely get data map from DocumentSnapshot, or an empty map if null
+    Map<String, dynamic> userDataMap = (userData.data() as Map<String, dynamic>?) ?? {};
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -51,9 +54,11 @@ class ProfileScreen extends StatelessWidget {
             _buildAccountOption(
               context,
               title: 'Coins',
-              value: '${userData['coins'] ?? 0}',
+              value: '${userDataMap['coins'] ?? 0}',
               icon: Icons.monetization_on,
             ),
+            // Assuming referralCode might be accessed elsewhere, though not explicitly in this snippet
+            // You would use userDataMap['referralCode'] ?? 'N/A' for it.
             const SizedBox(height: 30),
             Align(
               alignment: Alignment.centerLeft,

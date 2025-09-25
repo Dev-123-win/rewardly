@@ -43,9 +43,11 @@ class _HomeState extends State<Home> {
       } else {
         admin = await UserService().isAdmin(user.uid);
       }
-      setState(() {
-        _isAdmin = admin;
-      });
+      if (mounted) {
+        setState(() {
+          _isAdmin = admin;
+        });
+      }
     }
   }
 
@@ -167,7 +169,7 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    Map<String, dynamic> userData = userDataProvider.userData!.data() as Map<String, dynamic>;
+    Map<String, dynamic> userData = (userDataProvider.userData!.data() as Map<String, dynamic>?) ?? {};
     int coins = userData['coins'] ?? 0;
 
     return SingleChildScrollView(

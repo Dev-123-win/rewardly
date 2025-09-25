@@ -19,7 +19,6 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
   User? _currentUser; // To get current user UID
 
   @override
-  @override
   void initState() {
     super.initState();
     _currentUser = Provider.of<User?>(context, listen: false);
@@ -52,6 +51,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 
   void _watchAd(int points) {
     if (_currentUser == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to watch ads.')),
       );
@@ -61,18 +61,21 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async { // AdService now passes rewardAmount
         await _userService.updateCoins(_currentUser!.uid, points); // Update coins
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You earned $points coins!')),
         );
         _loadAd(); // Reload ad
       },
       onAdFailedToLoad: () {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to load ad. Please try again.')),
         );
         _loadAd(); // Try reloading ad
       },
       onAdFailedToShow: () {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to show ad. Please try again.')),
         );

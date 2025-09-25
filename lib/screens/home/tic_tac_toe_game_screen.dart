@@ -87,7 +87,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
           break;
       }
 
-      if (move != null) {
+      if (move != null && mounted) {
         setState(() {
           board[move!] = Player.o;
           _checkGameEnd();
@@ -267,6 +267,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   Future<void> _updateUserCoins(int coins) async {
     if (_currentUser != null && coins > 0) {
       await _userService.updateCoins(_currentUser!.uid, coins);
+      if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('You earned $coins coins!')),
       );
@@ -292,6 +293,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   }
 
   void _showResultDialogContent(int rewardCoins) {
+    if(!mounted) return;
     String title;
     String content;
     switch (gameResult) {
@@ -346,28 +348,34 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
     });
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
-        setState(() {
-          _isLoadingAd = false;
-        });
+        if(mounted) {
+          setState(() {
+            _isLoadingAd = false;
+          });
+        }
         await _updateUserCoins(rewardAmount); // Reward amount from AdService
         _resetGame();
       },
       onAdFailedToLoad: () {
-        setState(() {
-          _isLoadingAd = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
-        );
+        if(mounted) {
+          setState(() {
+            _isLoadingAd = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
+          );
+        }
         _resetGame();
       },
       onAdFailedToShow: () {
-        setState(() {
-          _isLoadingAd = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
-        );
+        if(mounted) {
+          setState(() {
+            _isLoadingAd = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
+          );
+        }
         _resetGame();
       },
     );

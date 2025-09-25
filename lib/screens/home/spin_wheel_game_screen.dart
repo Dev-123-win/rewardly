@@ -67,16 +67,22 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
 
   Future<void> _updateSpinState() async {
     if (_currentUser == null) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       return;
     }
+
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
 
     // Ensure daily counts are reset if date has changed
     await _userService.resetSpinWheelDailyCounts(_currentUser!.uid);
 
-    final userData = Provider.of<UserDataProvider>(context, listen: false).userData;
+    if (!mounted) return;
+
+    final userData = userDataProvider.userData;
     if (userData != null && userData.data() != null) {
       final data = userData.data() as Map<String, dynamic>;
       setState(() {
@@ -86,9 +92,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
         _isLoading = false;
       });
     } else {
-      setState(() {
-        _isLoading = false;
-      });
+      if(mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -141,6 +149,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     if (_currentUser == null) return;
 
     await _userService.updateCoins(_currentUser!.uid, rewardAmount);
+    
+    if(!mounted) return;
 
     setState(() {
       _isSpinning = false;
@@ -150,6 +160,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   }
 
   void _showResultOverlay(bool success, int? reward, [String? message]) {
+    if(!mounted) return;
     setState(() {
       if (success) {
         _resultMessage = 'Congratulations! You won $reward coins!';
@@ -158,9 +169,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
       }
     });
     Future.delayed(const Duration(seconds: 3), () {
-      setState(() {
-        _resultMessage = null;
-      });
+      if(mounted) {
+        setState(() {
+          _resultMessage = null;
+        });
+      }
     });
   }
 
