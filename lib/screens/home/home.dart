@@ -53,10 +53,22 @@ class _HomeState extends State<Home> {
 
   List<Widget> _buildScreens() {
     return [
-      const WithdrawScreen(), // Index 0 (Redeem)
-      const ReferralScreen(), // Index 1 (Invite)
+      Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, _) => userDataProvider.userData == null
+            ? const _LoadingPlaceholder()
+            : const WithdrawScreen(), // Index 0 (Redeem)
+      ),
+      Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, _) => userDataProvider.userData == null
+            ? const _LoadingPlaceholder()
+            : const ReferralScreen(), // Index 1 (Invite)
+      ),
       _buildHomePageContent(), // Index 2 (Home)
-      const ProfileScreen(), // Index 3 (Profile)
+      Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, _) => userDataProvider.userData == null
+            ? const _LoadingPlaceholder()
+            : const ProfileScreen(), // Index 3 (Profile)
+      ),
       if (_isAdmin) const AdminPanel(), // Index 4 (Admin)
     ];
   }
@@ -390,6 +402,19 @@ class HomeScreenLoading extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const ShimmerLoading.rectangular(height: 56),
+    );
+  }
+}
+
+class _LoadingPlaceholder extends StatelessWidget {
+  const _LoadingPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }

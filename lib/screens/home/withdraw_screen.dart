@@ -162,7 +162,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     final user = Provider.of<User?>(context);
     final userDataProvider = Provider.of<UserDataProvider>(context);
 
-    if (user == null || userDataProvider.userData == null) {
+    if (user == null || userDataProvider.userData == null || userDataProvider.userData!.data() == null) {
       return const _WithdrawScreenLoading();
     }
 
@@ -173,203 +173,208 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            const SizedBox(height: 20), // Adjusted spacing from top
-            // Available Balance Card
-            Card(
-              elevation: 6.0, // Increased elevation for more prominence
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)), // More rounded corners
-              child: Container(
-                padding: const EdgeInsets.all(25.0), // Increased padding
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18.0),
-                  gradient: LinearGradient(
-                    colors: [Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()), Theme.of(context).primaryColor.withAlpha((255 * 0.5).round())], // Using primary color with opacity
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              const SizedBox(height: 20), // Adjusted spacing from top
+              // Available Balance Card
+              Card(
+                elevation: 6.0, // Increased elevation for more prominence
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.0)), // More rounded corners
+                child: Container(
+                  padding: const EdgeInsets.all(25.0), // Increased padding
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18.0),
+                    gradient: LinearGradient(
+                      colors: [Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()), Theme.of(context).primaryColor.withAlpha((255 * 0.5).round())], // Using primary color with opacity
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).primaryColor.withAlpha((255 * 0.3).round()),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).primaryColor.withAlpha((255 * 0.3).round()),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Available Balance',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.monetization_on, color: Colors.amber.shade300, size: 30),
-                        const SizedBox(width: 10),
-                        Text(
-                          '₹${totalBalanceINR.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      'Minimum withdrawal: $_minWithdrawalCoins coins',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 40), // Increased spacing
-            Text(
-              'Select Withdrawal Method',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            // Withdrawal Method Selection
-            SizedBox(
-              height: 120, // Increased height for method cards
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _buildMethodCard(
-                    context,
-                    method: WithdrawalMethod.bank,
-                    icon: Icons.account_balance,
-                    label: 'Bank',
-                    isSelected: _selectedMethod == WithdrawalMethod.bank,
-                    onTap: () {
-                      setState(() {
-                        _selectedMethod = WithdrawalMethod.bank;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 20), // Increased spacing between cards
-                  _buildMethodCard(
-                    context,
-                    method: WithdrawalMethod.upi,
-                    icon: Icons.payment,
-                    label: 'UPI',
-                    isSelected: _selectedMethod == WithdrawalMethod.upi,
-                    onTap: () {
-                      setState(() {
-                        _selectedMethod = WithdrawalMethod.upi;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40), // Increased spacing
-            Form(
-              key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  if (_selectedMethod == WithdrawalMethod.bank) ...[
-                    TextFormField(
-                      controller: _bankAccountNumberController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        labelText: 'Bank Account Number',
-                        icon: Icons.account_balance_wallet,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Available Balance',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70, fontWeight: FontWeight.w500),
                       ),
-                      validator: (val) => val == null || val.isEmpty ? 'Enter account number' : null,
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _accountHolderNameController,
-                      decoration: _inputDecoration(
-                        labelText: 'Account Holder Name',
-                        icon: Icons.person,
-                      ),
-                      validator: (val) => val == null || val.isEmpty ? 'Enter account holder name' : null,
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _ifscCodeController,
-                      decoration: _inputDecoration(
-                        labelText: 'IFSC Code',
-                        icon: Icons.code,
-                      ),
-                      validator: (val) => val == null || val.isEmpty ? 'Enter IFSC code' : null,
-                    ),
-                    const SizedBox(height: 20),
-                  ] else if (_selectedMethod == WithdrawalMethod.upi) ...[
-                    TextFormField(
-                      controller: _upiIdController,
-                      decoration: _inputDecoration(
-                        labelText: 'UPI ID (e.g., yourname@upi)',
-                        icon: Icons.qr_code,
-                      ),
-                      validator: (val) => val == null || val.isEmpty ? 'Enter UPI ID' : null,
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _confirmUpiIdController,
-                      decoration: _inputDecoration(
-                        labelText: 'Confirm UPI ID',
-                        icon: Icons.qr_code,
-                      ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return 'Confirm UPI ID';
-                        if (val != _upiIdController.text) return 'UPI IDs do not match';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                  ],
-                  if (_selectedMethod != WithdrawalMethod.none) ...[
-                    TextFormField(
-                      controller: _amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        labelText: 'Amount to Withdraw (Coins)',
-                        icon: Icons.money,
-                      ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) {
-                          return 'Please enter an amount';
-                        }
-                        if (int.tryParse(val) == null || int.parse(val) <= 0) {
-                          return 'Please enter a valid amount';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15), // Adjusted spacing
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildAmountButton('25%', () => _setAmountPercentage(25, currentCoins)),
-                        _buildAmountButton('50%', () => _setAmountPercentage(50, currentCoins)),
-                        _buildAmountButton('MAX', () => _setAmountPercentage(100, currentCoins)),
-                      ],
-                    ),
-                    const SizedBox(height: 40), // Increased spacing
-                    _isLoading
-                        ? ShimmerLoading.rectangular(height: 55, width: double.infinity) // Adjusted height
-                        : CustomButton(
-                            text: _selectedMethod == WithdrawalMethod.bank
-                                ? 'Withdraw to Bank Account'
-                                : 'Withdraw via UPI',
-                            onPressed: _submitWithdrawal,
-                            startColor: Theme.of(context).primaryColor,
-                            endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()),
-                            height: 55, // Consistent button height
-                            borderRadius: 12.0, // More rounded button
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.monetization_on, color: Colors.amber.shade300, size: 30),
+                          const SizedBox(width: 10),
+                          Text(
+                            '₹${totalBalanceINR.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 32),
                           ),
-                  ],
-                ],
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      Text(
+                        'Minimum withdrawal: $_minWithdrawalCoins coins',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 40), // Increased spacing
+              Text(
+                'Select Withdrawal Method',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              // Withdrawal Method Selection
+              SizedBox(
+                height: 120, // Increased height for method cards
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildMethodCard(
+                      context,
+                      method: WithdrawalMethod.bank,
+                      icon: Icons.account_balance,
+                      label: 'Bank',
+                      isSelected: _selectedMethod == WithdrawalMethod.bank,
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = WithdrawalMethod.bank;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 20), // Increased spacing between cards
+                    _buildMethodCard(
+                      context,
+                      method: WithdrawalMethod.upi,
+                      icon: Icons.payment,
+                      label: 'UPI',
+                      isSelected: _selectedMethod == WithdrawalMethod.upi,
+                      onTap: () {
+                        setState(() {
+                          _selectedMethod = WithdrawalMethod.upi;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40), // Increased spacing
+              SingleChildScrollView(
+                child:
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: <Widget>[
+                    if (_selectedMethod == WithdrawalMethod.bank) ...[
+                      TextFormField(
+                        controller: _bankAccountNumberController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          labelText: 'Bank Account Number',
+                          icon: Icons.account_balance_wallet,
+                        ),
+                        validator: (val) => val == null || val.isEmpty ? 'Enter account number' : null,
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _accountHolderNameController,
+                        decoration: _inputDecoration(
+                          labelText: 'Account Holder Name',
+                          icon: Icons.person,
+                        ),
+                        validator: (val) => val == null || val.isEmpty ? 'Enter account holder name' : null,
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _ifscCodeController,
+                        decoration: _inputDecoration(
+                          labelText: 'IFSC Code',
+                          icon: Icons.code,
+                        ),
+                        validator: (val) => val == null || val.isEmpty ? 'Enter IFSC code' : null,
+                      ),
+                      const SizedBox(height: 20),
+                    ] else if (_selectedMethod == WithdrawalMethod.upi) ...[
+                      TextFormField(
+                        controller: _upiIdController,
+                        decoration: _inputDecoration(
+                          labelText: 'UPI ID (e.g., yourname@upi)',
+                          icon: Icons.qr_code,
+                        ),
+                        validator: (val) => val == null || val.isEmpty ? 'Enter UPI ID' : null,
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _confirmUpiIdController,
+                        decoration: _inputDecoration(
+                          labelText: 'Confirm UPI ID',
+                          icon: Icons.qr_code,
+                        ),
+                        validator: (val) {
+                          if (val == null || val.isEmpty) return 'Confirm UPI ID';
+                          if (val != _upiIdController.text) return 'UPI IDs do not match';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    if (_selectedMethod != WithdrawalMethod.none) ...[
+                      TextFormField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          labelText: 'Amount to Withdraw (Coins)',
+                          icon: Icons.money,
+                        ),
+                        validator: (val) {
+                          if (val == null || val.isEmpty) {
+                            return 'Please enter an amount';
+                          }
+                          if (int.tryParse(val) == null || int.parse(val) <= 0) {
+                            return 'Please enter a valid amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15), // Adjusted spacing
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildAmountButton('25%', () => _setAmountPercentage(25, currentCoins)),
+                          _buildAmountButton('50%', () => _setAmountPercentage(50, currentCoins)),
+                          _buildAmountButton('MAX', () => _setAmountPercentage(100, currentCoins)),
+                        ],
+                      ),
+                      const SizedBox(height: 40), // Increased spacing
+                      _isLoading
+                          ? ShimmerLoading.rectangular(height: 55, width: double.infinity) // Adjusted height
+                          : CustomButton(
+                              text: _selectedMethod == WithdrawalMethod.bank
+                                  ? 'Withdraw to Bank Account'
+                                  : 'Withdraw via UPI',
+                              onPressed: _submitWithdrawal,
+                              startColor: Theme.of(context).primaryColor,
+                              endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.8).round()),
+                              height: 55, // Consistent button height
+                              borderRadius: 12.0, // More rounded button
+                            ),
+                    ],
+                  ],
+                ),
+              ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -74,9 +74,18 @@ class UserService {
 
   // Update user coins
   Future<void> updateCoins(String uid, int amount) async {
-    await _firestore.collection('users').doc(uid).update({
-      'coins': FieldValue.increment(amount),
-    });
+    final userDoc = _firestore.collection('users').doc(uid);
+    final doc = await userDoc.get();
+
+    if (!doc.exists) {
+      await userDoc.set({
+        'coins': amount,
+      });
+    } else {
+      await userDoc.update({
+        'coins': FieldValue.increment(amount),
+      });
+    }
   }
 
   // Update ads watched today

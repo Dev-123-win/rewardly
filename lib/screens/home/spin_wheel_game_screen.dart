@@ -95,12 +95,14 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     final userData = userDataProvider.userData;
     if (userData != null && userData.data() != null) {
       final data = userData.data() as Map<String, dynamic>;
-      setState(() {
-        _freeSpinsToday = data['spinWheelFreeSpinsToday'] ?? 0;
-        _adSpinsWatchedToday = data['spinWheelAdSpinsToday'] ?? 0;
-        _spinWheelDailyAdLimit = _remoteConfigService.spinWheelDailyAdLimit;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _freeSpinsToday = data['spinWheelFreeSpinsToday'] ?? 0;
+          _adSpinsWatchedToday = data['spinWheelAdSpinsToday'] ?? 0;
+          _spinWheelDailyAdLimit = _remoteConfigService.spinWheelDailyAdLimit;
+          _isLoading = false;
+        });
+      }
     } else {
       if(mounted) {
         setState(() {
@@ -114,10 +116,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     if (_currentUser == null || _isSpinning) return;
 
     if (isFreeSpin && _freeSpinsToday > 0) {
-      setState(() {
-        _isSpinning = true;
-        _resultMessage = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isSpinning = true;
+          _resultMessage = null;
+        });
+      }
       await _userService.decrementFreeSpinWheelSpins(_currentUser!.uid);
       _startSpin();
     } else if (!isFreeSpin && _adSpinsWatchedToday < _spinWheelDailyAdLimit) {
@@ -131,10 +135,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
         if (_currentUser != null) {
-          setState(() {
-            _isSpinning = true;
-            _resultMessage = null;
-          });
+          if (mounted) {
+            setState(() {
+              _isSpinning = true;
+              _resultMessage = null;
+            });
+          }
           await _userService.incrementAdSpinWheelSpins(_currentUser!.uid);
           _startSpin();
         }
@@ -149,9 +155,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   }
 
   void _startSpin() {
-    setState(() {
-      _selectedItem = Fortune.randomInt(0, _fortuneItems.length);
-    });
+    if (mounted) {
+      setState(() {
+        _selectedItem = Fortune.randomInt(0, _fortuneItems.length);
+      });
+    }
     _fortuneWheelController.add(_selectedItem);
   }
 
@@ -162,22 +170,26 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     
     if(!mounted) return;
 
-    setState(() {
-      _isSpinning = false;
-    });
+    if (mounted) {
+      setState(() {
+        _isSpinning = false;
+      });
+    }
     _showResultOverlay(true, rewardAmount);
     _updateSpinState(); // Refresh spin state after reward
   }
 
   void _showResultOverlay(bool success, int? reward, [String? message]) {
     if(!mounted) return;
-    setState(() {
-      if (success) {
-        _resultMessage = 'Congratulations! You won $reward coins!';
-      } else {
-        _resultMessage = message ?? 'No reward this time.';
-      }
-    });
+    if (mounted) {
+      setState(() {
+        if (success) {
+          _resultMessage = 'Congratulations! You won $reward coins!';
+        } else {
+          _resultMessage = message ?? 'No reward this time.';
+        }
+      });
+    }
     Future.delayed(const Duration(seconds: 3), () {
       if(mounted) {
         setState(() {
@@ -318,9 +330,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                             const SizedBox(height: 20),
                             ElevatedButton(
                               onPressed: () {
-                                setState(() {
-                                  _resultMessage = null;
-                                });
+                                if (mounted) {
+                                  setState(() {
+                                    _resultMessage = null;
+                                  });
+                                }
                                 _updateSpinState(); // Refresh button state
                               },
                               style: ElevatedButton.styleFrom(
