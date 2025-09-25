@@ -14,7 +14,7 @@ class ProfileScreen extends StatelessWidget {
     final userDataProvider = Provider.of<UserDataProvider>(context);
     final userData = userDataProvider.userData; // This is a DocumentSnapshot
 
-    if (user == null || userData == null) {
+    if (user == null || userData == null || !userData.exists) {
       return const ProfileScreenLoading();
     }
 
