@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/ad_service.dart';
+import '../../user_service.dart';
+import '../../ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for AdWidget
 import 'dart:math';
+import '../../widgets/animated_tap.dart'; // Import AnimatedTap
 
 enum Player { x, o, none }
 enum GameMode { easy, medium, hard }
@@ -435,7 +436,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
                   ),
                   itemCount: 9,
                   itemBuilder: (context, index) {
-                    return GestureDetector(
+                    return AnimatedTap( // Wrap with AnimatedTap
                       onTap: () => _onTap(index),
                       child: Container(
                         decoration: BoxDecoration(

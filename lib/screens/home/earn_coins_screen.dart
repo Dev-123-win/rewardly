@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
-import 'package:flutter_spinkit/flutter_spinkit.dart'; // Import for loading indicator
-import 'package:rewardly_app/user_service.dart'; // Added for updating coins
+import '../../ad_service.dart'; // Consolidated AdService
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import '../../user_service.dart';
+import '../../providers/user_data_provider.dart'; // Import UserDataProvider
+import '../../widgets/animated_tap.dart'; // Import AnimatedTap
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -13,41 +15,75 @@ class EarnCoinsScreen extends StatefulWidget {
 }
 
 class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
-  final AdService _adService = AdService(); // Use consolidated AdService
-  final UserService _userService = UserService(); // For updating coins
-  bool _isAdLoading = false; // State to manage loading indicator
-  User? _currentUser; // To get current user UID
+  final AdService _adService = AdService();
+  final UserService _userService = UserService();
+  bool _isAdLoading = false;
+  User? _currentUser;
+  int _adsWatchedToday = 0; // New state variable for ads watched today
+  static const int _dailyAdLimit = 10; // Define daily ad limit
 
   @override
   void initState() {
     super.initState();
     _currentUser = Provider.of<User?>(context, listen: false);
     _loadAd(); // Load ad when screen initializes
+
+    // Listen to user data changes to update adsWatchedToday
+    Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
+    _updateAdsWatchedState(); // Initial load of ads watched state
   }
 
   @override
   void dispose() {
-    _adService.dispose(); // Dispose ads
+    _adService.dispose();
+    Provider.of<UserDataProvider>(context, listen: false).removeListener(_onUserDataChanged);
     super.dispose();
   }
 
+  void _onUserDataChanged() {
+    _updateAdsWatchedState();
+  }
+
+  Future<void> _updateAdsWatchedState() async {
+    if (_currentUser == null) {
+      if (mounted) {
+        setState(() {
+          _adsWatchedToday = 0;
+        });
+      }
+      return;
+    }
+
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final userData = userDataProvider.userData;
+
+    if (userData != null && userData.data() != null) {
+      final data = userData.data() as Map<String, dynamic>;
+      if (mounted) {
+        setState(() {
+          _adsWatchedToday = data['adsWatchedToday'] ?? 0;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _adsWatchedToday = 0;
+        });
+      }
+    }
+  }
+
   void _loadAd() async {
-    if (!mounted) return; // Ensure widget is still in the tree
+    if (!mounted) return;
     setState(() {
       _isAdLoading = true;
     });
-    _adService.loadRewardedAd(); // Load ad
+    _adService.loadRewardedAd();
     if (!mounted) return;
     setState(() {
       _isAdLoading = false;
     });
   }
-
-  // Data for ad cards - 10 cards, each offering 100 coins
-  final List<Map<String, dynamic>> _adOffers = List.generate(
-    10,
-    (index) => {'title': 'Watch an ad', 'points': 100},
-  );
 
   void _watchAd(int points) {
     if (_currentUser == null) {
@@ -58,9 +94,18 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
       return;
     }
 
+    if (_adsWatchedToday >= _dailyAdLimit) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have reached your daily ad limit.')),
+      );
+      return;
+    }
+
     _adService.showRewardedAd(
-      onRewardEarned: (int rewardAmount) async { // AdService now passes rewardAmount
-        await _userService.updateCoins(_currentUser!.uid, points); // Update coins
+      onRewardEarned: (int rewardAmount) async {
+        await _userService.updateCoins(_currentUser!.uid, points);
+        await _userService.updateAdsWatchedToday(_currentUser!.uid); // Increment ads watched today
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You earned $points coins!')),
@@ -86,6 +131,8 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final int remainingAds = _dailyAdLimit - _adsWatchedToday;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Watch & Earn', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
@@ -101,18 +148,42 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
                 size: 50.0,
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: _adOffers.length,
-              itemBuilder: (context, index) {
-                final offer = _adOffers[index];
-                return _AdCard(
-                  title: offer['title'],
-                  points: offer['points'],
-                  onWatchAd: () => _watchAd(offer['points']),
-                );
-              },
-            ),
+          : remainingAds > 0
+              ? ListView.builder(
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: remainingAds, // Show only remaining ads
+                  itemBuilder: (context, index) {
+                    // Each card offers 100 coins
+                    return _AdCard(
+                      title: 'Watch an ad',
+                      points: 100,
+                      onWatchAd: () => _watchAd(100),
+                    );
+                  },
+                )
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
+                        const SizedBox(height: 20),
+                        Text(
+                          'You\'ve watched all your ads for today!',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Come back tomorrow for more earning opportunities.',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
     );
   }
 }
@@ -142,8 +213,8 @@ class _AdCard extends StatelessWidget {
             colors: [
               Colors.white.withAlpha((0.8 * 255).round()),
               Colors.white.withAlpha((0.5 * 255).round()),
-              Colors.purple.withAlpha((0.1 * 255).round()), // Light purple hint
-              Colors.yellow.withAlpha((0.1 * 255).round()), // Light yellow hint
+              Colors.purple.withAlpha((0.1 * 255).round()),
+              Colors.yellow.withAlpha((0.1 * 255).round()),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -182,18 +253,21 @@ class _AdCard extends StatelessWidget {
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: onWatchAd,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.lightGreen, // Green button
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            AnimatedTap( // Wrap ElevatedButton with AnimatedTap
+              onTap: onWatchAd,
+              child: ElevatedButton(
+                onPressed: null, // onPressed is handled by AnimatedTap
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightGreen,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              child: Text(
-                'Watch Ad ($points Coins)',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
+                child: Text(
+                  'Watch Ad ($points Coins)',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
+                ),
               ),
             ),
           ],

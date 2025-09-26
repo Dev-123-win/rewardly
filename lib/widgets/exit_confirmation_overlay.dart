@@ -53,37 +53,87 @@ class _ExitConfirmationOverlayState extends State<ExitConfirmationOverlay> with 
             ),
           ),
         ),
-        // Animated exit confirmation card
-        Align(
-          alignment: Alignment.bottomCenter,
+        // Animated exit confirmation dialog
+        Center( // Centralize the dialog
           child: SlideTransition(
             position: _offsetAnimation,
-            child: Card(
+            child: Container(
               margin: const EdgeInsets.all(20.0),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-              elevation: 10.0,
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: widget.onCancel,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Press back again to exit',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    // You can add more information or buttons here if needed
+              padding: const EdgeInsets.all(25.0),
+              decoration: BoxDecoration(
+                color: Colors.white, // White background
+                borderRadius: BorderRadius.circular(20.0),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.deepPurple.shade50,
+                    Colors.white,
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(51),
+                    blurRadius: 15,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.exit_to_app, // Prominent exit icon
+                    size: 60,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Are you sure you want to exit?', // Clearer main message
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Press back again to confirm.', // Secondary instruction
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: widget.onCancel,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                            side: BorderSide(color: Theme.of(context).primaryColor),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('Stay'),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Dismiss overlay, allow Wrapper to handle next back press
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          child: const Text('Exit'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),

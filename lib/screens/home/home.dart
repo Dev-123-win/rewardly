@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
-import 'package:rewardly_app/screens/home/admin_panel.dart';
-import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
-import 'package:rewardly_app/screens/home/referral_screen.dart';
-import 'package:rewardly_app/screens/home/profile_screen.dart';
-import 'package:rewardly_app/screens/home/withdraw_screen.dart';
+import '../../remote_config_service.dart';
+import '../../user_service.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
+import 'admin_panel.dart';
+import 'earn_coins_screen.dart';
+import 'referral_screen.dart';
+import 'profile_screen.dart';
+import 'withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'package:rewardly_app/screens/home/spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
-import 'package:rewardly_app/screens/home/tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
+import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {
@@ -202,62 +202,78 @@ class _HomeState extends State<Home> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Card(
-                      elevation: 4.0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-                      child: Container(
-                        padding: const EdgeInsets.all(15.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15.0),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white.withAlpha(128),
-                              Colors.white.withAlpha(51),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.yellow.shade100, // Light yellow background
+                        borderRadius: BorderRadius.circular(15.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(25),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha(26),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                          border: Border.all(
-                            color: Colors.white.withAlpha(51),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 25,
+                            backgroundColor: Colors.amber.shade700, // Background for coin icon
+                            child: Image.asset('assets/coin.png', height: 30, width: 30), // Coin icon
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Image.asset('assets/coin.png', height: 40, width: 40), // Coin icon
-                                const SizedBox(width: 10),
-                                RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: (coins / 1000).toStringAsFixed(2),
-                                        style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.black87, fontFamily: 'Poppins', fontSize: 24.0),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: (coins / 1000).toStringAsFixed(2),
+                                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                        color: Colors.black87,
+                                        fontFamily: 'Poppins', // Using existing font
+                                        fontSize: 24.0,
+                                        fontWeight: FontWeight.bold,
+                                        shadows: [
+                                          const Shadow(
+                                            offset: Offset(1.0, 1.0),
+                                            blurRadius: 2.0,
+                                            color: Colors.black38,
+                                          ),
+                                        ],
                                       ),
-                                      TextSpan(
-                                        text: 'k',
-                                        style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.black87, fontFamily: 'RobloxFont', fontSize: 18.0),
+                                    ),
+                                    TextSpan(
+                                      text: 'k',
+                                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                        color: Colors.black87,
+                                        fontFamily: 'Poppins', // Using existing font
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.bold,
+                                        shadows: [
+                                          const Shadow(
+                                            offset: Offset(1.0, 1.0),
+                                            blurRadius: 2.0,
+                                            color: Colors.black38,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Coins',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54),
-                            ),
-                          ],
-                        ),
+                              ),
+                              Text(
+                                'Coins',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54, fontFamily: 'Lato'), // Using existing font
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -279,7 +295,7 @@ class _HomeState extends State<Home> {
                     context,
                     title: 'Tic Tac Toe',
                     subtitle: 'Play against NPC!',
-                    icon: Icons.grid_on,
+                    imagePath: 'assets/tic_tac_toe.png', // Updated to imagePath
                     startColor: const Color(0xFF4CAF50), // Green
                     endColor: const Color(0xFF8BC34A), // Light Green
                     onTap: () {
@@ -290,7 +306,7 @@ class _HomeState extends State<Home> {
                     context,
                     title: 'Play Game!',
                     subtitle: 'Spin & Win!',
-                    icon: Icons.sports_esports,
+                    imagePath: 'assets/spin_the_wheel.png', // Updated to imagePath
                     startColor: const Color(0xFF8B008B), // DarkMagenta
                     endColor: const Color(0xFFBA55D3), // MediumPurple
                     onTap: () {
@@ -301,7 +317,7 @@ class _HomeState extends State<Home> {
                     context,
                     title: 'Watch Ads',
                     subtitle: 'Earn Upto ${RemoteConfigService().coinsPerAd} coins per ad',
-                    icon: Icons.play_circle_fill,
+                    imagePath: 'assets/watch_ads.png', // Updated to imagePath
                     startColor: Colors.green,
                     endColor: Colors.lightGreen,
                     onTap: () {
@@ -322,7 +338,7 @@ class _HomeState extends State<Home> {
     BuildContext context, {
     required String title,
     required String subtitle,
-    required IconData icon,
+    required String imagePath, // Changed from IconData to String imagePath
     required Color startColor,
     required Color endColor,
     required VoidCallback onTap,
@@ -346,7 +362,7 @@ class _HomeState extends State<Home> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 40, color: Colors.white),
+              Image.asset(imagePath, height: 40, width: 40), // Replaced Icon with Image.asset
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

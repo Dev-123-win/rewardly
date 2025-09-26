@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
+import '../../remote_config_service.dart';
+import '../../shared/shimmer_loading.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../providers/user_data_provider.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
