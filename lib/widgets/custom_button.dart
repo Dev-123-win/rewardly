@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'animated_tap.dart'; // Import AnimatedTap
+import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
 
 class CustomButton extends StatefulWidget {
   final String text;

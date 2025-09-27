@@ -3,10 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'dart:async'; // Import for StreamSubscription
 import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity_plus
-import 'screens/auth/authenticate.dart';
-import 'screens/home/home.dart';
-import 'widgets/exit_confirmation_overlay.dart';
-import 'screens/no_internet_screen.dart'; // Import NoInternetScreen
+import 'package:rewardly_app/screens/auth/authenticate.dart';
+import 'package:rewardly_app/screens/home/home.dart';
+import 'package:rewardly_app/widgets/exit_confirmation_overlay.dart';
+import 'package:rewardly_app/screens/no_internet_screen.dart'; // Import NoInternetScreen
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});

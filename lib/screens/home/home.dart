@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../remote_config_service.dart';
-import '../../user_service.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
-import 'admin_panel.dart';
-import 'earn_coins_screen.dart';
-import 'referral_screen.dart';
-import 'profile_screen.dart';
-import 'withdraw_screen.dart';
+import 'package:rewardly_app/remote_config_service.dart';
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
+import 'package:rewardly_app/screens/home/admin_panel.dart';
+import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
+import 'package:rewardly_app/screens/home/referral_screen.dart';
+import 'package:rewardly_app/screens/home/profile_screen.dart';
+import 'package:rewardly_app/screens/home/withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
-import 'tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
+import 'package:rewardly_app/screens/home/spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'package:rewardly_app/screens/home/tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {
@@ -348,8 +348,8 @@ class _HomeState extends State<Home> {
       child: Card(
         elevation: 4.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        clipBehavior: Clip.antiAlias, // Clip content to card shape
         child: Container(
-          padding: const EdgeInsets.all(15.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(15.0),
             gradient: LinearGradient(
@@ -358,23 +358,40 @@ class _HomeState extends State<Home> {
               end: Alignment.bottomRight,
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Stack(
             children: [
-              Image.asset(imagePath, height: 40, width: 40), // Replaced Icon with Image.asset
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              // Background Image
+              Positioned.fill(
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover, // Ensure image covers the entire card
+                ),
+              ),
+              // Text content with semi-transparent background
+              Align(
+                alignment: Alignment.topLeft,
+                child: Container(
+                  padding: const EdgeInsets.all(10.0),
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4), // Semi-transparent background for text
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),

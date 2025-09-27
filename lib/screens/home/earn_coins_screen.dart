@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../ad_service.dart'; // Consolidated AdService
+import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../user_service.dart';
-import '../../providers/user_data_provider.dart'; // Import UserDataProvider
-import '../../widgets/animated_tap.dart'; // Import AnimatedTap
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart'; // Import UserDataProvider
+import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});

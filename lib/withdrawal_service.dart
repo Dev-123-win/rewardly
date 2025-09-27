@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'; // Import for debugPrint
-import 'user_service.dart';
+import 'package:rewardly_app/user_service.dart';
 
 class WithdrawalService {
   final UserService _userService = UserService();
