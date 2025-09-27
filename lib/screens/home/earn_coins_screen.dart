@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
+import '../../ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart'; // Import UserDataProvider
-import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
+import '../../user_service.dart';
+import '../../providers/user_data_provider.dart'; // Import UserDataProvider
+import '../../widgets/animated_tap.dart'; // Import AnimatedTap
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -20,7 +20,8 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
   bool _isAdLoading = false;
   User? _currentUser;
   int _adsWatchedToday = 0; // New state variable for ads watched today
-  static const int _dailyAdLimit = 10; // Define daily ad limit
+  static const int _dailyAdLimit = 7; // Define daily ad limit based on the image
+  final List<int> _adRewards = [30, 72, 120, 162, 210, 240, 300]; // Ad rewards from the image
 
   @override
   void initState() {
@@ -41,16 +42,16 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
   }
 
   void _onUserDataChanged() {
+    if (!mounted) return;
     _updateAdsWatchedState();
   }
 
   Future<void> _updateAdsWatchedState() async {
+    if (!mounted) return; // Add mounted check here
     if (_currentUser == null) {
-      if (mounted) {
-        setState(() {
-          _adsWatchedToday = 0;
-        });
-      }
+      setState(() {
+        _adsWatchedToday = 0;
+      });
       return;
     }
 
@@ -131,7 +132,8 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final int remainingAds = _dailyAdLimit - _adsWatchedToday;
+    final int totalAds = _adRewards.length;
+    final int adsRemaining = totalAds - _adsWatchedToday;
 
     return Scaffold(
       appBar: AppBar(
@@ -148,42 +150,71 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
                 size: 50.0,
               ),
             )
-          : remainingAds > 0
-              ? ListView.builder(
+          : Column(
+              children: [
+                Padding(
                   padding: const EdgeInsets.all(16.0),
-                  itemCount: remainingAds, // Show only remaining ads
-                  itemBuilder: (context, index) {
-                    // Each card offers 100 coins
-                    return _AdCard(
-                      title: 'Watch an ad',
-                      points: 100,
-                      onWatchAd: () => _watchAd(100),
-                    );
-                  },
-                )
-              : Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
-                        const SizedBox(height: 20),
-                        Text(
-                          'You\'ve watched all your ads for today!',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Come back tomorrow for more earning opportunities.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ads Watched Today: $_adsWatchedToday / $totalAds',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: _adsWatchedToday / totalAds,
+                        backgroundColor: Colors.grey[300],
+                        color: Colors.deepPurple,
+                      ),
+                    ],
                   ),
                 ),
+                Expanded(
+                  child: adsRemaining > 0
+                      ? ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          itemCount: totalAds, // Show all ad slots
+                          itemBuilder: (context, index) {
+                            final int points = _adRewards[index];
+                            final bool isLocked = index > _adsWatchedToday;
+                            final String? lockedMessage = isLocked ? 'Locked' : null;
+
+                            return _AdCard(
+                              title: 'Watch Ad #${index + 1}',
+                              points: points,
+                              onWatchAd: isLocked ? null : () => _watchAd(points),
+                              isLocked: isLocked,
+                              lockedMessage: lockedMessage,
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'You\'ve watched all your ads for today!',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Come back tomorrow for more earning opportunities.',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -191,12 +222,16 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 class _AdCard extends StatelessWidget {
   final String title;
   final int points;
-  final VoidCallback onWatchAd;
+  final VoidCallback? onWatchAd; // Make nullable for locked state
+  final bool isLocked;
+  final String? lockedMessage;
 
   const _AdCard({
     required this.title,
     required this.points,
-    required this.onWatchAd,
+    this.onWatchAd,
+    this.isLocked = false,
+    this.lockedMessage,
   });
 
   @override
@@ -242,10 +277,10 @@ class _AdCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.monetization_on, color: Colors.green[700], size: 20),
+                      Image.asset('assets/coin.png', height: 20, width: 20), // Use coin.png
                       const SizedBox(width: 5),
                       Text(
-                        '$points Points',
+                        '$points Coins', // Changed to 'Coins'
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.green[700]),
                       ),
                     ],
@@ -253,19 +288,19 @@ class _AdCard extends StatelessWidget {
                 ],
               ),
             ),
-            AnimatedTap( // Wrap ElevatedButton with AnimatedTap
-              onTap: onWatchAd,
+            AnimatedTap(
+              onTap: isLocked ? null : onWatchAd, // Disable tap if locked
               child: ElevatedButton(
-                onPressed: null, // onPressed is handled by AnimatedTap
+                onPressed: isLocked ? null : onWatchAd, // Disable button if locked
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightGreen,
+                  backgroundColor: isLocked ? Colors.grey : Colors.lightGreen, // Grey if locked
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
                 child: Text(
-                  'Watch Ad ($points Coins)',
+                  isLocked ? (lockedMessage ?? 'Locked') : 'Watch Ad ($points Coins)', // Dynamic text
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
                 ),
               ),

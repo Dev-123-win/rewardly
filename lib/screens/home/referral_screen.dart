@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../providers/user_data_provider.dart';
 // import 'package:share_plus/share_plus.dart'; // Removed share_plus import
-import 'package:rewardly_app/shared/shimmer_loading.dart';
+import '../../shared/shimmer_loading.dart';
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -60,45 +60,50 @@ class ReferralScreen extends StatelessWidget {
     }
 
     final data = userData.data() as Map<String, dynamic>?;
-    final referralCode = data!['referralCode'] as String;
+    final referralCode = data?['referralCode'] as String? ?? 'N/A';
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
-          'Invite Friends',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
+          'We Share More.\nWe Earn More.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black87),
+        toolbarHeight: 100, // Adjust height to accommodate two lines
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            const SizedBox(height: 20),
-            Icon(
-              Icons.card_giftcard, // Changed icon to something more referral-like
-              size: 120,
-              color: Colors.deepPurple.shade400,
-            ),
-            const SizedBox(height: 30),
             Text(
-              'Share the love, earn rewards!',
+              'Invite your Friends, Win Rewards!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.deepPurple,
+                fontFamily: 'Calinastiya', // Apply custom font
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 15),
             Text(
-              'Invite your friends to Rewardly using your unique code and both of you will get 500 coins!',
+              'Refer and Win. Share with Friends, Unlock Exciting Rewards!',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
+            Image.asset(
+              'assets/referral.png', // Use the provided image
+              height: 200,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 30),
             Text(
-              'Your Referral Code',
+              'Copy your referral code', // Rephrased text
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
             ),
@@ -131,22 +136,8 @@ class ReferralScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.share, color: Colors.white),
-              label: Text('Share Now', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sharing functionality is currently disabled.')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple.shade400,
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                elevation: 3,
-              ),
-            ),
+            const SizedBox(height: 20),
+            // Removed "Invite Friends" button and social media sharing
           ],
         ),
       ),
