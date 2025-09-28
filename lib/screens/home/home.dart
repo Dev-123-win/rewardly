@@ -2,18 +2,18 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
-import 'package:rewardly_app/screens/home/admin_panel.dart';
-import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
-import 'package:rewardly_app/screens/home/referral_screen.dart';
-import 'package:rewardly_app/screens/home/profile_screen.dart';
-import 'package:rewardly_app/screens/home/withdraw_screen.dart';
+import '../../user_service.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
+import 'admin_panel.dart';
+import 'earn_coins_screen.dart';
+import 'referral_screen.dart';
+import 'profile_screen.dart';
+import 'withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'package:rewardly_app/screens/home/spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
-import 'package:rewardly_app/screens/home/tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
-import 'package:rewardly_app/screens/home/minesweeper_game_screen.dart'; // New import for Minesweeper Game
+import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
+import 'minesweeper_game_screen.dart'; // New import for Minesweeper Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {
@@ -117,102 +117,10 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    int coins = (userDataProvider.userData!.data() as Map<String, dynamic>?)?['coins'] ?? 0;
-    double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
-
     return Scaffold(
       backgroundColor: Colors.white, // Ensure consistent background
       body: Column(
         children: [
-          // Custom Header Section
-          Container(
-            padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor, // Use primary color for header background
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color.fromARGB(26, 0, 0, 0),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                          child: Icon(Icons.person, color: Colors.white),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
-                      onPressed: () {
-                        // TODO: Implement notification logic
-                        log('Notifications icon tapped');
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Centralized Balance Card
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedIndex = 0; // Navigate to WithdrawScreen
-                    });
-                  },
-                  child: Card(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    elevation: 8.0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Balance',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                '₹${totalBalanceINR.toStringAsFixed(2)}',
-                                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                  color: Theme.of(context).primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 36,
-                                ),
-                              ),
-                              Text(
-                                '($coins coins)',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
-                              ),
-                            ],
-                          ),
-                          Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           Expanded(
             child: _buildScreens()[_selectedIndex],
           ),
@@ -243,12 +151,107 @@ class _HomeState extends State<Home> {
     }
 
 
+    int coins = (userDataProvider.userData!.data() as Map<String, dynamic>?)?['coins'] ?? 0;
+    double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
+
     return SingleChildScrollView(
       child: Container(
         color: Colors.white, // White background for home content
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // Custom Header Section
+            Container(
+              padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor, // Use primary color for header background
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color.fromARGB(26, 0, 0, 0),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
+                            child: Icon(Icons.person, color: Colors.white),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis, // Handle long names
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+                        onPressed: () {
+                          // TODO: Implement notification logic
+                          log('Notifications icon tapped');
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // Centralized Balance Card
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 0; // Navigate to WithdrawScreen
+                      });
+                    },
+                    child: Card(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      elevation: 8.0,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Balance',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  '₹${totalBalanceINR.toStringAsFixed(2)}',
+                                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 36,
+                                  ),
+                                ),
+                                Text(
+                                  '($coins coins)',
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
+                                ),
+                              ],
+                            ),
+                            Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
             // Quick Actions Section
             Padding(

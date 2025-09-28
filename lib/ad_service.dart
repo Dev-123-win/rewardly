@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'package:flutter/material.dart'; // Import for ValueNotifier
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdService {
@@ -21,6 +22,7 @@ class AdService {
   // Banner Ad
   BannerAd? _bannerAd;
   final String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test Ad Unit ID
+  ValueNotifier<bool> bannerAdLoadedNotifier = ValueNotifier<bool>(false);
 
   BannerAd? get bannerAd => _bannerAd;
 
@@ -152,10 +154,12 @@ class AdService {
         onAdLoaded: (Ad ad) {
           log('$ad loaded.');
           _bannerAd = ad as BannerAd;
+          bannerAdLoadedNotifier.value = true; // Notify listeners that banner ad is loaded
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
           log('$ad failed to load: $error');
           ad.dispose();
+          bannerAdLoadedNotifier.value = false; // Notify listeners that banner ad failed to load
         },
         onAdOpened: (Ad ad) => log('$ad opened.'),
         onAdClosed: (Ad ad) => log('$ad closed.'),

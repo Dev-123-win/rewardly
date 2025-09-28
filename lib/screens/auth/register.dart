@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rewardly_app/auth_service.dart';
-import 'package:rewardly_app/screens/auth/sign_in.dart';
-import 'package:rewardly_app/widgets/custom_button.dart';
-import 'package:rewardly_app/screens/auth/auth_card.dart';
+import '../../auth_service.dart';
+import 'sign_in.dart';
+import '../../widgets/custom_button.dart';
+import 'auth_card.dart';
 
 class Register extends StatefulWidget {
   final Function toggleView;

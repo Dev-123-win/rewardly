@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
 
 enum WithdrawalMethod { bank, upi, none }
 

@@ -2,10 +2,10 @@ import 'dart:async'; // Import for Timer
 import 'dart:math'; // Import for Random
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Import for Provider
-import 'package:rewardly_app/widgets/custom_button.dart';
-import 'package:rewardly_app/ad_service.dart'; // Import AdService
+import '../../widgets/custom_button.dart';
+import '../../ad_service.dart'; // Import AdService
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerAd
-import 'package:rewardly_app/providers/user_data_provider.dart'; // Import UserDataProvider
+import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 
 class MinesweeperGameScreen extends StatefulWidget {
   const MinesweeperGameScreen({super.key});

@@ -2,11 +2,11 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
+import '../../ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart'; // Import UserDataProvider
-import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
+import '../../user_service.dart';
+import '../../providers/user_data_provider.dart'; // Import UserDataProvider
+import '../../widgets/animated_tap.dart'; // Import AnimatedTap
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -180,22 +180,17 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
                 ),
                 Expanded(
                   child: adsRemaining > 0
-                      ? ListView.builder(
+                      ? ListView( // Changed to ListView as we're showing only one card or a few
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          itemCount: totalAds, // Show all ad slots
-                          itemBuilder: (context, index) {
-                            final int points = _adRewards[index];
-                            final bool isLocked = index > _adsWatchedToday;
-                            final String? lockedMessage = isLocked ? 'Locked' : null;
-
-                            return _AdCard(
-                              title: 'Watch Ad #${index + 1}',
-                              points: points,
-                              onWatchAd: isLocked ? null : () => _watchAd(points),
-                              isLocked: isLocked,
-                              lockedMessage: lockedMessage,
-                            );
-                          },
+                          children: [
+                            _AdCard(
+                              title: 'Watch Ad #${_adsWatchedToday + 1}',
+                              points: _adRewards[_adsWatchedToday],
+                              onWatchAd: () => _watchAd(_adRewards[_adsWatchedToday]),
+                              isLocked: false, // The displayed card is always the next available, so it's not locked
+                              lockedMessage: null,
+                            ),
+                          ],
                         )
                       : Center(
                           child: Padding(

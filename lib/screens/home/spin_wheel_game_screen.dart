@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/user_service.dart';
-import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
-import 'package:rewardly_app/remote_config_service.dart';
-import 'package:rewardly_app/shared/shimmer_loading.dart';
-import 'package:rewardly_app/providers/user_data_provider.dart';
+import '../../user_service.dart';
+import '../../ad_service.dart'; // Consolidated AdService
+import '../../remote_config_service.dart';
+import '../../shared/shimmer_loading.dart';
+import '../../providers/user_data_provider.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'dart:async'; // For StreamController
-import 'package:rewardly_app/theme_provider.dart';
+import '../../theme_provider.dart';
 import 'dart:developer' as developer;
 import 'package:google_mobile_ads/google_mobile_ads.dart' as ads; // Import for AdWidget with alias
 
@@ -48,19 +48,24 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   @override
   void initState() {
     super.initState();
-    _currentUser = Provider.of<User?>(context, listen: false);
-    _adService.loadRewardedAd(); // Pre-load an ad
-    _adService.loadInterstitialAd(); // Pre-load interstitial if needed for other features
+    _adService.loadRewardedAd(); // Pre-load rewarded ad
+    _adService.loadInterstitialAd(); // Pre-load interstitial ad
+    _adService.loadBannerAd(); // Pre-load banner ad
 
     // Listen to user data changes
     Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
-    _updateSpinState(); // Initial load of spin state
+    // Initial load of spin state after the first frame to ensure context is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateSpinState();
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // Update current user here as well, in case it changes
+    _currentUser = Provider.of<User?>(context);
   }
 
   @override
@@ -73,10 +78,20 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   }
 
   void _onUserDataChanged() {
+    // Ensure _currentUser is up-to-date before calling _updateSpinState
+    _currentUser = Provider.of<User?>(context, listen: false);
     _updateSpinState();
   }
 
   Future<void> _updateSpinState() async {
+    if (!mounted) return; // Check if widget is still mounted
+
+    setState(() {
+      _isLoading = true; // Set loading to true at the start of data fetching
+    });
+
+    _currentUser = Provider.of<User?>(context, listen: false); // Get current user here
+
     if (_currentUser == null) {
       if (mounted) {
         setState(() {
@@ -203,7 +218,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    backgroundColor: Theme.of(context).primaryColor.withAlpha((255 * 0.1).round()), // Themed background
+      backgroundColor: Colors.white, // Changed background to white
       appBar: AppBar(
         title: const Text('Spin & Win!'),
         centerTitle: true,
@@ -217,40 +232,40 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
             )
           : Stack(
               children: [
-                Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    // Spin Count Cards
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _buildSpinCountCard(
-                              context,
-                              label: 'Free Spins',
-                              count: _freeSpinsToday,
-                              icon: Icons.redeem,
-                              color: Colors.deepPurple.shade600,
+                SingleChildScrollView( // Added SingleChildScrollView
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      // Spin Count Cards
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildSpinCountCard(
+                                context,
+                                label: 'Free Spins',
+                                count: _freeSpinsToday,
+                                icon: Icons.redeem,
+                                color: Colors.deepPurple.shade600,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: _buildSpinCountCard(
-                              context,
-                              label: 'Ad Spins',
-                              count: _adSpinsWatchedToday,
-                              limit: _spinWheelDailyAdLimit,
-                              icon: Icons.videocam,
-                              color: Colors.green.shade600,
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: _buildSpinCountCard(
+                                context,
+                                label: 'Ad Spins',
+                                count: _adSpinsWatchedToday,
+                                limit: _spinWheelDailyAdLimit,
+                                icon: Icons.videocam,
+                                color: Colors.green.shade600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 30),
-                    Expanded(
-                      child: Padding(
+                      const SizedBox(height: 30),
+                      Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: FortuneWheel(
                           selected: _fortuneWheelController.stream,
@@ -260,11 +275,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    if (item != 0) Image.asset('assets/coin.png', height: 24, width: 24),
-                                    const SizedBox(width: 5),
+                                    if (item != 0) Image.asset('assets/coin.png', height: 30, width: 30), // Increased coin size
+                                    const SizedBox(width: 8), // Increased spacing
                                     Text(
                                       item == 0 ? 'Try Again' : '$item Coins',
-                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith( // Increased font size
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -272,9 +287,9 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                                   ],
                                 ),
                                 style: FortuneItemStyle(
-                                  color: item == 0 ? Colors.redAccent.shade700 : Theme.of(context).primaryColor, // Themed colors
-                                  borderColor: Color.fromARGB((255 * 0.5).round(), 255, 255, 255),
-                                  borderWidth: 2,
+                                  color: item == 0 ? Colors.redAccent.shade700 : (item % 2 == 0 ? Theme.of(context).primaryColor : Theme.of(context).primaryColor.withAlpha((255 * 0.8).round())), // Alternating themed colors
+                                  borderColor: Colors.white.withAlpha((255 * 0.7).round()), // Lighter border
+                                  borderWidth: 3, // Thicker border
                                   textAlign: TextAlign.center,
                                 ),
                               ),
@@ -286,112 +301,120 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                             FortuneIndicator(
                               alignment: Alignment.topCenter,
                               child: Container(
-                                width: 60,
-                                height: 60,
+                                width: 70, // Larger indicator
+                                height: 70, // Larger indicator
                                 decoration: BoxDecoration(
                                   color: Colors.amber.shade700,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Color.fromARGB((255 * 0.2).round(), 0, 0, 0),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
+                                      color: Colors.black.withAlpha((255 * 0.3).round()), // Stronger shadow
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 child: const Icon(
                                   Icons.arrow_drop_down,
                                   color: Colors.white,
-                                  size: 40,
+                                  size: 50, // Larger icon
                                 ),
                               ),
                             ),
                           ],
                           animateFirst: false,
-                          rotationCount: 10, // More rotations for a better visual effect
-                          duration: const Duration(seconds: 7), // Longer spin duration
+                          rotationCount: 15, // More rotations for a better visual effect
+                          duration: const Duration(seconds: 8), // Longer spin duration
                           hapticImpact: HapticImpact.heavy,
                           physics: NoPanPhysics(), // Prevent manual scrolling
-                          // Add a central widget to the wheel
-                          // centerWidget: Image.asset('assets/AppLogo.png', height: 80, width: 80),
+                          // centerWidget: Image.asset('assets/AppLogo.png', height: 80, width: 80), // Removed as not supported in 1.3.2
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _freeSpinsToday > 0 && !_isSpinning
-                                  ? () => _handleSpinRequest(isFreeSpin: true)
-                                  : null,
-                              icon: const Icon(Icons.redeem, color: Colors.white),
-                              label: const Text('Free Spin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple.shade600,
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                                elevation: 5,
+                      const SizedBox(height: 30),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _freeSpinsToday > 0 && !_isSpinning
+                                    ? () => _handleSpinRequest(isFreeSpin: true)
+                                    : null,
+                                icon: const Icon(Icons.redeem, color: Colors.white),
+                                label: const Text('Free Spin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple.shade600,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Increased padding
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // More rounded corners
+                                  elevation: 8, // Stronger elevation
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _adSpinsWatchedToday < _spinWheelDailyAdLimit && !_isSpinning
-                                  ? () => _handleSpinRequest(isFreeSpin: false)
-                                  : null,
-                              icon: const Icon(Icons.play_arrow, color: Colors.white),
-                              label: const Text('Watch Ad for Spin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green.shade600,
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 18),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                                elevation: 5,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _adSpinsWatchedToday < _spinWheelDailyAdLimit && !_isSpinning
+                                    ? () => _handleSpinRequest(isFreeSpin: false)
+                                    : null,
+                                icon: const Icon(Icons.play_arrow, color: Colors.white),
+                                label: const Text('Watch Ad for Spin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green.shade600,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20), // Increased padding
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // More rounded corners
+                                  elevation: 8, // Stronger elevation
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    // Banner Ad Placeholder
-                    if (_adService.bannerAd != null)
-                      Container(
-                        margin: const EdgeInsets.only(top: 10, bottom: 10), // Add some margin
-                        width: _adService.bannerAd!.size.width.toDouble(),
-                        height: _adService.bannerAd!.size.height.toDouble(),
-                        child: ads.AdWidget(ad: _adService.bannerAd!),
+                      // Banner Ad Placeholder
+                      ValueListenableBuilder<bool>(
+                        valueListenable: _adService.bannerAdLoadedNotifier,
+                        builder: (context, isLoaded, child) {
+                          if (isLoaded && _adService.bannerAd != null) {
+                            return Container(
+                              margin: const EdgeInsets.only(top: 20, bottom: 20), // Increased margin
+                              width: _adService.bannerAd!.size.width.toDouble(),
+                              height: _adService.bannerAd!.size.height.toDouble(),
+                              child: ads.AdWidget(ad: _adService.bannerAd!),
+                            );
+                          } else {
+                            return const SizedBox(height: 50); // Placeholder for ad space
+                          }
+                        },
                       ),
-                  ],
+                    ],
+                  ),
                 ),
                 if (_resultMessage != null)
                   Positioned.fill(
                     child: Container(
-                      color: Color.fromARGB((255 * 0.8).round(), 0, 0, 0), // Darker overlay
+                      color: Colors.black.withAlpha((255 * 0.8).round()), // Darker overlay
                       child: Center(
                         child: Card(
                           margin: const EdgeInsets.all(30),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                          elevation: 10,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)), // More rounded
+                          elevation: 15, // Stronger elevation
                           child: Padding(
-                            padding: const EdgeInsets.all(25.0),
+                            padding: const EdgeInsets.all(30.0), // Increased padding
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(
                                   _resultMessage!.contains('Congratulations') ? Icons.emoji_events : Icons.sentiment_dissatisfied,
-                                  color: _resultMessage!.contains('Congratulations') ? Colors.amber.shade700 : Colors.grey,
-                                  size: 60,
+                                  color: _resultMessage!.contains('Congratulations') ? Colors.amber.shade700 : Colors.grey.shade600, // Themed icon color
+                                  size: 70, // Larger icon
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 25), // Increased spacing
                                 Text(
                                   _resultMessage!,
                                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 25), // Increased spacing
                                 ElevatedButton(
                                   onPressed: () {
                                     if (mounted) {
@@ -404,9 +427,9 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Theme.of(context).primaryColor,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    elevation: 5,
+                                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                    elevation: 8,
                                   ),
                                   child: const Text('OK', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                 ),
@@ -420,7 +443,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
                 if (_isSpinning)
                   Positioned.fill(
                     child: Container(
-                      color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
+                      color: Colors.black.withAlpha((255 * 0.6).round()), // Darker overlay
                       child: const Center(
                         child: CircularProgressIndicator(color: Colors.amber),
                       ),
@@ -440,23 +463,23 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
     required Color color,
   }) {
     return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: Colors.white,
+      elevation: 8, // Increased elevation
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // More rounded corners
+      color: Colors.white, // White background as per user request
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
+        padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 15.0), // Increased padding
         child: Column(
           children: [
-            Icon(icon, size: 30, color: color),
-            const SizedBox(height: 10),
+            Icon(icon, size: 35, color: color), // Larger icon
+            const SizedBox(height: 12), // Increased spacing
             Text(
               label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.w600), // Larger font
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 8), // Increased spacing
             Text(
               limit != null ? '$count / $limit' : '$count',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: color, fontWeight: FontWeight.bold), // Larger font
             ),
           ],
         ),
