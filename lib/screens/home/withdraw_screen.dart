@@ -140,38 +140,34 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               ),
               const SizedBox(height: 25),
               // Withdrawal Method Selection
-              SizedBox(
-                height: 140, // Further increased height for method cards
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildMethodCard(
-                      context,
-                      method: WithdrawalMethod.bank,
-                      icon: Icons.account_balance,
-                      label: 'Bank Account',
-                      isSelected: _selectedMethod == WithdrawalMethod.bank,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = WithdrawalMethod.bank;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 25), // Increased spacing between cards
-                    _buildMethodCard(
-                      context,
-                      method: WithdrawalMethod.upi,
-                      icon: Icons.payment,
-                      label: 'UPI ID',
-                      isSelected: _selectedMethod == WithdrawalMethod.upi,
-                      onTap: () {
-                        setState(() {
-                          _selectedMethod = WithdrawalMethod.upi;
-                        });
-                      },
-                    ),
-                  ],
-                ),
+              Column(
+                children: [
+                  _buildMethodCard(
+                    context,
+                    method: WithdrawalMethod.bank,
+                    icon: Icons.account_balance,
+                    label: 'Withdraw to Bank',
+                    isSelected: _selectedMethod == WithdrawalMethod.bank,
+                    onTap: () {
+                      setState(() {
+                        _selectedMethod = WithdrawalMethod.bank;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 15), // Vertical spacing between cards
+                  _buildMethodCard(
+                    context,
+                    method: WithdrawalMethod.upi,
+                    icon: Icons.payment,
+                    label: 'Withdraw to UPI',
+                    isSelected: _selectedMethod == WithdrawalMethod.upi,
+                    onTap: () {
+                      setState(() {
+                        _selectedMethod = WithdrawalMethod.upi;
+                      });
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 40), // Increased spacing
 
@@ -371,42 +367,43 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        width: 140, // Slightly wider cards
+        width: double.infinity, // Full width for list-type cards
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor.withAlpha((0.1 * 255).round()) : Colors.white,
-          borderRadius: BorderRadius.circular(20.0), // More rounded corners
+          color: Colors.white, // Consistent background color
+          borderRadius: BorderRadius.circular(15.0),
           border: Border.all(
             color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
-            width: isSelected ? 3.0 : 1.5,
+            width: isSelected ? 2.0 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: isSelected ? Theme.of(context).primaryColor.withAlpha((0.2 * 255).round()) : Colors.grey.shade200,
-              blurRadius: isSelected ? 15 : 8,
-              offset: isSelected ? const Offset(0, 6) : const Offset(0, 4),
+                      color: Color.fromARGB((255 * 0.05).round(), 0, 0, 0),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(18.0), // Increased padding
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0), // Adjusted padding
+          child: Row(
             children: [
               Icon(
                 icon,
-                size: 48, // Larger icon
+                size: 30, // Adjusted icon size
                 color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
               ),
-              const SizedBox(height: 15), // Increased spacing
+              const SizedBox(width: 15), // Spacing between icon and text
               Text(
                 label,
-                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                       fontSize: 16,
                     ),
               ),
+              const Spacer(), // Pushes content to the left and right
+              if (isSelected)
+                Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: 24),
             ],
           ),
         ),

@@ -1,7 +1,7 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:rewardly_app/remote_config_service.dart';
 import 'package:rewardly_app/user_service.dart';
 import 'package:rewardly_app/shared/shimmer_loading.dart';
 import 'package:rewardly_app/providers/user_data_provider.dart';
@@ -117,47 +117,107 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    Map<String, dynamic> userData = (userDataProvider.userData!.data() as Map<String, dynamic>?) ?? {};
-    int coins = userData['coins'] ?? 0;
+    int coins = (userDataProvider.userData!.data() as Map<String, dynamic>?)?['coins'] ?? 0;
     double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white, // White AppBar background
-        title: Text(
-          user.email ?? 'Rewardly App',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontSize: 16.0),
-        ),
-        elevation: 1.0, // Subtle shadow
-        actions: <Widget>[
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedIndex = 0; // Navigate to WithdrawScreen
-              });
-            },
-            child: Card(
-              color: Colors.grey[100], // Light grey card
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 2.0,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Row(
+      backgroundColor: Colors.white, // Ensure consistent background
+      body: Column(
+        children: [
+          // Custom Header Section
+          Container(
+            padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor, // Use primary color for header background
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.fromARGB(26, 0, 0, 0),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 18), // Primary color icon
-                    const SizedBox(width: 6),
-                    Text(
-                      'Total Balance\n₹${totalBalanceINR.toStringAsFixed(2)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black87, fontSize: 12.0),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
+                          child: Icon(Icons.person, color: Colors.white),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+                      onPressed: () {
+                        // TODO: Implement notification logic
+                        log('Notifications icon tapped');
+                      },
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                // Centralized Balance Card
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedIndex = 0; // Navigate to WithdrawScreen
+                    });
+                  },
+                  child: Card(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 8.0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Balance',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                '₹${totalBalanceINR.toStringAsFixed(2)}',
+                                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 36,
+                                ),
+                              ),
+                              Text(
+                                '($coins coins)',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
+                              ),
+                            ],
+                          ),
+                          Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
+          Expanded(
+            child: _buildScreens()[_selectedIndex],
           ),
         ],
       ),
-      body: _buildScreens()[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: _buildNavBarItems(),
         currentIndex: _selectedIndex,
@@ -182,8 +242,6 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    Map<String, dynamic> userData = (userDataProvider.userData!.data() as Map<String, dynamic>?) ?? {};
-    int coins = userData['coins'] ?? 0;
 
     return SingleChildScrollView(
       child: Container(
@@ -191,151 +249,101 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text(
-                'Available Coins',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54),
-              ),
-            ),
+            const SizedBox(height: 20),
+            // Quick Actions Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
+              child: Text(
+                'Quick Actions',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ),
+            const SizedBox(height: 15),
+            SizedBox(
+              height: 100, // Height for horizontal quick action cards
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.yellow.shade100, // Light yellow background
-                        borderRadius: BorderRadius.circular(15.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(25),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircleAvatar(
-                            radius: 25,
-                            backgroundColor: Colors.amber.shade700, // Background for coin icon
-                            child: Image.asset('assets/coin.png', height: 30, width: 30), // Coin icon
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: (coins / 1000).toStringAsFixed(2),
-                                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                        color: Colors.black87,
-                                        fontFamily: 'Poppins', // Using existing font
-                                        fontSize: 24.0,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: [
-                                          const Shadow(
-                                            offset: Offset(1.0, 1.0),
-                                            blurRadius: 2.0,
-                                            color: Colors.black38,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: 'k',
-                                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                        color: Colors.black87,
-                                        fontFamily: 'Poppins', // Using existing font
-                                        fontSize: 18.0,
-                                        fontWeight: FontWeight.bold,
-                                        shadows: [
-                                          const Shadow(
-                                            offset: Offset(1.0, 1.0),
-                                            blurRadius: 2.0,
-                                            color: Colors.black38,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                'Coins',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54, fontFamily: 'Lato'), // Using existing font
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  _buildQuickActionCard(
+                    context,
+                    icon: Icons.videocam,
+                    label: 'Watch Ads',
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                    },
+                  ),
+                  const SizedBox(width: 15),
+                  _buildQuickActionCard(
+                    context,
+                    icon: Icons.person_add,
+                    label: 'Invite Friends',
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
+                    },
+                  ),
+                  const SizedBox(width: 15),
+                  _buildQuickActionCard(
+                    context,
+                    icon: Icons.redeem,
+                    label: 'Redeem Coins',
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 0; // Navigate to WithdrawScreen
+                      });
+                    },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            // Offer Grid
+            const SizedBox(height: 30),
+            // Main Offer Grid
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Explore & Earn',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+            ),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.count(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
                 children: [
                   _buildOfferCard(
                     context,
                     title: 'Tic Tac Toe',
                     subtitle: 'Play against NPC!',
-                    imagePath: 'assets/tic_tac_toe.png', // Updated to imagePath
-                    startColor: const Color(0xFF4CAF50), // Green
-                    endColor: const Color(0xFF8BC34A), // Light Green
+                    imagePath: 'assets/tic_tac_toe.png',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
                     },
                   ),
                   _buildOfferCard(
                     context,
-                    title: 'Play Game!',
-                    subtitle: 'Spin & Win!',
-                    imagePath: 'assets/spin_the_wheel.png', // Updated to imagePath
-                    startColor: const Color(0xFF8B008B), // DarkMagenta
-                    endColor: const Color(0xFFBA55D3), // MediumPurple
+                    title: 'Spin & Win',
+                    subtitle: 'Try your luck!',
+                    imagePath: 'assets/spin_the_wheel.png',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
                     },
                   ),
                   _buildOfferCard(
                     context,
-                    title: 'Watch Ads',
-                    subtitle: 'Earn Upto ${RemoteConfigService().coinsPerAd} coins per ad',
-                    imagePath: 'assets/watch_ads.png', // Updated to imagePath
-                    startColor: Colors.green,
-                    endColor: Colors.lightGreen,
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
                     title: 'Minesweeper',
                     subtitle: 'Find the mines!',
-                    imagePath: 'assets/minesweeper.png', // Updated to minesweeper.png
-                    startColor: Colors.blueGrey,
-                    endColor: Colors.blueGrey.shade300,
+                    imagePath: 'assets/minesweeper.png',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
                     },
                   ),
+                  // The "Watch Ads" card is now in Quick Actions, so it's removed from here.
+                  // Add more offer cards here as needed
                 ],
               ),
             ),
@@ -346,13 +354,10 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _buildOfferCard(
+  Widget _buildQuickActionCard(
     BuildContext context, {
-    required String title,
-    required String subtitle,
-    required String imagePath, // Changed from IconData to String imagePath
-    required Color startColor,
-    required Color endColor,
+    required IconData icon,
+    required String label,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -360,50 +365,82 @@ class _HomeState extends State<Home> {
       child: Card(
         elevation: 4.0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-        clipBehavior: Clip.antiAlias, // Clip content to card shape
+        child: Container(
+          width: 120, // Fixed width for quick action cards
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15.0),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromARGB(13, 0, 0, 0),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 30, color: Theme.of(context).primaryColor),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOfferCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String imagePath,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
+            color: Colors.white, // Solid white background
             borderRadius: BorderRadius.circular(15.0),
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Background Image
-              Positioned.fill(
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover, // Ensure image covers the entire card
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromARGB(13, 0, 0, 0),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              // Text content with semi-transparent background
-              Align(
-                alignment: Alignment.topLeft,
-                child: Container(
-                  padding: const EdgeInsets.all(10.0),
-                  margin: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(102), // Semi-transparent background for text (0.4 * 255 = 102)
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                      ),
-                    ],
-                  ),
-                ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                imagePath,
+                height: 60, // Adjusted image size
+                width: 60,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ),

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -48,6 +49,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 
   Future<void> _updateAdsWatchedState() async {
     if (!mounted) return; // Add mounted check here
+    log('Updating adsWatchedToday state. Current value: $_adsWatchedToday'); // Log for debugging
     if (_currentUser == null) {
       setState(() {
         _adsWatchedToday = 0;
@@ -111,6 +113,12 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You earned $points coins!')),
         );
+        // Manually update state to reflect the watched ad immediately
+        if (mounted) {
+          setState(() {
+            _adsWatchedToday++;
+          });
+        }
         _loadAd(); // Reload ad
       },
       onAdFailedToLoad: () {

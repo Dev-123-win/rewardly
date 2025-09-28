@@ -35,8 +35,9 @@ class _CustomButtonState extends State<CustomButton> {
     return AnimatedTap(
       onTap: widget.onPressed,
       child: Container(
-        width: widget.width ?? double.infinity,
+        width: widget.width, // Removed default to double.infinity
         height: widget.height ?? 50.0,
+        padding: widget.padding, // Apply padding
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -55,7 +56,6 @@ class _CustomButtonState extends State<CustomButton> {
             ),
           ],
         ),
-        padding: widget.padding, // Apply padding
         child: Center(
           child: Text(
             widget.text,

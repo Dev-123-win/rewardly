@@ -385,100 +385,66 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.deepPurple.shade50, // Themed background
       appBar: AppBar(
         title: const Text('Tic Tac Toe'),
-        backgroundColor: Colors.blueAccent,
+        centerTitle: true,
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: Stack(
         children: [
           Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(20.0), // Increased padding
                 child: Column(
                   children: [
-                    Text(
-                      'Current Player: ${currentPlayer == Player.x ? 'X (You)' : 'O (NPC)'}',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Difficulty: '),
-                        DropdownButton<GameMode>(
-                          value: selectedMode,
-                          onChanged: (GameMode? newValue) {
-                            setState(() {
-                              selectedMode = newValue!;
-                              _resetGame();
-                            });
-                          },
-                          items: const [
-                            DropdownMenuItem(value: GameMode.easy, child: Text('Easy')),
-                            DropdownMenuItem(value: GameMode.medium, child: Text('Medium')),
-                            DropdownMenuItem(value: GameMode.hard, child: Text('Hard')),
-                          ],
-                        ),
-                      ],
-                    ),
+                    // Current Player Indicator
+                    _buildPlayerIndicator(context),
+                    const SizedBox(height: 20),
+                    // Difficulty Selector
+                    _buildDifficultySelector(context),
                   ],
                 ),
               ),
               Expanded(
                 child: GridView.builder(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0), // Increased padding
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    crossAxisSpacing: 10.0,
-                    mainAxisSpacing: 10.0,
+                    crossAxisSpacing: 15.0, // Increased spacing
+                    mainAxisSpacing: 15.0, // Increased spacing
                   ),
                   itemCount: 9,
                   itemBuilder: (context, index) {
-                    return AnimatedTap( // Wrap with AnimatedTap
-                      onTap: () => _onTap(index),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey[400]!),
-                        ),
-                        child: Center(
-                          child: Text(
-                            board[index] == Player.x
-                                ? 'X'
-                                : board[index] == Player.o
-                                    ? 'O'
-                                    : '',
-                            style: TextStyle(
-                              fontSize: 60,
-                              fontWeight: FontWeight.bold,
-                              color: board[index] == Player.x ? Colors.blueAccent : Colors.redAccent,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
+                    return _buildGameCell(index);
                   },
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
+                padding: const EdgeInsets.all(20.0), // Increased padding
+                child: ElevatedButton.icon(
                   onPressed: _resetGame,
+                  icon: const Icon(Icons.refresh, size: 24),
+                  label: const Text('Reset Game'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    textStyle: const TextStyle(fontSize: 18),
+                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    elevation: 5,
                   ),
-                  child: const Text('Reset Game'),
                 ),
               ),
               // Banner Ad Placeholder
               if (_adService.bannerAd != null)
-                SizedBox(
+                Container(
+                  margin: const EdgeInsets.only(bottom: 10), // Add some margin
                   width: _adService.bannerAd!.size.width.toDouble(),
                   height: _adService.bannerAd!.size.height.toDouble(),
                   child: AdWidget(ad: _adService.bannerAd!),
@@ -488,13 +454,119 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
           if (_isLoadingAd)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withAlpha((255 * 0.5).round()),
+                color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
                 child: const Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(color: Colors.white),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlayerIndicator(BuildContext context) {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Current Player: ',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+            ),
+            Text(
+              currentPlayer == Player.x ? 'X (You)' : 'O (NPC)',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: currentPlayer == Player.x ? Theme.of(context).primaryColor : Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDifficultySelector(BuildContext context) {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Difficulty:',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87),
+            ),
+            DropdownButton<GameMode>(
+              value: selectedMode,
+              onChanged: (GameMode? newValue) {
+                setState(() {
+                  selectedMode = newValue!;
+                  _resetGame();
+                });
+              },
+              items: const [
+                DropdownMenuItem(value: GameMode.easy, child: Text('Easy')),
+                DropdownMenuItem(value: GameMode.medium, child: Text('Medium')),
+                DropdownMenuItem(value: GameMode.hard, child: Text('Hard')),
+              ],
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
+              underline: Container(), // Remove underline
+              icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).primaryColor),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameCell(int index) {
+    return AnimatedTap(
+      onTap: () => _onTap(index),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white, // Solid white background for cells
+          borderRadius: BorderRadius.circular(15.0), // More rounded corners
+          border: Border.all(color: Colors.grey.shade300, width: 2.0), // Subtle border
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromARGB((255 * 0.05).round(), 0, 0, 0),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            board[index] == Player.x
+                ? 'X'
+                : board[index] == Player.o
+                    ? 'O'
+                    : '',
+            style: TextStyle(
+              fontSize: 70, // Larger font size
+              fontWeight: FontWeight.w900, // Bolder weight
+              fontFamily: 'Poppins', // Use a professional font
+              color: board[index] == Player.x ? Theme.of(context).primaryColor : Colors.redAccent,
+              shadows: [
+                Shadow(
+                  offset: const Offset(2.0, 2.0),
+                  blurRadius: 3.0,
+                  color: Color.fromARGB((255 * 0.2).round(), 0, 0, 0),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
