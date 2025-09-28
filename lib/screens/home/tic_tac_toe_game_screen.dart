@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../user_service.dart';
-import '../../ad_service.dart';
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for AdWidget
 import 'dart:math';
-import '../../widgets/animated_tap.dart'; // Import AnimatedTap
+import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
 
 enum Player { x, o, none }
 enum GameMode { easy, medium, hard }

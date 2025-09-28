@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
 
 enum WithdrawalMethod { bank, upi, none }
 
@@ -17,8 +17,18 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   WithdrawalMethod _selectedMethod = WithdrawalMethod.none;
   final int _minWithdrawalCoins = 1000; // Example minimum withdrawal
 
+  // Text editing controllers for withdrawal details
+  final TextEditingController _bankAccountController = TextEditingController();
+  final TextEditingController _ifscCodeController = TextEditingController();
+  final TextEditingController _accountHolderNameController = TextEditingController();
+  final TextEditingController _upiIdController = TextEditingController();
+
   @override
   void dispose() {
+    _bankAccountController.dispose();
+    _ifscCodeController.dispose();
+    _accountHolderNameController.dispose();
+    _upiIdController.dispose();
     super.dispose();
   }
 
@@ -49,62 +59,89 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20), // Adjusted spacing from top
+              const SizedBox(height: 30),
               // Current Balance Display
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    Text(
-                      '₹${totalBalanceINR.toStringAsFixed(2)}',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 48,
-                      ),
+              Center(
+                child: Card(
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Your Current Balance',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          '₹${totalBalanceINR.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 52,
+                          ),
+                        ),
+                        Text(
+                          '($currentCoins coins)',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'You have $currentCoins coins',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
               // Minimum Withdrawal Progress
               Container(
-                padding: const EdgeInsets.all(15.0),
+                padding: const EdgeInsets.all(18.0),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12.0),
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(15.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha((0.05 * 255).round()),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Minimum withdrawal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                      'Withdrawal Goal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 15),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: currentCoins / _minWithdrawalCoins.toDouble(),
+                        backgroundColor: Colors.grey[300],
+                        color: Theme.of(context).primaryColor,
+                        minHeight: 12,
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    LinearProgressIndicator(
-                      value: currentCoins / _minWithdrawalCoins.toDouble(),
-                      backgroundColor: Colors.grey[300],
-                      color: Theme.of(context).primaryColor,
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
+                    Text(
+                      '${((currentCoins / _minWithdrawalCoins.toDouble()) * 100).toStringAsFixed(0)}% towards your goal',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 40),
               Text(
-                'Select Method',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                'Choose Withdrawal Method',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               // Withdrawal Method Selection
               SizedBox(
-                height: 120, // Increased height for method cards
+                height: 140, // Further increased height for method cards
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
@@ -112,7 +149,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       context,
                       method: WithdrawalMethod.bank,
                       icon: Icons.account_balance,
-                      label: 'Bank',
+                      label: 'Bank Account',
                       isSelected: _selectedMethod == WithdrawalMethod.bank,
                       onTap: () {
                         setState(() {
@@ -120,12 +157,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                         });
                       },
                     ),
-                    const SizedBox(width: 20), // Increased spacing between cards
+                    const SizedBox(width: 25), // Increased spacing between cards
                     _buildMethodCard(
                       context,
                       method: WithdrawalMethod.upi,
                       icon: Icons.payment,
-                      label: 'UPI',
+                      label: 'UPI ID',
                       isSelected: _selectedMethod == WithdrawalMethod.upi,
                       onTap: () {
                         setState(() {
@@ -137,24 +174,56 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 ),
               ),
               const SizedBox(height: 40), // Increased spacing
+
+              // Conditional Input Fields
+              if (_selectedMethod == WithdrawalMethod.bank) _buildBankDetailsInput(context),
+              if (_selectedMethod == WithdrawalMethod.upi) _buildUpiDetailsInput(context),
+
+              const SizedBox(height: 40),
+
+              // Withdraw Button
+              if (_selectedMethod != WithdrawalMethod.none)
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    child: ElevatedButton(
+                      onPressed: () => _processWithdrawal(currentCoins),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: Text(
+                        'Initiate Withdrawal',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 40),
               // Set Up Auto-Withdrawal
-              Align(
-                alignment: Alignment.center,
-                child: TextButton(
+              Center(
+                child: TextButton.icon(
                   onPressed: () {
                     // TODO: Implement auto-withdrawal setup logic
                     _showSnackBar('Auto-Withdrawal setup coming soon!');
                   },
-                  child: Text(
+                  icon: Icon(Icons.auto_mode, color: Theme.of(context).primaryColor),
+                  label: Text(
                     'Set Up Auto-Withdrawal',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.underline),
                   ),
                 ),
               ),
               const SizedBox(height: 40),
               Text(
                 'Recent Activity',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               // Placeholder for Recent Activity (no static content as per user's request)
@@ -171,6 +240,123 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
+  Widget _buildBankDetailsInput(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Enter Bank Account Details',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _bankAccountController,
+          decoration: InputDecoration(
+            labelText: 'Bank Account Number',
+            hintText: 'e.g., 1234567890',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            prefixIcon: const Icon(Icons.account_balance_wallet, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _ifscCodeController,
+          decoration: InputDecoration(
+            labelText: 'IFSC Code',
+            hintText: 'e.g., HDFC0001234',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            prefixIcon: const Icon(Icons.code, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _accountHolderNameController,
+          decoration: InputDecoration(
+            labelText: 'Account Holder Name',
+            hintText: 'e.g., John Doe',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            prefixIcon: const Icon(Icons.person, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUpiDetailsInput(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Enter UPI Details',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _upiIdController,
+          decoration: InputDecoration(
+            labelText: 'UPI ID',
+            hintText: 'e.g., yourname@bank',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            prefixIcon: const Icon(Icons.qr_code, color: Colors.grey),
+            filled: true,
+            fillColor: Colors.grey[50],
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+      ],
+    );
+  }
+
+  void _processWithdrawal(int currentCoins) {
+    if (currentCoins < _minWithdrawalCoins) {
+      _showSnackBar('You need at least $_minWithdrawalCoins coins to withdraw.', backgroundColor: Colors.red);
+      return;
+    }
+
+    String message = '';
+    if (_selectedMethod == WithdrawalMethod.bank) {
+      if (_bankAccountController.text.isEmpty ||
+          _ifscCodeController.text.isEmpty ||
+          _accountHolderNameController.text.isEmpty) {
+        _showSnackBar('Please fill all bank details.', backgroundColor: Colors.red);
+        return;
+      }
+      message = 'Bank Withdrawal Request:\n'
+          'Account: ${_bankAccountController.text}\n'
+          'IFSC: ${_ifscCodeController.text}\n'
+          'Holder: ${_accountHolderNameController.text}\n'
+          'Amount: ${currentCoins / 1000.0} INR';
+    } else if (_selectedMethod == WithdrawalMethod.upi) {
+      if (_upiIdController.text.isEmpty) {
+        _showSnackBar('Please enter your UPI ID.', backgroundColor: Colors.red);
+        return;
+      }
+      message = 'UPI Withdrawal Request:\n'
+          'UPI ID: ${_upiIdController.text}\n'
+          'Amount: ${currentCoins / 1000.0} INR';
+    } else {
+      _showSnackBar('Please select a withdrawal method.', backgroundColor: Colors.red);
+      return;
+    }
+
+    _showSnackBar('Withdrawal request submitted!\n$message');
+    // TODO: Integrate with actual WithdrawalService
+    // Clear fields after submission
+    _bankAccountController.clear();
+    _ifscCodeController.clear();
+    _accountHolderNameController.clear();
+    _upiIdController.clear();
+    setState(() {
+      _selectedMethod = WithdrawalMethod.none; // Reset selection
+    });
+  }
 
   Widget _buildMethodCard(
     BuildContext context, {
@@ -182,29 +368,43 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        elevation: isSelected ? 10.0 : 5.0, // More distinct elevation
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18.0), // More rounded corners
-          side: isSelected ? BorderSide(color: Theme.of(context).primaryColor, width: 3.0) : BorderSide(color: Colors.grey.shade300, width: 1.0),
-        ),
-        child: Container(
-          width: 130, // Slightly wider cards
-          padding: const EdgeInsets.all(18.0), // Increased padding
-          decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.15).round()) : Colors.white, // More prominent selected color
-            borderRadius: BorderRadius.circular(18.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        width: 140, // Slightly wider cards
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).primaryColor.withAlpha((0.1 * 255).round()) : Colors.white,
+          borderRadius: BorderRadius.circular(20.0), // More rounded corners
+          border: Border.all(
+            color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+            width: isSelected ? 3.0 : 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected ? Theme.of(context).primaryColor.withAlpha((0.2 * 255).round()) : Colors.grey.shade200,
+              blurRadius: isSelected ? 15 : 8,
+              offset: isSelected ? const Offset(0, 6) : const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(18.0), // Increased padding
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 45, color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700), // Larger icon
-              const SizedBox(height: 12), // Increased spacing
+              Icon(
+                icon,
+                size: 48, // Larger icon
+                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
+              ),
+              const SizedBox(height: 15), // Increased spacing
               Text(
                 label,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith( // Larger text
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600, // Bolder text
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 16,
                     ),
               ),
             ],
@@ -213,7 +413,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       ),
     );
   }
-
 }
 
 class _WithdrawScreenLoading extends StatelessWidget {

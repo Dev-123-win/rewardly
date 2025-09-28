@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'animated_tap.dart'; // Import AnimatedTap
+import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
 
 class CustomButton extends StatefulWidget {
   final String text;
@@ -10,6 +10,7 @@ class CustomButton extends StatefulWidget {
   final double? height;
   final double borderRadius;
   final TextStyle? textStyle;
+  final EdgeInsetsGeometry? padding; // Add padding parameter
 
   const CustomButton({
     super.key,
@@ -21,6 +22,7 @@ class CustomButton extends StatefulWidget {
     this.height,
     this.borderRadius = 10.0, // Changed default to 10.0 for consistency with image
     this.textStyle,
+    this.padding, // Initialize padding
   });
 
   @override
@@ -53,6 +55,7 @@ class _CustomButtonState extends State<CustomButton> {
             ),
           ],
         ),
+        padding: widget.padding, // Apply padding
         child: Center(
           child: Text(
             widget.text,

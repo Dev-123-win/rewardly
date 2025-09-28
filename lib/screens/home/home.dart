@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../remote_config_service.dart';
-import '../../user_service.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
-import 'admin_panel.dart';
-import 'earn_coins_screen.dart';
-import 'referral_screen.dart';
-import 'profile_screen.dart';
-import 'withdraw_screen.dart';
+import 'package:rewardly_app/remote_config_service.dart';
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
+import 'package:rewardly_app/screens/home/admin_panel.dart';
+import 'package:rewardly_app/screens/home/earn_coins_screen.dart';
+import 'package:rewardly_app/screens/home/referral_screen.dart';
+import 'package:rewardly_app/screens/home/profile_screen.dart';
+import 'package:rewardly_app/screens/home/withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
-import 'tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
-import 'minesweeper_game_screen.dart'; // New import for Minesweeper Game
+import 'package:rewardly_app/screens/home/spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
+import 'package:rewardly_app/screens/home/tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
+import 'package:rewardly_app/screens/home/minesweeper_game_screen.dart'; // New import for Minesweeper Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 
 class Home extends StatefulWidget {

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../user_service.dart';
-import '../../ad_service.dart'; // Consolidated AdService
-import '../../remote_config_service.dart';
-import '../../shared/shimmer_loading.dart';
-import '../../providers/user_data_provider.dart';
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
+import 'package:rewardly_app/remote_config_service.dart';
+import 'package:rewardly_app/shared/shimmer_loading.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'dart:async'; // For StreamController
-import '../../theme_provider.dart';
+import 'package:rewardly_app/theme_provider.dart';
 import 'dart:developer' as developer;
 
 class SpinWheelGameScreen extends StatefulWidget {

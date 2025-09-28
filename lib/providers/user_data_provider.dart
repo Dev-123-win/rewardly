@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../user_service.dart';
+import 'package:rewardly_app/user_service.dart';
 import 'dart:developer' as developer;
 
 class UserDataProvider with ChangeNotifier {
@@ -37,6 +37,14 @@ class UserDataProvider with ChangeNotifier {
       _userData = null;
       _isLoading = false; // Also set loading to false when user is null
       notifyListeners();
+    }
+  }
+
+  Future<void> updateUserCoins(int amount) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _userService.updateCoins(user.uid, amount);
+      // No need to explicitly reload, as the stream listener will handle updates
     }
   }
 }

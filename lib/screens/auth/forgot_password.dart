@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../widgets/custom_button.dart';
-import 'auth_card.dart';
+import 'package:rewardly_app/widgets/custom_button.dart';
+import 'package:rewardly_app/screens/auth/auth_card.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../ad_service.dart'; // Consolidated AdService
+import 'package:rewardly_app/ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../user_service.dart';
-import '../../providers/user_data_provider.dart'; // Import UserDataProvider
-import '../../widgets/animated_tap.dart'; // Import AnimatedTap
+import 'package:rewardly_app/user_service.dart';
+import 'package:rewardly_app/providers/user_data_provider.dart'; // Import UserDataProvider
+import 'package:rewardly_app/widgets/animated_tap.dart'; // Import AnimatedTap
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -267,23 +267,32 @@ class _AdCard extends StatelessWidget {
         child: Row(
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Image.asset('assets/coin.png', height: 20, width: 20), // Use coin.png
-                      const SizedBox(width: 5),
-                      Text(
-                        '$points Coins', // Changed to 'Coins'
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.green[700]),
+                  // Custom "AD" icon (like a TV)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withAlpha((0.1 * 255).round()),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      'AD',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: Colors.deepPurple,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Image.asset('assets/coin.png', height: 24, width: 24), // Coin image
+                  const SizedBox(width: 5),
+                  Text(
+                    '+$points', // Display points as +X
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -293,15 +302,19 @@ class _AdCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isLocked ? null : onWatchAd, // Disable button if locked
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isLocked ? Colors.grey : Colors.lightGreen, // Grey if locked
+                  backgroundColor: isLocked ? Colors.grey[300] : Colors.deepPurple, // Grey if locked, purple if unlocked
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  elevation: isLocked ? 0 : 5, // No elevation if locked
                 ),
                 child: Text(
-                  isLocked ? (lockedMessage ?? 'Locked') : 'Watch Ad ($points Coins)', // Dynamic text
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white),
+                  isLocked ? (lockedMessage ?? 'Locked') : 'Watch Ad', // Only "Watch Ad"
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: isLocked ? Colors.grey[700] : Colors.white, // Darker text if locked
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
