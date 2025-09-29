@@ -174,82 +174,87 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                            child: Icon(Icons.person, color: Colors.white),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis, // Handle long names
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
-                        onPressed: () {
-                          // TODO: Implement notification logic
-                          log('Notifications icon tapped');
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Centralized Balance Card
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedIndex = 0; // Navigate to WithdrawScreen
-                      });
-                    },
-                    child: Card(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      elevation: 8.0,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+              child: SizedBox(
+                width: double.infinity, // Ensure the column takes full available width
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                      Expanded( // Wrap the inner Row with Expanded
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total Balance',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '₹${totalBalanceINR.toStringAsFixed(2)}',
-                                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 36,
-                                  ),
-                                ),
-                                Text(
-                                  '($coins coins)',
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
-                                ),
-                              ],
+                            CircleAvatar(
+                              backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
+                              child: Icon(Icons.person, color: Colors.white),
                             ),
-                            Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis, // Handle long names
+                              ),
+                            ),
                           ],
                         ),
                       ),
+                        IconButton(
+                          icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+                          onPressed: () {
+                            // TODO: Implement notification logic
+                            log('Notifications icon tapped');
+                          },
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 20),
+                    // Centralized Balance Card
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 0; // Navigate to WithdrawScreen
+                        });
+                      },
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        elevation: 8.0,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Total Balance',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    '₹${totalBalanceINR.toStringAsFixed(2)}',
+                                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 36,
+                                    ),
+                                  ),
+                                  Text(
+                                    '($coins coins)',
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
+                                  ),
+                                ],
+                              ),
+                              Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
