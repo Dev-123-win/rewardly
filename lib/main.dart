@@ -7,6 +7,8 @@ import 'providers/user_data_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // Import Crashlytics
 import 'dart:ui'; // Import for PlatformDispatcher
+// import 'package:firebase_core/firebase_core.dart'; // Removed as it's not needed for initializing default app directly here.
+
 
 import 'remote_config_service.dart';
 import 'wrapper.dart';
@@ -14,6 +16,8 @@ import 'theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp(); // Removed this line.
+
   // Initialize all sharded Firebase projects
   await FirebaseProjectConfigService.initializeAllFirebaseProjects();
 
