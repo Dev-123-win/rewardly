@@ -1,45 +1,100 @@
-import 'package:flutter/foundation.dart'; // Import for debugPrint
-import 'user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:firebase_core/firebase_core.dart'; // Import FirebaseApp
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
+import 'firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
+import 'logger_service.dart'; // Import LoggerService
 
 class WithdrawalService {
-  final UserService _userService = UserService();
+  // No longer needs a default UserService, as it will be created with the correct Firestore instance
 
   Future<String?> submitWithdrawal({
     required String uid,
     required int amount,
     required String paymentMethod,
-    required Map<String, dynamic> paymentDetails, // Changed to Map<String, dynamic>
+    required Map<String, dynamic> paymentDetails,
   }) async {
     if (amount <= 0) {
       return 'Please enter a valid amount.';
     }
 
-    final userData = await _userService.getUserData(uid).first;
-    final int currentCoins = (userData.data() as Map<String, dynamic>)['coins'] ?? 0;
-
-    if (amount > currentCoins) {
-      return 'Insufficient coins.';
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return 'User not logged in.';
     }
+
+    String? projectId;
+    final defaultFirestore = FirebaseFirestore.instance;
+    final userDocInDefaultProject = await defaultFirestore.collection('users').doc(uid).get();
+
+    if (userDocInDefaultProject.exists && userDocInDefaultProject.data()?['projectId'] != null) {
+      projectId = userDocInDefaultProject.data()?['projectId'] as String?;
+    } else {
+      // Fallback: If projectId is not in the default project, search all shards
+      LoggerService.warning('User document for $uid in default project does not contain projectId or document not found. Searching all shards for withdrawal.');
+      for (String pId in FirebaseProjectConfigService.projectIds) {
+        try {
+          final FirebaseApp shardedApp = FirebaseProjectConfigService.getFirebaseApp(pId);
+          final FirebaseFirestore shardedFirestore = FirebaseFirestore.instanceFor(app: shardedApp);
+          final shardedUserDoc = await shardedFirestore.collection('users').doc(uid).get();
+          if (shardedUserDoc.exists) {
+            projectId = pId;
+            LoggerService.info('User $uid found in shard: $projectId for withdrawal.');
+            break; // Found the user's project
+          }
+        } catch (e, s) {
+          LoggerService.error('Error searching shard $pId for user $uid during withdrawal', e, s);
+        }
+      }
+    }
+
+    if (projectId == null) {
+      LoggerService.error('User document for $uid not found in any sharded project for withdrawal.');
+      return 'Could not determine user\'s project ID.';
+    }
+
+    // Get the Firestore instance for the user's specific project
+    final FirebaseFirestore userFirestore = FirebaseFirestore.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
 
     if (paymentDetails.isEmpty) {
-      return 'Please enter payment details.'; // This check might need to be more specific now
+      return 'Please enter payment details.';
     }
 
-    // In a real application, you would store paymentDetails in Firestore
-    // or send them to a backend for processing.
-    // For this simulation, we'll just log them.
-    debugPrint('Withdrawal Request:');
-    debugPrint('  UID: $uid');
-    debugPrint('  Amount: $amount coins');
-    debugPrint('  Method: $paymentMethod');
-    debugPrint('  Details: $paymentDetails');
+    try {
+      await userFirestore.runTransaction((transaction) async {
+        final userDocRef = userFirestore.collection('users').doc(uid);
+        final userSnapshot = await transaction.get(userDocRef);
 
-    // Simulate withdrawal process
-    await Future.delayed(const Duration(seconds: 2));
+        if (!userSnapshot.exists) {
+          throw Exception('User document not found for withdrawal.');
+        }
 
-    // Deduct coins (in a real app, this would be after successful payment processing)
-    await _userService.updateCoins(uid, -amount);
+        final int currentCoins = (userSnapshot.data()?['coins'] as int?) ?? 0;
 
-    return null; // No error
+        if (amount > currentCoins) {
+          throw Exception('Insufficient coins for withdrawal.');
+        }
+
+        // Deduct coins
+        transaction.update(userDocRef, {'coins': FieldValue.increment(-amount)});
+
+        // Add withdrawal request
+        transaction.set(userFirestore.collection('withdrawalRequests').doc(), {
+          'uid': uid,
+          'amount': amount,
+          'paymentMethod': paymentMethod,
+          'paymentDetails': paymentDetails,
+          'status': 'pending',
+          'createdAt': FieldValue.serverTimestamp(),
+          'projectId': projectId,
+        });
+      });
+      return null;
+    } on Exception catch (e, s) {
+      LoggerService.error('Withdrawal transaction failed: $e', e, s);
+      return e.toString().contains('Insufficient coins') ? 'Insufficient coins.' : 'Failed to submit withdrawal request. Please try again.';
+    } catch (e, s) {
+      LoggerService.error('Error submitting withdrawal request: $e', e, s);
+      return 'Failed to submit withdrawal request. Please try again.';
+    }
   }
 }

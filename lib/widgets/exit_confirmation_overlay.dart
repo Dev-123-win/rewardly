@@ -1,5 +1,6 @@
 import 'dart:ui'; // For BackdropFilter
 import 'package:flutter/material.dart';
+import '../logger_service.dart'; // Import LoggerService
 
 class ExitConfirmationOverlay extends StatefulWidget {
   final VoidCallback onCancel;
@@ -120,6 +121,7 @@ class _ExitConfirmationOverlayState extends State<ExitConfirmationOverlay> with 
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
+                            LoggerService.info('Exit confirmed by user.');
                             Navigator.of(context).pop(); // Dismiss overlay, allow Wrapper to handle next back press
                           },
                           style: ElevatedButton.styleFrom(

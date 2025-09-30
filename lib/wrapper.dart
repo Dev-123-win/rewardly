@@ -63,7 +63,7 @@ class _WrapperState extends State<Wrapper> {
     }
   }
 
-  Future<void> _onPopInvokedWithResult(bool didPop) async {
+  Future<void> _onPopInvokedWithResult(bool didPop, dynamic result) async {
     if (didPop) {
       return;
     }
@@ -108,7 +108,7 @@ class _WrapperState extends State<Wrapper> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) => _onPopInvokedWithResult(didPop),
+      onPopInvokedWithResult: (didPop, result) => _onPopInvokedWithResult(didPop, result),
       child: Stack(
         children: [
           content,

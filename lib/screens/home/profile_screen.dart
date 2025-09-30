@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/user_data_provider.dart';
-import '../../auth_service.dart';
+import '../../auth_service.dart'; // Keep import for signOut
 import '../../shared/shimmer_loading.dart';
 
 class ProfileScreen extends StatelessWidget {

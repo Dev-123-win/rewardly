@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
+import '../../withdrawal_service.dart'; // Import WithdrawalService
 
 enum WithdrawalMethod { bank, upi, none }
 
@@ -14,6 +15,7 @@ class WithdrawScreen extends StatefulWidget {
 }
 
 class _WithdrawScreenState extends State<WithdrawScreen> {
+  final WithdrawalService _withdrawalService = WithdrawalService(); // Instantiate WithdrawalService
   WithdrawalMethod _selectedMethod = WithdrawalMethod.none;
   final int _minWithdrawalCoins = 1000; // Example minimum withdrawal
 
@@ -316,7 +318,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       return;
     }
 
-    String message = '';
     if (_selectedMethod == WithdrawalMethod.bank) {
       if (_bankAccountController.text.isEmpty ||
           _ifscCodeController.text.isEmpty ||
@@ -324,33 +325,49 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         _showSnackBar('Please fill all bank details.', backgroundColor: Colors.red);
         return;
       }
-      message = 'Bank Withdrawal Request:\n'
-          'Account: ${_bankAccountController.text}\n'
-          'IFSC: ${_ifscCodeController.text}\n'
-          'Holder: ${_accountHolderNameController.text}\n'
-          'Amount: ${currentCoins / 1000.0} INR';
     } else if (_selectedMethod == WithdrawalMethod.upi) {
       if (_upiIdController.text.isEmpty) {
         _showSnackBar('Please enter your UPI ID.', backgroundColor: Colors.red);
         return;
       }
-      message = 'UPI Withdrawal Request:\n'
-          'UPI ID: ${_upiIdController.text}\n'
-          'Amount: ${currentCoins / 1000.0} INR';
     } else {
       _showSnackBar('Please select a withdrawal method.', backgroundColor: Colors.red);
       return;
     }
 
-    _showSnackBar('Withdrawal request submitted!\n$message');
-    // TODO: Integrate with actual WithdrawalService
-    // Clear fields after submission
-    _bankAccountController.clear();
-    _ifscCodeController.clear();
-    _accountHolderNameController.clear();
-    _upiIdController.clear();
-    setState(() {
-      _selectedMethod = WithdrawalMethod.none; // Reset selection
+    _showSnackBar('Submitting withdrawal request...');
+
+    final String uid = FirebaseAuth.instance.currentUser!.uid; // User is guaranteed to be logged in at this point
+    final String methodString = _selectedMethod == WithdrawalMethod.bank ? 'bank' : 'upi';
+    final Map<String, dynamic> details = _selectedMethod == WithdrawalMethod.bank
+        ? {
+            'bankAccountNumber': _bankAccountController.text,
+            'ifscCode': _ifscCodeController.text,
+            'accountHolderName': _accountHolderNameController.text,
+          }
+        : {
+            'upiId': _upiIdController.text,
+          };
+
+    _withdrawalService.submitWithdrawal(
+      uid: uid,
+      amount: currentCoins,
+      paymentMethod: methodString,
+      paymentDetails: details,
+    ).then((errorMessage) {
+      if (errorMessage == null) {
+        _showSnackBar('Withdrawal request submitted successfully!');
+        // Clear fields after submission
+        _bankAccountController.clear();
+        _ifscCodeController.clear();
+        _accountHolderNameController.clear();
+        _upiIdController.clear();
+        setState(() {
+          _selectedMethod = WithdrawalMethod.none; // Reset selection
+        });
+      } else {
+        _showSnackBar(errorMessage, backgroundColor: Colors.red);
+      }
     });
   }
 

@@ -1,8 +1,6 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import '../../user_service.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
 import 'admin_panel.dart';
@@ -11,10 +9,11 @@ import 'referral_screen.dart';
 import 'profile_screen.dart';
 import 'withdraw_screen.dart';
 // Removed import for play_game_screen.dart
-import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
 import 'tic_tac_toe_game_screen.dart'; // New import for Tic Tac Toe Game
 import 'minesweeper_game_screen.dart'; // New import for Minesweeper Game
+import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
+import '../../logger_service.dart'; // Import LoggerService
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -37,12 +36,13 @@ class _HomeState extends State<Home> {
     final user = Provider.of<User?>(context, listen: false);
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
 
-    if (user != null) {
+    if (user != null && userDataProvider.shardedUserService != null) {
       bool admin = false;
       if (userDataProvider.userData != null) {
         admin = userDataProvider.userData!['isAdmin'] ?? false;
       } else {
-        admin = await UserService().isAdmin(user.uid);
+        // Use the sharded UserService to check admin status
+        admin = await userDataProvider.shardedUserService!.isAdmin(user.uid);
       }
       if (mounted) {
         setState(() {
@@ -203,7 +203,7 @@ class _HomeState extends State<Home> {
                           icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
                           onPressed: () {
                             // TODO: Implement notification logic
-                            log('Notifications icon tapped');
+                            LoggerService.info('Notifications icon tapped');
                           },
                         ),
                       ],
@@ -325,20 +325,20 @@ class _HomeState extends State<Home> {
                 children: [
                   _buildOfferCard(
                     context,
+                    title: 'Spin & Win',
+                    subtitle: 'Try your luck!',
+                    imagePath: 'assets/coin.png', // Using coin image for now
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
+                    },
+                  ),
+                  _buildOfferCard(
+                    context,
                     title: 'Tic Tac Toe',
                     subtitle: 'Play against NPC!',
                     imagePath: 'assets/tic_tac_toe.png',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
-                    },
-                  ),
-                  _buildOfferCard(
-                    context,
-                    title: 'Spin & Win',
-                    subtitle: 'Try your luck!',
-                    imagePath: 'assets/spin_the_wheel.png',
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
                     },
                   ),
                   _buildOfferCard(

@@ -1,12 +1,13 @@
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../ad_service.dart'; // Consolidated AdService
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../user_service.dart';
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import '../../widgets/animated_tap.dart'; // Import AnimatedTap
+import '../../logger_service.dart'; // Import LoggerService
+
+import '../../remote_config_service.dart'; // Import RemoteConfigService
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -17,18 +18,19 @@ class EarnCoinsScreen extends StatefulWidget {
 
 class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
   final AdService _adService = AdService();
-  final UserService _userService = UserService();
+  // UserService will be obtained from Provider
   bool _isAdLoading = false;
   User? _currentUser;
   int _adsWatchedToday = 0; // New state variable for ads watched today
-  static const int _dailyAdLimit = 7; // Define daily ad limit based on the image
-  final List<int> _adRewards = [30, 72, 120, 162, 210, 240, 300]; // Ad rewards from the image
+  int _dailyAdLimit = 0; // Will be fetched from Remote Config
+  List<int> _adRewards = []; // Will be fetched from Remote Config
+  final RemoteConfigService _remoteConfigService = RemoteConfigService();
 
   @override
   void initState() {
     super.initState();
     _currentUser = Provider.of<User?>(context, listen: false);
-    _loadAd(); // Load ad when screen initializes
+    _loadRemoteConfigAndAds(); // Load remote config and then ads
 
     // Listen to user data changes to update adsWatchedToday
     Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
@@ -47,13 +49,26 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
     _updateAdsWatchedState();
   }
 
+  Future<void> _loadRemoteConfigAndAds() async {
+    await _remoteConfigService.initialize();
+    if (mounted) {
+      setState(() {
+        _dailyAdLimit = _remoteConfigService.dailyAdLimit;
+        _adRewards = _remoteConfigService.adRewardsList;
+      });
+    }
+    _loadAd(); // Load ad after remote config is loaded
+  }
+
   Future<void> _updateAdsWatchedState() async {
     if (!mounted) return; // Add mounted check here
-    log('Updating adsWatchedToday state. Current value: $_adsWatchedToday'); // Log for debugging
+    LoggerService.debug('Updating adsWatchedToday state. Current value: $_adsWatchedToday'); // Log for debugging
     if (_currentUser == null) {
-      setState(() {
-        _adsWatchedToday = 0;
-      });
+      if (mounted) {
+        setState(() {
+          _adsWatchedToday = 0;
+        });
+      }
       return;
     }
 
@@ -107,8 +122,14 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
 
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
-        await _userService.updateCoins(_currentUser!.uid, points);
-        await _userService.updateAdsWatchedToday(_currentUser!.uid); // Increment ads watched today
+        final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+        await userDataProvider.shardedUserService!.updateCoins(_currentUser!.uid, points);
+        final String? projectId = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['projectId'];
+        if (projectId != null) {
+          await userDataProvider.shardedUserService!.updateAdsWatchedToday(_currentUser!.uid, projectId); // Increment ads watched today
+        } else {
+          LoggerService.error('ProjectId not found for user ${_currentUser!.uid} when updating ads watched today.');
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You earned $points coins!')),

@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'auth_service.dart';
-import 'firebase_options.dart';
+import 'firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
 import 'providers/user_data_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart'; // Import Crashlytics
+import 'dart:ui'; // Import for PlatformDispatcher
+
 import 'remote_config_service.dart';
 import 'wrapper.dart';
 import 'theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Initialize all sharded Firebase projects
+  await FirebaseProjectConfigService.initializeAllFirebaseProjects();
+
+  // Initialize Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+
   MobileAds.instance.initialize(); // Initialize AdMob
   await RemoteConfigService().initialize(); // Initialize Remote Config
   runApp(

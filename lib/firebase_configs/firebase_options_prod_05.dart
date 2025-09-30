@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart'
 ///
 /// Example:
 /// ```dart
-/// import 'firebase_options.dart';
+/// import 'firebase_options_prod_05.dart';
 /// // ...
 /// await Firebase.initializeApp(
 ///   options: DefaultFirebaseOptions.currentPlatform,
@@ -26,14 +26,20 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -47,29 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBQRbos-m9BLMQFaK-nAafAi_BGPGIDvNg',
-    appId: '1:1006454812188:android:3e5d7908b377359194f9d9',
-    messagingSenderId: '1006454812188',
-    projectId: 'rewardly-new',
-    storageBucket: 'rewardly-new.firebasestorage.app',
+    apiKey: 'AIzaSyCHXczYhynQ_atbe7SQK5DgUwdBc7p2lo8', // TODO: Replace with actual API Key for rewardly-3
+    appId: '1:701097217785:android:2db181338814cc7d74dc28', // TODO: Replace with actual App ID for rewardly-3
+    messagingSenderId: '701097217785', // TODO: Replace with actual Messaging Sender ID for rewardly-3
+    projectId: 'rewardly-3',
+    storageBucket: 'rewardly-3.firebasestorage.app',
   );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBXT-6Teaw4_wyPuPz-j5nEYA8AcLP3jbo',
-    appId: '1:1006454812188:ios:4d22aaf34600c29894f9d9',
-    messagingSenderId: '1006454812188',
-    projectId: 'rewardly-new',
-    storageBucket: 'rewardly-new.firebasestorage.app',
-    iosBundleId: 'com.supreet.rewardly',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBNmCsyoXUTZQcwQZjgqr3JxdUMqpfAsMc',
-    appId: '1:1006454812188:web:331704ea9d8b223d94f9d9',
-    messagingSenderId: '1006454812188',
-    projectId: 'rewardly-new',
-    authDomain: 'rewardly-new.firebaseapp.com',
-    storageBucket: 'rewardly-new.firebasestorage.app',
-  );
-
 }

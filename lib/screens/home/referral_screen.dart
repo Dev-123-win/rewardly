@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart'; // Added share_plus import
 import '../../providers/user_data_provider.dart';
-// import 'package:share_plus/share_plus.dart'; // Removed share_plus import
 import '../../shared/shimmer_loading.dart';
 
 class ReferralScreenLoading extends StatelessWidget {
@@ -137,8 +137,25 @@ class ReferralScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            // Removed "Invite Friends" button and social media sharing
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
+              onPressed: () {
+                Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode');
+              },
+              icon: const Icon(Icons.share, color: Colors.white),
+              label: Text(
+                'Share with Friends',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 5,
+              ),
+            ),
           ],
         ),
       ),

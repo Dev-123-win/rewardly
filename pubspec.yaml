@@ -36,6 +36,7 @@ dependencies:
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
   cloud_firestore: ^4.17.5
+  cloud_functions: ^4.0.0 # Added for Firebase Cloud Functions integration
   firebase_remote_config: ^4.4.7
   google_mobile_ads: ^6.0.0 # Updated to latest stable version
   provider: ^6.0.5
@@ -43,6 +44,12 @@ dependencies:
   shimmer: ^3.0.0
   flutter_fortune_wheel: ^1.3.2
   connectivity_plus: ^7.0.0 # Updated to latest stable version
+  uuid: ^4.4.0 # For generating unique referral codes
+  firebase_crashlytics: ^3.5.0 # For crash reporting
+  device_info_plus: ^10.0.0 # For device identification
+  share_plus: ^9.0.0 # For sharing functionality
+  logger: ^2.3.0 # For logging
+  shared_preferences: ^2.2.2 # For persistent storage of sharding index
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,8 @@ import '../../widgets/custom_button.dart';
 import '../../ad_service.dart'; // Import AdService
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerAd
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
+import '../../logger_service.dart'; // Import LoggerService
+// Removed direct import of UserService as it will be accessed via UserDataProvider
 
 class MinesweeperGameScreen extends StatefulWidget {
   const MinesweeperGameScreen({super.key});
@@ -27,6 +29,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
   late Timer _timer;
   late Random _random; // For better mine placement
   late AdService _adService; // AdService instance
+  // UserService will be obtained from Provider
 
   // Custom difficulty settings
   int _selectedRows = 9;
@@ -323,10 +326,13 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
         for (int c = 0; c < _cols; c++) {
           if (board[r][c] == randomSafeCell) {
             _revealCell(r, c);
+            LoggerService.info('Hint provided: revealed safe cell at ($r, $c)');
             return;
           }
         }
       }
+    } else {
+      LoggerService.info('No unrevealed safe cells available for a hint.');
     }
   }
 

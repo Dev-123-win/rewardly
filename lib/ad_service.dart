@@ -1,6 +1,6 @@
-import 'dart:developer';
 import 'package:flutter/material.dart'; // Import for ValueNotifier
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'logger_service.dart'; // Import LoggerService
 
 class AdService {
   // Singleton instance
@@ -12,16 +12,16 @@ class AdService {
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
   final int maxFailedLoadAttempts = 3;
-  final String _rewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917'; // Test Ad Unit ID
+  final String _rewardedAdUnitId = 'ca-app-pub-3863562453957252/7819438744'; // TODO: Replace with actual production ad unit ID from Google AdMob
 
   // Interstitial Ad
   InterstitialAd? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
-  final String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test Ad Unit ID
+  final String _interstitialAdUnitId = 'ca-app-pub-3863562453957252/8204266334'; // TODO: Replace with actual production ad unit ID from Google AdMob
 
   // Banner Ad
   BannerAd? _bannerAd;
-  final String _bannerAdUnitId = 'ca-app-pub-3940256099942544/6300978111'; // Test Ad Unit ID
+  final String _bannerAdUnitId = 'ca-app-pub-3863562453957252/8322001628'; // TODO: Replace with actual production ad unit ID from Google AdMob
   ValueNotifier<bool> bannerAdLoadedNotifier = ValueNotifier<bool>(false);
 
   BannerAd? get bannerAd => _bannerAd;
@@ -37,12 +37,12 @@ class AdService {
         onAdLoaded: (RewardedAd ad) {
           _rewardedAd = ad;
           _numRewardedLoadAttempts = 0;
-          log('RewardedAd loaded.');
+          LoggerService.info('RewardedAd loaded.');
         },
         onAdFailedToLoad: (LoadAdError error) {
           _rewardedAd = null;
           _numRewardedLoadAttempts++;
-          log('RewardedAd failed to load: $error');
+          LoggerService.error('RewardedAd failed to load: $error');
           if (_numRewardedLoadAttempts <= maxFailedLoadAttempts) {
             loadRewardedAd();
           }
@@ -64,15 +64,15 @@ class AdService {
     }
 
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (ad) => log('$ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (ad) => LoggerService.info('$ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (ad) {
-        log('$ad onAdDismissedFullScreenContent.');
+        LoggerService.info('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         _rewardedAd = null;
         loadRewardedAd(); // Load a new ad after the current one is dismissed
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
-        log('$ad onAdFailedToShowFullScreenContent: $error');
+        LoggerService.error('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         _rewardedAd = null;
         onAdFailedToShow();
@@ -98,12 +98,12 @@ class AdService {
         onAdLoaded: (InterstitialAd ad) {
           _interstitialAd = ad;
           _numInterstitialLoadAttempts = 0;
-          log('InterstitialAd loaded.');
+          LoggerService.info('InterstitialAd loaded.');
         },
         onAdFailedToLoad: (LoadAdError error) {
           _interstitialAd = null;
           _numInterstitialLoadAttempts++;
-          log('InterstitialAd failed to load: $error');
+          LoggerService.error('InterstitialAd failed to load: $error');
           if (_numInterstitialLoadAttempts <= maxFailedLoadAttempts) {
             loadInterstitialAd();
           }
@@ -124,16 +124,16 @@ class AdService {
     }
 
     _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) => log('$ad onAdShowedFullScreenContent.'),
+      onAdShowedFullScreenContent: (InterstitialAd ad) => LoggerService.info('$ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        log('$ad onAdDismissedFullScreenContent.');
+        LoggerService.info('$ad onAdDismissedFullScreenContent.');
         ad.dispose();
         _interstitialAd = null;
         onAdDismissed();
         loadInterstitialAd(); // Load a new ad
       },
       onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        log('$ad onAdFailedToShowFullScreenContent: $error');
+        LoggerService.error('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
         _interstitialAd = null;
         onAdFailedToShow();
@@ -152,18 +152,18 @@ class AdService {
       size: AdSize.banner,
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
-          log('$ad loaded.');
+          LoggerService.info('$ad loaded.');
           _bannerAd = ad as BannerAd;
           bannerAdLoadedNotifier.value = true; // Notify listeners that banner ad is loaded
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          log('$ad failed to load: $error');
+          LoggerService.error('$ad failed to load: $error');
           ad.dispose();
           bannerAdLoadedNotifier.value = false; // Notify listeners that banner ad failed to load
         },
-        onAdOpened: (Ad ad) => log('$ad opened.'),
-        onAdClosed: (Ad ad) => log('$ad closed.'),
-        onAdImpression: (Ad ad) => log('$ad impression.'),
+        onAdOpened: (Ad ad) => LoggerService.info('$ad opened.'),
+        onAdClosed: (Ad ad) => LoggerService.info('$ad closed.'),
+        onAdImpression: (Ad ad) => LoggerService.info('$ad impression.'),
       ),
     )..load();
   }
