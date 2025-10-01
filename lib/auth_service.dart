@@ -17,14 +17,16 @@ class AuthService {
         return AuthResult.failure(message: 'Could not get device ID. Please try again.');
       }
 
-      // Check if device ID is already registered across all projects
-      for (String projectId in FirebaseProjectConfigService.projectIds) {
-        final FirebaseFirestore firestoreInstance = FirebaseFirestore.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
-        final deviceCheck = await firestoreInstance.collection('users').where('deviceId', isEqualTo: deviceId).limit(1).get();
-        if (deviceCheck.docs.isNotEmpty) {
-          return AuthResult.failure(message: 'Only one account per device is allowed.');
-        }
+      // --- MODIFICATION START ---
+      // Temporarily simplify device ID check to use the default FirebaseFirestore instance.
+      // This is for debugging the PERMISSION_DENIED error during unauthenticated queries.
+      final FirebaseFirestore defaultFirestoreInstance = FirebaseFirestore.instance; // Use default instance
+      final deviceCheck = await defaultFirestoreInstance.collection('users').where('deviceId', isEqualTo: deviceId).limit(1).get();
+      if (deviceCheck.docs.isNotEmpty) {
+        return AuthResult.failure(message: 'Only one account per device is allowed.');
       }
+      // --- MODIFICATION END ---
+
 
       // Determine which project to shard the new user to
       final String targetProjectId = await FirebaseProjectConfigService.getNextProjectIdForNewUser();
