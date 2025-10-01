@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart'; // Import for defaultTargetPlatform
 import 'logger_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 import 'firebase_configs/firebase_options_prod_01.dart' as prod01_options;
@@ -9,11 +10,11 @@ import 'firebase_configs/firebase_options_prod_05.dart' as prod05_options;
 
 class FirebaseProjectConfigService {
   static final Map<String, FirebaseOptions> _projectOptions = {
-    'rewardly-new': prod01_options.DefaultFirebaseOptions.currentPlatform,
-    'rewardly-9fe76': prod02_options.DefaultFirebaseOptions.currentPlatform,
-    'rewardly-5': prod03_options.DefaultFirebaseOptions.currentPlatform,
-    'rewardly-4': prod04_options.DefaultFirebaseOptions.currentPlatform,
-    'rewardly-3': prod05_options.DefaultFirebaseOptions.currentPlatform,
+    'rewardly-new': prod01_options.DefaultFirebaseOptions.android,
+    'rewardly-9fe76': prod02_options.DefaultFirebaseOptions.android,
+    'rewardly-5': prod03_options.DefaultFirebaseOptions.android,
+    'rewardly-4': prod04_options.DefaultFirebaseOptions.android,
+    'rewardly-3': prod05_options.DefaultFirebaseOptions.android,
   };
 
   static List<String> get projectIds => _projectOptions.keys.toList();
@@ -23,22 +24,27 @@ class FirebaseProjectConfigService {
   }
 
   static Future<void> initializeAllFirebaseProjects() async {
-    // Initialize the default Firebase app first
-    await Firebase.initializeApp(
-      options: prod05_options.DefaultFirebaseOptions.currentPlatform,
-    );
-    for (String projectId in _projectOptions.keys) {
-      final options = _projectOptions[projectId];
-      if (options != null) {
-        try {
-          await Firebase.initializeApp(
-            name: projectId,
-            options: options,
-          );
-        } catch (e) {
-          LoggerService.error('Failed to initialize Firebase project: $projectId', e);
+    // Only attempt to initialize Firebase for Android platform if running on Android
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // Initialize the default Firebase app first
+      await Firebase.initializeApp(
+        options: prod05_options.DefaultFirebaseOptions.android,
+      );
+      for (String projectId in _projectOptions.keys) {
+        final options = _projectOptions[projectId];
+        if (options != null) {
+          try {
+            await Firebase.initializeApp(
+              name: projectId,
+              options: options,
+            );
+          } catch (e) {
+            LoggerService.error('Failed to initialize Firebase project: $projectId', e);
+          }
         }
       }
+    } else {
+      LoggerService.info('Firebase initialization skipped for unsupported platform: $defaultTargetPlatform');
     }
   }
 
