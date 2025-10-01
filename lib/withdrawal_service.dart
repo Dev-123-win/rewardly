@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:firebase_core/firebase_core.dart'; // Import FirebaseApp
 import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
-import 'package:rewardly_app/firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
+import 'firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
 import 'logger_service.dart'; // Import LoggerService
 
 class WithdrawalService {
