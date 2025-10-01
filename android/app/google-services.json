@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "701097217785",
+    "project_id": "rewardly-3",
+    "storage_bucket": "rewardly-3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:701097217785:android:2db181338814cc7d74dc28",
+        "android_client_info": {
+          "package_name": "com.supreet.rewardly"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHXczYhynQ_atbe7SQK5DgUwdBc7p2lo8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
