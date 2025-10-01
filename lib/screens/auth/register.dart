@@ -14,7 +14,7 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   final AuthService _auth = AuthService();
-  final _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>(); // Corrected type here
   bool loading = false;
 
   String email = '';
@@ -127,18 +127,29 @@ class _RegisterState extends State<Register> {
                                     setState(() => loading = true);
                                     final scaffoldMessenger = ScaffoldMessenger.of(context);
 									final theme = Theme.of(context);
-                                    dynamic result = await _auth.registerWithEmailAndPassword(email, password, referralCode: referralCode.isEmpty ? null : referralCode);
+                                    dynamic authResult = await _auth.registerWithEmailAndPassword(email, password, referralCode: referralCode.isEmpty ? null : referralCode);
                                     if (!mounted) return;
-                                    if (result is String) {
+
+                                    if (!authResult.success) {
                                       setState(() {
                                         loading = false;
+                                        error = authResult.message; // Set the error message from AuthResult
                                       });
                                       scaffoldMessenger.showSnackBar(
                                         SnackBar(
-                                          content: Text(result, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                          content: Text(error, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
+                                    } else {
+                                      // Registration successful
+                                      scaffoldMessenger.showSnackBar(
+                                        SnackBar(
+                                          content: Text('Registration successful! Please log in.', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                      widget.toggleView(); // Navigate to sign-in view
                                     }
                                   }
                                 },

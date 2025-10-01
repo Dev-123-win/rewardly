@@ -12,7 +12,7 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.email == request.auth.token.email
                     && request.resource.data.keys().hasAll(['email', 'coins', 'adsWatchedToday', 'lastAdWatchDate', 'referralCode', 'referredBy', 'isAdmin', 'spinWheelFreeSpinsToday', 'spinWheelAdSpinsToday', 'lastSpinWheelDate', 'deviceId', 'projectId'])
-                    && request.resource.data.email is string
+                    && request.resource.data.email is string && request.resource.data.email.matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
                     && request.resource.data.coins == 0 // New users start with 0 coins
                     && request.resource.data.adsWatchedToday == 0
                     && request.resource.data.lastAdWatchDate == '' // Or a default empty string/null
@@ -38,23 +38,16 @@ service cloud.firestore {
                     // Allow coins to be incremented/decremented by a small, reasonable amount per update
                     // This is a client-side compromise, still vulnerable to rapid clicks/bots
                     && request.resource.data.coins <= resource.data.coins + 100 // Example: max increment of 100 coins per update
-                    && request.resource.data.coins >= resource.data.data.coins - 100 // Example: max decrement of 100 coins per update
+                    && request.resource.data.coins >= resource.data.coins - 100 // Example: max decrement of 100 coins per update
                     // Ads Watched Today logic (client-side with rules)
                     && request.resource.data.adsWatchedToday is int && request.resource.data.adsWatchedToday >= 0
-                    && request.resource.data.lastAdWatchDate is string
+                    && request.resource.data.lastAdWatchDate is string && request.resource.data.lastAdWatchDate.matches(/^\d{4}-\d{2}-\d{2}$/)
                     // Spin Wheel logic (client-side with rules)
                     && request.resource.data.spinWheelFreeSpinsToday is int && request.resource.data.spinWheelFreeSpinsToday >= 0
                     && request.resource.data.spinWheelAdSpinsToday is int && request.resource.data.spinWheelAdSpinsToday >= 0
-                    && request.resource.data.lastSpinWheelDate is string;
+                    && request.resource.data.lastSpinWheelDate is string && request.resource.data.lastSpinWheelDate.matches(/^\d{4}-\d{2}-\d{2}$/);
 
       allow delete: if false; // No direct deletion of user accounts from client
-    }
-
-    // TEMPORARY: VERY INSECURE. Allows anyone to perform list operations (queries) on the users collection.
-    // This is ONLY to unblock registration for debugging purposes.
-    // FOR PRODUCTION, IMPLEMENT A CLOUD FUNCTION FOR SECURE DEVICE ID CHECKS.
-    match /users {
-      allow list: if true;
     }
 
     // Withdrawal Requests Collection Rules
