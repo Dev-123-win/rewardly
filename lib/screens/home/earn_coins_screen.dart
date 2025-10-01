@@ -124,12 +124,8 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
       onRewardEarned: (int rewardAmount) async {
         final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
         await userDataProvider.shardedUserService!.updateCoins(_currentUser!.uid, points);
-        final String? projectId = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['projectId'];
-        if (projectId != null) {
-          await userDataProvider.shardedUserService!.updateAdsWatchedToday(_currentUser!.uid, projectId); // Increment ads watched today
-        } else {
-          LoggerService.error('ProjectId not found for user ${_currentUser!.uid} when updating ads watched today.');
-        }
+        // ProjectId is no longer needed for client-side updateAdsWatchedToday
+        await userDataProvider.shardedUserService!.updateAdsWatchedToday(_currentUser!.uid); // Increment ads watched today
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You earned $points coins!')),

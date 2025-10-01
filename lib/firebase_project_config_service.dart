@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:rewardly_app/logger_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
-import 'firebase_configs/firebase_options_prod_01.dart' as prod01_options;
-import 'firebase_configs/firebase_options_prod_02.dart' as prod02_options;
-import 'firebase_configs/firebase_options_prod_03.dart' as prod03_options;
-import 'firebase_configs/firebase_options_prod_04.dart' as prod04_options;
-import 'firebase_configs/firebase_options_prod_05.dart' as prod05_options;
+import 'package:rewardly_app/firebase_configs/firebase_options_prod_01.dart' as prod01_options;
+import 'package:rewardly_app/firebase_configs/firebase_options_prod_02.dart' as prod02_options;
+import 'package:rewardly_app/firebase_configs/firebase_options_prod_03.dart' as prod03_options;
+import 'package:rewardly_app/firebase_configs/firebase_options_prod_04.dart' as prod04_options;
+import 'package:rewardly_app/firebase_configs/firebase_options_prod_05.dart' as prod05_options;
 
 class FirebaseProjectConfigService {
   static final Map<String, FirebaseOptions> _projectOptions = {
@@ -22,13 +23,21 @@ class FirebaseProjectConfigService {
   }
 
   static Future<void> initializeAllFirebaseProjects() async {
+    // Initialize the default Firebase app first
+    await Firebase.initializeApp(
+      options: prod05_options.DefaultFirebaseOptions.currentPlatform,
+    );
     for (String projectId in _projectOptions.keys) {
       final options = _projectOptions[projectId];
       if (options != null) {
-        await Firebase.initializeApp(
-          name: projectId,
-          options: options,
-        );
+        try {
+          await Firebase.initializeApp(
+            name: projectId,
+            options: options,
+          );
+        } catch (e) {
+          LoggerService.error('Failed to initialize Firebase project: $projectId', e);
+        }
       }
     }
   }

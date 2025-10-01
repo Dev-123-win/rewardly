@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'user_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'models/auth_result.dart'; // Import AuthResult
-import 'device_service.dart'; // Import DeviceService
+import 'package:rewardly_app/models/auth_result.dart'; // Import AuthResult
+import 'package:rewardly_app/device_service.dart'; // Import DeviceService
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Firestore queries
-import 'firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
+import 'package:rewardly_app/firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

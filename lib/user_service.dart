@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // Import Cloud Functions
 import 'package:uuid/uuid.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
@@ -18,41 +17,36 @@ class UserService {
         String? actualReferredBy;
         String newReferralCode;
 
-        // Call Cloud Function to generate a unique referral code
-        try {
-          final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('generateUniqueReferralCode');
-          final HttpsCallableResult result = await callable.call();
-          newReferralCode = result.data['referralCode'];
-        } catch (e, s) {
-          FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error calling Cloud Function to generate unique referral code');
-          // Fallback to client-side generation if Cloud Function fails
-          newReferralCode = const Uuid().v4().substring(0, 8);
-        }
+        // Client-side generation of a unique referral code
+        newReferralCode = const Uuid().v4().substring(0, 8);
+        // Note: Global uniqueness across shards is difficult to guarantee client-side
+        // without extensive queries, which are inefficient and prone to race conditions.
+        // We rely on Firestore Security Rules to prevent modification after creation.
 
-        // Client-side referral bonus logic removed.
-        // The Cloud Function 'handleReferralBonus' will now handle referrer lookup and bonus awarding.
         if (referralCode != null && referralCode.isNotEmpty) {
           actualReferredBy = referralCode;
+          // Client-side referral bonus logic:
+          // The plan states that 'handleReferralBonus' is highly sensitive and
+          // should ideally remain server-side or be removed.
+          // For now, we will only store 'referredBy' and rely on manual processing
+          // or a simplified client-side approach (with acknowledged security risks)
+          // if the bonus system is to be retained without Cloud Functions.
+          // For this implementation, we are not awarding bonuses client-side.
         }
-
-        // Ensure the generated referral code is unique (though UUID collision is highly unlikely for substring)
-        // For robustness, a loop could be added here to regenerate if a collision is detected,
-        // but for an 8-character UUID substring, it's generally considered unique enough for this scale.
-        // If truly unique and short codes are needed, a server-side generation with collision checks is better.
 
         transaction.set(_firestore.collection('users').doc(uid), {
           'email': email,
           'coins': initialCoins,
           'adsWatchedToday': 0,
-          'lastAdWatchDate': DateTime.now().toIso8601String().substring(0, 10),
-          'referralCode': newReferralCode, // Use the generated unique referral code
+          'lastAdWatchDate': '', // Initialize as empty, updated on first ad watch
+          'referralCode': newReferralCode,
           'referredBy': actualReferredBy,
           'isAdmin': false,
           'spinWheelFreeSpinsToday': 3, // Initial free spins
-          'spinWheelAdSpinsToday': 0, // Initial ad-watched spins
-          'lastSpinWheelDate': DateTime.now().toIso8601String().substring(0, 10), // Current date
-          'deviceId': deviceId, // Store the device ID
-          'projectId': projectId, // Store the project ID this user belongs to
+          'spinWheelAdSpinsToday': 0,
+          'lastSpinWheelDate': '', // Initialize as empty, updated on first spin
+          'deviceId': deviceId,
+          'projectId': projectId,
         });
       });
     } catch (e, s) {
@@ -83,13 +77,30 @@ class UserService {
     }
   }
 
-  // Reset daily spin wheel counts if date has changed (now handled by Cloud Function)
-  Future<void> resetSpinWheelDailyCounts(String uid, String projectId) async {
+  // Reset daily spin wheel counts if date has changed (now handled client-side)
+  Future<void> resetSpinWheelDailyCounts(String uid) async {
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('resetSpinWheelDailyCounts');
-      await callable.call({'uid': uid, 'projectId': projectId});
+      await _firestore.runTransaction((transaction) async {
+        final userRef = _firestore.collection('users').doc(uid);
+        final userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists) {
+          throw Exception('User document not found.');
+        }
+
+        final today = DateTime.now().toIso8601String().substring(0, 10);
+        final lastSpinWheelDate = userDoc.data()?['lastSpinWheelDate'] as String? ?? '';
+
+        if (lastSpinWheelDate != today) {
+          transaction.update(userRef, {
+            'spinWheelFreeSpinsToday': 3, // Reset to initial free spins
+            'spinWheelAdSpinsToday': 0,
+            'lastSpinWheelDate': today,
+          });
+        }
+      });
     } catch (e, s) {
-      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error calling Cloud Function to reset spin wheel daily counts');
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error resetting spin wheel daily counts client-side');
       rethrow;
     }
   }
@@ -120,13 +131,33 @@ class UserService {
     }
   }
 
-  // Update ads watched today (now handled by Cloud Function)
-  Future<void> updateAdsWatchedToday(String uid, String projectId) async {
+  // Update ads watched today (now handled client-side)
+  Future<void> updateAdsWatchedToday(String uid) async {
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('updateAdsWatchedToday');
-      await callable.call({'uid': uid, 'projectId': projectId});
+      await _firestore.runTransaction((transaction) async {
+        final userRef = _firestore.collection('users').doc(uid);
+        final userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists) {
+          throw Exception('User document not found.');
+        }
+
+        final today = DateTime.now().toIso8601String().substring(0, 10);
+        final lastAdWatchDate = userDoc.data()?['lastAdWatchDate'] as String? ?? '';
+
+        if (lastAdWatchDate != today) {
+          transaction.update(userRef, {
+            'adsWatchedToday': 1, // Reset to 1 for the new day
+            'lastAdWatchDate': today,
+          });
+        } else {
+          transaction.update(userRef, {
+            'adsWatchedToday': FieldValue.increment(1),
+          });
+        }
+      });
     } catch (e, s) {
-      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error calling Cloud Function to update ads watched today');
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating ads watched today client-side');
       rethrow;
     }
   }

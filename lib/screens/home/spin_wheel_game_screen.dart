@@ -7,7 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../ad_service.dart';
 import '../../remote_config_service.dart';
 import '../../providers/user_data_provider.dart';
-import '../../logger_service.dart';
 
 class SpinWheelGameScreen extends StatefulWidget {
   const SpinWheelGameScreen({super.key});
@@ -75,12 +74,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
 
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
     // Ensure daily counts are reset if date has changed using the sharded UserService
-    final String? projectId = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['projectId'];
-    if (projectId != null) {
-      await userDataProvider.shardedUserService!.resetSpinWheelDailyCounts(_currentUser!.uid, projectId);
-    } else {
-      LoggerService.error('ProjectId not found for user ${_currentUser!.uid} when resetting spin wheel daily counts.');
-    }
+    // ProjectId is no longer needed for client-side resetSpinWheelDailyCounts
+    await userDataProvider.shardedUserService!.resetSpinWheelDailyCounts(_currentUser!.uid);
 
     final userData = userDataProvider.userData;
 

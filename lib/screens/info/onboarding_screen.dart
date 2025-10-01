@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../wrapper.dart'; // Assuming Wrapper is your main entry after onboarding
+import 'package:rewardly_app/wrapper.dart'; // Assuming Wrapper is your main entry after onboarding
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
