@@ -4,6 +4,7 @@ import '../../shared/shimmer_loading.dart';
 import '../../widgets/custom_button.dart';
 import 'auth_card.dart';
 import 'forgot_password.dart';
+import '../../models/auth_result.dart'; // Import AuthResult
 
 class SignIn extends StatefulWidget {
   final Function toggleView;
@@ -105,18 +106,26 @@ class _SignInState extends State<SignIn> {
                                     setState(() => loading = true);
                                     final scaffoldMessenger = ScaffoldMessenger.of(context);
 									final theme = Theme.of(context);
-                                    dynamic result = await _auth.signInWithEmailAndPassword(email, password);
+                                    AuthResult authResult = await _auth.signInWithEmailAndPassword(email, password);
 									if (!mounted) return;
-                                    if (result is String) {
+
+                                    if (!authResult.success) {
                                       setState(() {
                                         loading = false;
+                                        error = authResult.message ?? ''; // Provide a default empty string if message is null
                                       });
                                       scaffoldMessenger.showSnackBar(
                                         SnackBar(
-                                          content: Text(result, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                                          content: Text(error, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
+                                    } else {
+                                      // Login successful, Wrapper will handle navigation
+                                      setState(() {
+                                        loading = false;
+                                        error = ''; // Clear any previous errors
+                                      });
                                     }
                                   }
                                 },

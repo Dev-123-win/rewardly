@@ -7,6 +7,7 @@ import 'screens/auth/authenticate.dart';
 import 'screens/home/home.dart';
 import 'widgets/exit_confirmation_overlay.dart';
 import 'screens/no_internet_screen.dart'; // Import NoInternetScreen
+import 'logger_service.dart'; // Import LoggerService
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});
@@ -98,6 +99,7 @@ class _WrapperState extends State<Wrapper> {
     }
 
     final user = Provider.of<User?>(context);
+    LoggerService.info('Wrapper rebuilding. User: ${user?.uid ?? 'null'}');
 
     Widget content;
     if (user == null) {

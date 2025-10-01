@@ -140,7 +140,7 @@ class ReferralScreen extends StatelessWidget {
             const SizedBox(height: 30),
             ElevatedButton.icon(
               onPressed: () {
-                Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode');
+                SharePlus.instance.share(ShareParams(text: 'Join Rewardly and earn rewards! Use my referral code: $referralCode')); // FIX: Using ShareParams
               },
               icon: const Icon(Icons.share, color: Colors.white),
               label: Text(

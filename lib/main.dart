@@ -12,6 +12,9 @@ import 'remote_config_service.dart';
 import 'wrapper.dart';
 import 'theme_provider.dart';
 
+// Ensure Consistent AuthService Instance in main.dart:
+final AuthService _authService = AuthService();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize all sharded Firebase projects
@@ -42,7 +45,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         StreamProvider<User?>.value(
-          value: AuthService().user,
+          value: _authService.user, // Use the consistent instance
           initialData: null,
         ),
         ChangeNotifierProvider(
