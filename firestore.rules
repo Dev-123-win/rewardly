@@ -4,16 +4,11 @@ service cloud.firestore {
 
     // Users Collection Rules
     match /users/{userId} {
-      // 🚨 TEMPORARY FIX:
-      // Allow unauthenticated list + get so deviceId queries during registration work.
-      // This makes the entire users collection publicly readable, so use only while debugging.
-      allow list, get: if true;
-
-      // Allow authenticated users to read their own profile
+      // Allow authenticated users to read their own user document
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      // Allow creation of new user documents by the authenticated user
-      // Enforce initial state for sensitive fields
+      // Allow authenticated users to create their own user document
+      // This is for initial registration in their assigned shard
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.email == request.auth.token.email
                     && request.resource.data.keys().hasAll([
@@ -28,12 +23,62 @@ service cloud.firestore {
                       'spinWheelAdSpinsToday',
                       'lastSpinWheelDate',
                       'deviceId',
-                      'projectId'
+                      'projectId',
+                      'preferredBankDetails', // New field
+                      'preferredUpiDetails',  // New field
+                      'lastUsedWithdrawalMethod', // New field
+                      'referredUserCreatedAt', // Referral system field
+                      'daysActiveCount', // Referral system field
+                      'lastActiveDate', // Referral system field
+                      'referrerAwarded' // Referral system field
                     ])
                     && request.resource.data.email is string
-                    && request.resource.data.coins == 0; // New users start with 0 coins
+                    // Coins are 5000 if referred, 0 otherwise.
+                    && ((request.resource.data.referredBy != null && request.resource.data.coins == 5000) || (request.resource.data.referredBy == null && request.resource.data.coins == 0))
+                    && request.resource.data.preferredBankDetails is map
+                    && request.resource.data.preferredUpiDetails is map
+                    && request.resource.data.lastUsedWithdrawalMethod == null
+                    && request.resource.data.referredUserCreatedAt is timestamp
+                    && request.resource.data.daysActiveCount == 0
+                    && request.resource.data.lastActiveDate is string
+                    && request.resource.data.referrerAwarded == false;
+
+      // Allow authenticated users to update their own user document
+      // Users can update specific fields related to app functionality and preferences
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly([
+                      'coins',
+                      'adsWatchedToday',
+                      'lastAdWatchDate',
+                      'spinWheelFreeSpinsToday',
+                      'spinWheelAdSpinsToday',
+                      'lastSpinWheelDate',
+                      'preferredBankDetails',
+                      'preferredUpiDetails',
+                      'lastUsedWithdrawalMethod',
+                      'daysActiveCount', // Referral system field
+                      'lastActiveDate', // Referral system field
+                      'referrerAwarded' // Referral system field
+                    ]);
     }
 
-    // TODO: add rules for other collections if needed
+    // Withdrawal Requests Collection Rules
+    match /withdrawalRequests/{requestId} {
+      // Allow authenticated users to create their own withdrawal requests
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+
+      // Allow authenticated users to read their own withdrawal requests
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+
+      // Allow updates to the 'status' field only, typically by an admin or backend service
+      // For now, we'll allow any authenticated user to update the status, but this is a security risk
+      // and should be replaced with admin-specific rules (e.g., custom claims) in a production environment.
+      allow update: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['status'])
+                    && request.resource.data.status in ['pending', 'success', 'failed'];
+
+      // Disallow deletion of withdrawal requests by regular users
+      allow delete: if false;
+    }
   }
 }

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
-import 'admin_panel.dart';
 import 'earn_coins_screen.dart';
 import 'referral_screen.dart';
 import 'profile_screen.dart';
@@ -14,6 +12,7 @@ import 'minesweeper_game_screen.dart'; // New import for Minesweeper Game
 import 'spin_wheel_game_screen.dart'; // New import for Spin Wheel Game
 // Removed imports for AquaBlastScreen, OfferProScreen, ReadAndEarnScreen, DailyStreamScreen, EmptyScreen
 import '../../logger_service.dart'; // Import LoggerService
+import '../../models/auth_result.dart'; // Import AuthResult
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -24,33 +23,6 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _selectedIndex = 2; // Set Home as initial selected index
-  bool _isAdmin = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAdminStatus();
-  }
-
-  Future<void> _checkAdminStatus() async {
-    final user = Provider.of<User?>(context, listen: false);
-    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-
-    if (user != null && userDataProvider.shardedUserService != null) {
-      bool admin = false;
-      if (userDataProvider.userData != null) {
-        admin = userDataProvider.userData!['isAdmin'] ?? false;
-      } else {
-        // Use the sharded UserService to check admin status
-        admin = await userDataProvider.shardedUserService!.isAdmin(user.uid);
-      }
-      if (mounted) {
-        setState(() {
-          _isAdmin = admin;
-        });
-      }
-    }
-  }
 
   List<Widget> _buildScreens() {
     return [
@@ -70,7 +42,6 @@ class _HomeState extends State<Home> {
             ? const _LoadingPlaceholder()
             : const ProfileScreen(), // Index 3 (Profile)
       ),
-      if (_isAdmin) const AdminPanel(), // Index 4 (Admin)
     ];
   }
 
@@ -93,22 +64,14 @@ class _HomeState extends State<Home> {
         label: 'Profile',
       ),
     ];
-    if (_isAdmin) {
-      items.add(
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.admin_panel_settings),
-          label: 'Admin',
-        ),
-      );
-    }
     return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User?>(context);
+    final authResult = Provider.of<AuthResult?>(context);
 
-    if (user == null) {
+    if (authResult?.uid == null) {
       return const HomeScreenLoading();
     }
 
@@ -143,10 +106,10 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildHomePageContent() {
-    final user = Provider.of<User?>(context);
+    final authResult = Provider.of<AuthResult?>(context);
     final userDataProvider = Provider.of<UserDataProvider>(context);
 
-    if (user == null || userDataProvider.userData == null) {
+    if (authResult?.uid == null || userDataProvider.userData == null) {
       return const HomeScreenLoading();
     }
 
@@ -189,13 +152,13 @@ class _HomeState extends State<Home> {
                               child: Icon(Icons.person, color: Colors.white),
                             ),
                             const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                'Hello, ${user.email?.split('@')[0] ?? 'User'}!',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis, // Handle long names
-                              ),
+                          Expanded(
+                            child: Text(
+                              'Hello, ${authResult?.uid?.split('@')[0] ?? 'User'}!', // Using uid as a fallback for display
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis, // Handle long names
                             ),
+                          ),
                           ],
                         ),
                       ),

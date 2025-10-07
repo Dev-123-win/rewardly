@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../user_service.dart';
+
 import '../../ad_service.dart';
+import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for AdWidget
 import 'dart:math';
 import '../../widgets/animated_tap.dart'; // Import AnimatedTap
+import 'package:confetti/confetti.dart';
+import 'package:group_radio_button/group_radio_button.dart' as grp;
 
 enum Player { x, o, none }
 enum GameMode { easy, medium, hard }
@@ -18,10 +21,18 @@ class TicTacToeGameScreen extends StatefulWidget {
   State<TicTacToeGameScreen> createState() => _TicTacToeGameScreenState();
 }
 
-class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
-  final UserService _userService = UserService();
+class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
+    with TickerProviderStateMixin {
   final AdService _adService = AdService();
-  User? _currentUser;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  late AnimationController _backgroundAnimationController;
+  late Animation<Color?> _gradientColor1;
+  late Animation<Color?> _gradientColor2;
+  late AnimationController _lineAnimationController;
+  late ConfettiController _confettiController;
+  late AnimationController _dialogAnimationController;
+  late Animation<double> _dialogScaleAnimation;
 
   List<Player> board = List.filled(9, Player.none);
   Player currentPlayer = Player.x;
@@ -29,29 +40,81 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   GameResult gameResult = GameResult.ongoing;
   bool _isGameOver = false;
   bool _isLoadingAd = false;
+  bool _isComputerThinking = false;
+  List<int>? _winningLine;
 
   @override
   void initState() {
     super.initState();
-    _currentUser = Provider.of<User?>(context, listen: false);
     _adService.loadInterstitialAd();
     _adService.loadBannerAd(); // Load banner ad
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _animation = Tween<double>(begin: 1, end: 1.2).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    _animationController.repeat(reverse: true);
+
+    _backgroundAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat(reverse: true);
+
+    _gradientColor1 = ColorTween(
+      begin: Colors.blueGrey.shade50, // Lighter gradient start
+      end: Colors.blueGrey.shade200, // Lighter gradient end
+    ).animate(_backgroundAnimationController);
+
+    _gradientColor2 = ColorTween(
+      begin: Colors.blueGrey.shade200, // Lighter gradient start
+      end: Colors.blueGrey.shade50, // Lighter gradient end
+    ).animate(_backgroundAnimationController);
+
+    _lineAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+
+    _dialogAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _dialogScaleAnimation = CurvedAnimation(
+      parent: _dialogAnimationController,
+      curve: Curves.elasticOut,
+    );
+
     _resetGame();
   }
 
   @override
   void dispose() {
     _adService.dispose(); // Dispose all ads
+    _animationController.dispose();
+    _backgroundAnimationController.dispose();
+    _lineAnimationController.dispose();
+    _confettiController.dispose();
+    _dialogAnimationController.dispose();
     super.dispose();
   }
 
   void _resetGame() {
+    _lineAnimationController.reset();
     setState(() {
       board = List.filled(9, Player.none);
       currentPlayer = Player.x;
       gameResult = GameResult.ongoing;
       _isGameOver = false;
       _isLoadingAd = false;
+      _winningLine = null;
     });
     if (currentPlayer == Player.o) {
       _makeComputerMove();
@@ -60,6 +123,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
 
   void _onTap(int index) {
     if (board[index] == Player.none && !_isGameOver && currentPlayer == Player.x) {
+      HapticFeedback.mediumImpact();
       setState(() {
         board[index] = Player.x;
         _checkGameEnd();
@@ -73,6 +137,9 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
 
   void _makeComputerMove() {
     if (_isGameOver) return;
+    setState(() {
+      _isComputerThinking = true;
+    });
 
     Future.delayed(const Duration(milliseconds: 500), () {
       int? move;
@@ -95,6 +162,11 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
           if (gameResult == GameResult.ongoing) {
             currentPlayer = Player.x;
           }
+          _isComputerThinking = false;
+        });
+      } else {
+        setState(() {
+          _isComputerThinking = false;
         });
       }
     });
@@ -118,7 +190,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
     for (int i = 0; i < 9; i++) {
       if (board[i] == Player.none) {
         board[i] = Player.o;
-        if (_checkWin(Player.o)) {
+        if (_checkWin(Player.o) != null) {
           board[i] = Player.none;
           return i;
         }
@@ -130,7 +202,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
     for (int i = 0; i < 9; i++) {
       if (board[i] == Player.none) {
         board[i] = Player.x;
-        if (_checkWin(Player.x)) {
+        if (_checkWin(Player.x) != null) {
           board[i] = Player.none;
           return i;
         }
@@ -173,8 +245,8 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   }
 
   int _minimax(List<Player> currentBoard, int depth, bool isMaximizingPlayer) {
-    if (_checkWin(Player.o)) return 10 - depth;
-    if (_checkWin(Player.x)) return -10 + depth;
+    if (_checkWin(Player.o) != null) return 10 - depth;
+    if (_checkWin(Player.x) != null) return -10 + depth;
     if (_checkDraw(currentBoard)) return 0;
 
     if (isMaximizingPlayer) {
@@ -202,19 +274,27 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
     }
   }
 
-  bool _checkWin(Player player) {
+  List<int>? _checkWin(Player player) {
     // Check rows
     for (int i = 0; i < 9; i += 3) {
-      if (board[i] == player && board[i + 1] == player && board[i + 2] == player) return true;
+      if (board[i] == player && board[i + 1] == player && board[i + 2] == player) {
+        return [i, i + 2];
+      }
     }
     // Check columns
     for (int i = 0; i < 3; i++) {
-      if (board[i] == player && board[i + 3] == player && board[i + 6] == player) return true;
+      if (board[i] == player && board[i + 3] == player && board[i + 6] == player) {
+        return [i, i + 6];
+      }
     }
     // Check diagonals
-    if (board[0] == player && board[4] == player && board[8] == player) return true;
-    if (board[2] == player && board[4] == player && board[6] == player) return true;
-    return false;
+    if (board[0] == player && board[4] == player && board[8] == player) {
+      return [0, 8];
+    }
+    if (board[2] == player && board[4] == player && board[6] == player) {
+      return [2, 6];
+    }
+    return null;
   }
 
   bool _checkDraw(List<Player> currentBoard) {
@@ -227,18 +307,32 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   }
 
   void _checkGameEnd() {
-    if (_checkWin(Player.x)) {
+    List<int>? winningLine = _checkWin(Player.x);
+    if (winningLine != null) {
+      _lineAnimationController.forward();
+      setState(() {
+        _winningLine = winningLine;
+      });
       gameResult = GameResult.win;
       _isGameOver = true;
+      _confettiController.play();
       _showGameResultDialog();
-    } else if (_checkWin(Player.o)) {
-      gameResult = GameResult.lose;
-      _isGameOver = true;
-      _showGameResultDialog();
-    } else if (_checkDraw(board)) {
-      gameResult = GameResult.draw;
-      _isGameOver = true;
-      _showGameResultDialog();
+    } else {
+      winningLine = _checkWin(Player.o);
+      if (winningLine != null) {
+        _lineAnimationController.forward();
+        setState(() {
+          _winningLine = winningLine;
+        });
+        gameResult = GameResult.lose;
+        _isGameOver = true;
+        _showGameResultDialog();
+      } else if (_checkDraw(board)) {
+        gameResult = GameResult.draw;
+        _isGameOver = true;
+        _confettiController.play();
+        _showGameResultDialog();
+      }
     }
   }
 
@@ -266,11 +360,19 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   }
 
   Future<void> _updateUserCoins(int coins) async {
-    if (_currentUser != null && coins > 0) {
-      await _userService.updateCoins(_currentUser!.uid, coins);
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    if (coins > 0 && userDataProvider.userData?.id != null && userDataProvider.shardedUserService != null) {
+      await userDataProvider.updateUserCoins(coins); // Use the provider's method
       if(!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('You earned $coins coins!')),
+      );
+    } else {
+      // Log a warning or show an error message if shardedUserService is not available
+      // For now, we'll just show a snackbar.
+      if(!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update coins. Please try again.')),
       );
     }
   }
@@ -294,7 +396,8 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   }
 
   void _showResultDialogContent(int rewardCoins) {
-    if(!mounted) return;
+    if (!mounted) return;
+    _dialogAnimationController.forward(from: 0);
     String title;
     String content;
     switch (gameResult) {
@@ -314,30 +417,62 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
         return; // Should not happen
     }
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-                _resetGame();
-              },
-              child: const Text('Play Again'),
+      isDismissible: false,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.deepPurple.shade50,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
             ),
-            if (gameResult != GameResult.win && gameResult != GameResult.draw)
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  _showRewardedAdForCoins();
-                },
-                child: const Text('Watch Ad for +X Coins'),
-              ),
-          ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (gameResult == GameResult.win)
+                  ScaleTransition(
+                    scale: _dialogScaleAnimation,
+                    child: const Icon(Icons.emoji_events,
+                        color: Colors.amber, size: 60),
+                  ),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 10),
+                ScaleTransition(
+                  scale: _dialogScaleAnimation,
+                  child: Text(
+                    content,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    _resetGame();
+                  },
+                  child: const Text('Play Again'),
+                ),
+                if (gameResult != GameResult.win &&
+                    gameResult != GameResult.draw)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _showRewardedAdForCoins();
+                    },
+                    child: const Text('Watch Ad for +X Coins'),
+                  ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -385,59 +520,120 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade50, // Themed background
+      floatingActionButton: FloatingActionButton(
+        onPressed: _resetGame,
+        backgroundColor: Colors.blueGrey.shade400, // Updated FAB color
+        child: const Icon(Icons.refresh, color: Colors.white), // Icon color for contrast
+      ),
       appBar: AppBar(
         title: const Text('Tic Tac Toe'),
         centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.blueGrey.shade800, // Updated AppBar foreground color
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _showDifficultySettingsDialog, // Call new method
+            color: Colors.blueGrey.shade800, // Icon color
+          ),
+        ],
       ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Padding(
+      body: AnimatedBuilder(
+        animation: _backgroundAnimationController,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_gradientColor1.value!, _gradientColor2.value!],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: child,
+          );
+        },
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                Padding(
                 padding: const EdgeInsets.all(20.0), // Increased padding
                 child: Column(
                   children: [
                     // Current Player Indicator
                     _buildPlayerIndicator(context),
-                    const SizedBox(height: 20),
-                    // Difficulty Selector
-                    _buildDifficultySelector(context),
+                    // Removed Difficulty Selector from here
                   ],
                 ),
               ),
-              Expanded(
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(20.0), // Increased padding
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 15.0, // Increased spacing
-                    mainAxisSpacing: 15.0, // Increased spacing
+              Center( // Wrap the board in a Center widget
+                child: Container(
+                  margin: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.shade50,
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  itemCount: 9,
-                  itemBuilder: (context, index) {
-                    return _buildGameCell(index);
-                  },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Removed 'spacing' as it's no longer used.
+                      return AspectRatio( // Ensure the board is square
+                        aspectRatio: 1,
+                        child: Stack(
+                          children: [
+                            GridView.count( // Changed to GridView.count as requested
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 2.0, // Small spacing for cell borders
+                              mainAxisSpacing: 2.0, // Small spacing for cell borders
+                              shrinkWrap: true, // Occupy only necessary space
+                              physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+                              children: List.generate(9, (index) {
+                                // Pass constraints to _buildGameCell for responsive symbol sizing
+                                return _buildGameCell(index, constraints);
+                              }),
+                            ),
+                            // Winning line painter remains, but will draw over the new cell design
+                            if (_winningLine != null)
+                              CustomPaint(
+                                size: Size(
+                                    constraints.maxWidth, constraints.maxHeight),
+                                painter: WinningLinePainter(
+                                  winningLine: _winningLine!,
+                                  animation: _lineAnimationController,
+                                ),
+                              ),
+                            // The duplicate CustomPaint was removed as it was redundant
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(20.0), // Increased padding
-                child: ElevatedButton.icon(
-                  onPressed: _resetGame,
-                  icon: const Icon(Icons.refresh, size: 24),
-                  label: const Text('Reset Game'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 5,
+              // Computer thinking indicator
+              AnimatedOpacity(
+                opacity: _isComputerThinking ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 10.0),
+                  child: Text(
+                    'Computer is thinking...',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade900),
                   ),
                 ),
               ),
@@ -449,27 +645,71 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
                   height: _adService.bannerAd!.size.height.toDouble(),
                   child: AdWidget(ad: _adService.bannerAd!),
                 ),
-            ],
-          ),
-          if (_isLoadingAd)
-            Positioned.fill(
-              child: Container(
-                color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
+              ],
+            ),
+            if (_isLoadingAd)
+              Positioned.fill(
+                child: Container(
+                  color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
+  void _showDifficultySettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Difficulty'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              grp.RadioGroup<GameMode>.builder(
+                direction: Axis.vertical,
+                groupValue: selectedMode,
+                onChanged: (GameMode? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedMode = newValue;
+                      _resetGame();
+                    });
+                    Navigator.of(context).pop(); // Close the dialog
+                  }
+                },
+                items: GameMode.values,
+                itemBuilder: (item) => grp.RadioButtonBuilder(
+                  item.toString().split('.').last,
+                  textPosition: grp.RadioButtonTextPosition.right,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildPlayerIndicator(BuildContext context) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.blueGrey.shade100, // Updated indicator background color
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
         child: Row(
@@ -479,11 +719,18 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
               'Current Player: ',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
             ),
-            Text(
-              currentPlayer == Player.x ? 'X (You)' : 'O (NPC)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: currentPlayer == Player.x ? Theme.of(context).primaryColor : Colors.redAccent,
-                fontWeight: FontWeight.bold,
+            ScaleTransition(
+              scale: _animation,
+              child: CircleAvatar(
+                backgroundColor: currentPlayer == Player.x ? Colors.blue.shade800 : Colors.red.shade800,
+                child: Text(
+                  currentPlayer == Player.x ? 'X' : 'O',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ),
           ],
@@ -492,82 +739,196 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen> {
     );
   }
 
-  Widget _buildDifficultySelector(BuildContext context) {
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Difficulty:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87),
-            ),
-            DropdownButton<GameMode>(
-              value: selectedMode,
-              onChanged: (GameMode? newValue) {
-                setState(() {
-                  selectedMode = newValue!;
-                  _resetGame();
-                });
-              },
-              items: const [
-                DropdownMenuItem(value: GameMode.easy, child: Text('Easy')),
-                DropdownMenuItem(value: GameMode.medium, child: Text('Medium')),
-                DropdownMenuItem(value: GameMode.hard, child: Text('Hard')),
-              ],
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),
-              underline: Container(), // Remove underline
-              icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).primaryColor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildGameCell(int index, BoxConstraints constraints) {
+    final isWinningCell = _winningLine != null &&
+        (index == _winningLine![0] ||
+            index == _winningLine![1] ||
+            index == (_winningLine![0] + _winningLine![1]) ~/ 2 ||
+            (_winningLine![0] % 3 == _winningLine![1] % 3 && index % 3 == _winningLine![0] % 3 && (index > _winningLine![0] && index < _winningLine![1] || index < _winningLine![0] && index > _winningLine![1])) ||
+            (_winningLine![0] ~/ 3 == _winningLine![1] ~/ 3 && index ~/ 3 == _winningLine![0] ~/ 3 && (index > _winningLine![0] && index < _winningLine![1] || index < _winningLine![0] && index > _winningLine![1]))
+        );
 
-  Widget _buildGameCell(int index) {
+    // Calculate cell size for responsive font sizing
+    final cellSize = (constraints.maxWidth - 4.0) / 3; // 4.0 for 2x crossAxisSpacing
+    final responsiveFontSize = cellSize * 0.6; // Adjust multiplier as needed
+
     return AnimatedTap(
       onTap: () => _onTap(index),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white, // Solid white background for cells
-          borderRadius: BorderRadius.circular(15.0), // More rounded corners
-          border: Border.all(color: Colors.grey.shade300, width: 2.0), // Subtle border
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromARGB((255 * 0.05).round(), 0, 0, 0),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Colors.deepPurple.shade100, // New cell background color
+          borderRadius: BorderRadius.circular(10.0), // Slightly rounded corners
+          border: Border.all(color: Colors.deepPurple.shade400, width: 2.0), // Cell borders
         ),
         child: Center(
-          child: Text(
-            board[index] == Player.x
-                ? 'X'
-                : board[index] == Player.o
-                    ? 'O'
-                    : '',
-            style: TextStyle(
-              fontSize: 70, // Larger font size
-              fontWeight: FontWeight.w900, // Bolder weight
-              fontFamily: 'Poppins', // Use a professional font
-              color: board[index] == Player.x ? Theme.of(context).primaryColor : Colors.redAccent,
-              shadows: [
-                Shadow(
-                  offset: const Offset(2.0, 2.0),
-                  blurRadius: 3.0,
-                  color: Color.fromARGB((255 * 0.2).round(), 0, 0, 0),
-                ),
-              ],
-            ),
+          child: AnimatedSymbol(
+            player: board[index],
+            isWinningCell: isWinningCell,
+            fontSize: responsiveFontSize, // Pass responsive font size
           ),
         ),
       ),
     );
+  }
+}
+
+// Remove GridPainter as it's no longer needed
+// class GridPainter extends CustomPainter {
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = Colors.deepPurple.shade200
+//       ..strokeWidth = 5;
+
+//     // Draw vertical lines
+//     canvas.drawLine(Offset(size.width / 3, 0), Offset(size.width / 3, size.height), paint);
+//     canvas.drawLine(Offset(size.width * 2 / 3, 0), Offset(size.width * 2 / 3, size.height), paint);
+
+//     // Draw horizontal lines
+//     canvas.drawLine(Offset(0, size.height / 3), Offset(size.width, size.height / 3), paint);
+//     canvas.drawLine(Offset(0, size.height * 2 / 3), Offset(size.width, size.height * 2 / 3), paint);
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+// }
+
+class AnimatedSymbol extends StatefulWidget {
+  final Player player;
+  final bool isWinningCell;
+  final double fontSize; // New parameter for responsive font size
+
+  const AnimatedSymbol({
+    super.key,
+    required this.player,
+    this.isWinningCell = false,
+    required this.fontSize, // Make fontSize required
+  });
+
+  @override
+  State<AnimatedSymbol> createState() => _AnimatedSymbolState();
+}
+
+class _AnimatedSymbolState extends State<AnimatedSymbol>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _rotationAnimation = Tween<double>(begin: 0.5, end: 0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    if (widget.player != Player.none) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedSymbol oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.player != Player.none && oldWidget.player == Player.none) {
+      _controller.forward(from: 0);
+    } else if (widget.player == Player.none && oldWidget.player != Player.none) {
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.001)
+            ..rotateY(pi * _rotationAnimation.value),
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Text(
+              widget.player == Player.x
+                  ? 'X'
+                  : widget.player == Player.o
+                      ? 'O'
+                      : '',
+              style: TextStyle(
+                fontSize: widget.fontSize, // Use responsive font size
+                fontWeight: FontWeight.w900,
+                fontFamily: 'Poppins',
+                color: widget.player == Player.x
+                    ? Colors.blue.shade800
+                    : Colors.red.shade800,
+                shadows: [
+                  const Shadow(
+                    offset: Offset(2.0, 2.0),
+                    blurRadius: 3.0,
+                    color: Color.fromARGB(51, 0, 0, 0),
+                  ),
+                  if (widget.isWinningCell)
+                    Shadow(
+                      offset: const Offset(0, 0),
+                      blurRadius: 25.0,
+                      color: Colors.yellow.shade700,
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// GridPainter class is removed as it's no longer used.
+
+class WinningLinePainter extends CustomPainter {
+  final List<int> winningLine;
+  final Animation<double> animation;
+
+  WinningLinePainter({required this.winningLine, required this.animation})
+      : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.amber.shade700 // Updated winning line color
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round;
+
+    final startX = (winningLine[0] % 3) * (size.width / 3) + (size.width / 6);
+    final startY = (winningLine[0] ~/ 3) * (size.height / 3) + (size.height / 6);
+    final endX = (winningLine[1] % 3) * (size.width / 3) + (size.width / 6);
+    final endY = (winningLine[1] ~/ 3) * (size.height / 3) + (size.height / 6);
+
+    final currentEndX = startX + (endX - startX) * animation.value;
+    final currentEndY = startY + (endY - startY) * animation.value;
+
+    canvas.drawLine(Offset(startX, startY), Offset(currentEndX, currentEndY), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant WinningLinePainter oldDelegate) {
+    return oldDelegate.winningLine != winningLine ||
+           oldDelegate.animation != animation;
   }
 }

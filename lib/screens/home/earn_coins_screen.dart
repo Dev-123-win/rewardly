@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../../ad_service.dart'; // Consolidated AdService
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import '../../providers/user_data_provider.dart'; // Import UserDataProvider
-import '../../widgets/animated_tap.dart'; // Import AnimatedTap
-import '../../logger_service.dart'; // Import LoggerService
-
-import '../../remote_config_service.dart'; // Import RemoteConfigService
+import 'dart:async'; // For Timer
+import '../../ad_service.dart';
+import '../../providers/user_data_provider.dart';
+import '../../shared/neuromorphic_constants.dart'; // For neumorphic design
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -16,328 +12,266 @@ class EarnCoinsScreen extends StatefulWidget {
   State<EarnCoinsScreen> createState() => _EarnCoinsScreenState();
 }
 
-class _EarnCoinsScreenState extends State<EarnCoinsScreen> {
+class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderStateMixin {
   final AdService _adService = AdService();
-  // UserService will be obtained from Provider
+  static const int _dailyAdLimit = 10;
+  static const int _coinsPerAd = 100; // Fixed coins per ad
+  static const int _timerDuration = 5; // 5-second timer
+
+  int _currentAdIndex = 0; // Tracks which ad card is currently active/unlocked
+  int _adsWatchedToday = 0;
+  Timer? _countdownTimer;
+  int _secondsRemaining = _timerDuration;
   bool _isAdLoading = false;
-  User? _currentUser;
-  int _adsWatchedToday = 0; // New state variable for ads watched today
-  int _dailyAdLimit = 0; // Will be fetched from Remote Config
-  List<int> _adRewards = []; // Will be fetched from Remote Config
-  final RemoteConfigService _remoteConfigService = RemoteConfigService();
+
+  // Animation controllers for neumorphic effects and subtle animations
+  late AnimationController _cardAnimationController;
+  late Animation<double> _cardScaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _currentUser = Provider.of<User?>(context, listen: false);
-    _loadRemoteConfigAndAds(); // Load remote config and then ads
+    _adService.loadRewardedAd(); // Preload rewarded ad
+    _initializeAdProgress();
 
-    // Listen to user data changes to update adsWatchedToday
-    Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
-    _updateAdsWatchedState(); // Initial load of ads watched state
+    _cardAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _cardScaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _cardAnimationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
+    _cardAnimationController.dispose();
     _adService.dispose();
-    Provider.of<UserDataProvider>(context, listen: false).removeListener(_onUserDataChanged);
     super.dispose();
   }
 
-  void _onUserDataChanged() {
-    if (!mounted) return;
-    _updateAdsWatchedState();
-  }
-
-  Future<void> _loadRemoteConfigAndAds() async {
-    await _remoteConfigService.initialize();
-    if (mounted) {
-      setState(() {
-        _dailyAdLimit = _remoteConfigService.dailyAdLimit;
-        _adRewards = _remoteConfigService.adRewardsList;
-      });
-    }
-    _loadAd(); // Load ad after remote config is loaded
-  }
-
-  Future<void> _updateAdsWatchedState() async {
-    if (!mounted) return; // Add mounted check here
-    LoggerService.debug('Updating adsWatchedToday state. Current value: $_adsWatchedToday'); // Log for debugging
-    if (_currentUser == null) {
-      if (mounted) {
-        setState(() {
-          _adsWatchedToday = 0;
-        });
-      }
-      return;
-    }
-
+  Future<void> _initializeAdProgress() async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    final userData = userDataProvider.userData;
+    await userDataProvider.resetDailyAdWatchCount(); // Reset if new day
 
-    if (userData != null && userData.data() != null) {
-      final data = userData.data() as Map<String, dynamic>;
-      if (mounted) {
-        setState(() {
-          _adsWatchedToday = data['adsWatchedToday'] ?? 0;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _adsWatchedToday = 0;
-        });
-      }
+    setState(() {
+      _adsWatchedToday = userDataProvider.userData?.get('adsWatchedToday') ?? 0;
+      _currentAdIndex = _adsWatchedToday; // Start from the next ad to watch
+    });
+    
+    if (_currentAdIndex < _dailyAdLimit) {
+      _startCountdownTimer(); // Start timer for the first available ad
     }
   }
 
-  void _loadAd() async {
-    if (!mounted) return;
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel(); // Cancel any existing timer
+    _secondsRemaining = _timerDuration;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        } else {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _watchAd(int adIndex) async {
+    if (_isAdLoading || adIndex != _currentAdIndex || _secondsRemaining > 0 || _adsWatchedToday >= _dailyAdLimit) {
+      return; // Prevent multiple ad loads, wrong index, or if timer is active/limit reached
+    }
+
     setState(() {
       _isAdLoading = true;
     });
-    _adService.loadRewardedAd();
-    if (!mounted) return;
-    setState(() {
-      _isAdLoading = false;
-    });
-  }
-
-  void _watchAd(int points) {
-    if (_currentUser == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to watch ads.')),
-      );
-      return;
-    }
-
-    if (_adsWatchedToday >= _dailyAdLimit) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You have reached your daily ad limit.')),
-      );
-      return;
-    }
 
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
-        final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-        await userDataProvider.shardedUserService!.updateCoins(_currentUser!.uid, points);
-        // ProjectId is no longer needed for client-side updateAdsWatchedToday
-        await userDataProvider.shardedUserService!.updateAdsWatchedToday(_currentUser!.uid); // Increment ads watched today
         if (!mounted) return;
+        setState(() {
+          _isAdLoading = false;
+          _adsWatchedToday++;
+          _currentAdIndex++;
+        });
+        
+        final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+        await userDataProvider.updateUserCoins(_coinsPerAd); // Award fixed coins
+        await userDataProvider.updateAdsWatchedToday(); // Increment ad count in Firestore
+
+        if (!mounted) return; // Add mounted check
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You earned $points coins!')),
+          SnackBar(content: Text('You earned $_coinsPerAd coins!')),
         );
-        // Manually update state to reflect the watched ad immediately
-        if (mounted) {
-          setState(() {
-            _adsWatchedToday++;
-          });
+
+        if (_currentAdIndex < _dailyAdLimit) {
+          _startCountdownTimer(); // Start timer for the next ad
+        } else {
+          _countdownTimer?.cancel(); // All ads watched
         }
-        _loadAd(); // Reload ad
       },
       onAdFailedToLoad: () {
         if (!mounted) return;
+        setState(() {
+          _isAdLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load ad. Please try again.')),
+          const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
         );
-        _loadAd(); // Try reloading ad
       },
       onAdFailedToShow: () {
         if (!mounted) return;
+        setState(() {
+          _isAdLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to show ad. Please try again.')),
+          const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
         );
-        _loadAd(); // Try reloading ad
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final int totalAds = _adRewards.length;
-    final int adsRemaining = totalAds - _adsWatchedToday;
-
     return Scaffold(
+      backgroundColor: kBackgroundColor, // Use neumorphic background color
       appBar: AppBar(
-        title: Text('Watch & Earn', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        title: const Text('Watch & Earn Coins'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: kTextColor,
       ),
-      body: _isAdLoading
-          ? const Center(
-              child: SpinKitCircle(
-                color: Colors.deepPurple,
-                size: 50.0,
+      body: Consumer<UserDataProvider>(
+        builder: (context, userDataProvider, child) {
+          _adsWatchedToday = userDataProvider.userData?.get('adsWatchedToday') ?? 0;
+          _currentAdIndex = _adsWatchedToday; // Ensure currentAdIndex is always in sync
+
+          return Stack(
+            children: [
+              ListView.builder(
+                padding: const EdgeInsets.all(kDefaultPadding),
+                itemCount: _dailyAdLimit,
+                itemBuilder: (context, index) {
+                  final bool isUnlocked = index == _currentAdIndex && _adsWatchedToday < _dailyAdLimit;
+                  final bool isWatched = index < _adsWatchedToday;
+                  final bool isLocked = index > _currentAdIndex || _adsWatchedToday >= _dailyAdLimit;
+
+                  return _buildAdCard(
+                    context,
+                    index + 1,
+                    isUnlocked: isUnlocked,
+                    isWatched: isWatched,
+                    isLocked: isLocked,
+                  );
+                },
               ),
-            )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Ads Watched Today: $_adsWatchedToday / $totalAds',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: _adsWatchedToday / totalAds,
-                        backgroundColor: Colors.grey[300],
-                        color: Colors.deepPurple,
-                      ),
-                    ],
+              if (_isAdLoading)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withAlpha((255 * 0.6).round()), // Fix deprecated withOpacity
+                    child: const Center(
+                      child: CircularProgressIndicator(color: kPrimaryColor),
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: adsRemaining > 0
-                      ? ListView( // Changed to ListView as we're showing only one card or a few
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          children: [
-                            _AdCard(
-                              title: 'Watch Ad #${_adsWatchedToday + 1}',
-                              points: _adRewards[_adsWatchedToday],
-                              onWatchAd: () => _watchAd(_adRewards[_adsWatchedToday]),
-                              isLocked: false, // The displayed card is always the next available, so it's not locked
-                              lockedMessage: null,
-                            ),
-                          ],
-                        )
-                      : Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.check_circle_outline, size: 80, color: Colors.green),
-                                const SizedBox(height: 20),
-                                Text(
-                                  'You\'ve watched all your ads for today!',
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Come back tomorrow for more earning opportunities.',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                ),
-              ],
-            ),
+            ],
+          );
+        },
+      ),
     );
   }
-}
 
-class _AdCard extends StatelessWidget {
-  final String title;
-  final int points;
-  final VoidCallback? onWatchAd; // Make nullable for locked state
-  final bool isLocked;
-  final String? lockedMessage;
+  Widget _buildAdCard(
+    BuildContext context,
+    int adNumber, {
+    required bool isUnlocked,
+    required bool isWatched,
+    required bool isLocked,
+  }) {
+    Function()? onPressed;
+    Color cardColor = kSurfaceColor;
+    List<BoxShadow> boxShadow = kNeumorphicShadows;
+    IconData icon = Icons.lock;
+    Color iconColor = kDisabledColor;
+    String statusText = 'Locked';
 
-  const _AdCard({
-    required this.title,
-    required this.points,
-    this.onWatchAd,
-    this.isLocked = false,
-    this.lockedMessage,
-  });
+    if (isWatched) {
+      cardColor = kPrimaryColor.withAlpha((255 * 0.2).round()); // Fix deprecated withOpacity
+      boxShadow = kNeumorphicPressedShadows;
+      icon = Icons.check_circle;
+      iconColor = kPrimaryColor;
+      statusText = 'Watched';
+      onPressed = null;
+    } else if (isUnlocked) {
+      cardColor = kSurfaceColor;
+      boxShadow = kNeumorphicShadows;
+      icon = Icons.play_circle_fill;
+      iconColor = kAccentColor;
+      statusText = 'Watch Ad';
+      onPressed = _secondsRemaining == 0 ? () => _watchAd(adNumber - 1) : null;
+    } else if (isLocked) {
+      cardColor = kSurfaceColor.withAlpha((255 * 0.5).round()); // Fix deprecated withOpacity
+      boxShadow = kNeumorphicShadows;
+      icon = Icons.lock;
+      iconColor = kDisabledColor;
+      statusText = 'Locked';
+      onPressed = null;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
+    if (isUnlocked && _secondsRemaining > 0) {
+      statusText = 'Waiting... $_secondsRemaining s';
+      icon = Icons.timer;
+      iconColor = kAccentColor;
+    }
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(vertical: kDefaultPadding / 2),
+        padding: const EdgeInsets.all(kDefaultPadding),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15.0),
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withAlpha((0.8 * 255).round()),
-              Colors.white.withAlpha((0.5 * 255).round()),
-              Colors.purple.withAlpha((0.1 * 255).round()),
-              Colors.yellow.withAlpha((0.1 * 255).round()),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            stops: const [0.0, 0.3, 0.7, 1.0],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.05 * 255).round()),
-              blurRadius: 8,
-              spreadRadius: 2,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: cardColor,
+          borderRadius: BorderRadius.circular(kDefaultBorderRadius),
+          boxShadow: boxShadow,
         ),
         child: Row(
           children: [
+            Icon(icon, color: iconColor, size: 30),
+            const SizedBox(width: kDefaultPadding),
             Expanded(
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Custom "AD" icon (like a TV)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurple.withAlpha((0.1 * 255).round()),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(
-                      'AD',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Image.asset('assets/coin.png', height: 24, width: 24), // Coin image
-                  const SizedBox(width: 5),
                   Text(
-                    '+$points', // Display points as +X
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.black87,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Ad #$adNumber', // Fix unnecessary braces
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: kTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    statusText,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: iconColor,
+                        ),
                   ),
                 ],
               ),
             ),
-            AnimatedTap(
-              onTap: isLocked ? null : onWatchAd, // Disable tap if locked
-              child: ElevatedButton(
-                onPressed: isLocked ? null : onWatchAd, // Disable button if locked
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isLocked ? Colors.grey[300] : Colors.deepPurple, // Grey if locked, purple if unlocked
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  elevation: isLocked ? 0 : 5, // No elevation if locked
-                ),
-                child: Text(
-                  isLocked ? (lockedMessage ?? 'Locked') : 'Watch Ad', // Only "Watch Ad"
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isLocked ? Colors.grey[700] : Colors.white, // Darker text if locked
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            if (isUnlocked && _secondsRemaining == 0)
+              ScaleTransition(
+                scale: _cardScaleAnimation,
+                child: Icon(Icons.arrow_forward_ios, color: kAccentColor),
               ),
-            ),
           ],
         ),
       ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'dart:async'; // Import for StreamSubscription
 import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity_plus
@@ -8,6 +7,8 @@ import 'screens/home/home.dart';
 import 'widgets/exit_confirmation_overlay.dart';
 import 'screens/no_internet_screen.dart'; // Import NoInternetScreen
 import 'logger_service.dart'; // Import LoggerService
+import 'models/auth_result.dart'; // Import AuthResult
+import 'providers/user_data_provider.dart'; // Import UserDataProvider
 
 class Wrapper extends StatefulWidget {
   const Wrapper({super.key});
@@ -98,13 +99,21 @@ class _WrapperState extends State<Wrapper> {
       return NoInternetScreen(onRetry: _checkConnectivity);
     }
 
-    final user = Provider.of<User?>(context);
-    LoggerService.info('Wrapper rebuilding. User: ${user?.uid ?? 'null'}');
+    final authResult = Provider.of<AuthResult?>(context);
+    LoggerService.info('Wrapper rebuilding. User: ${authResult?.uid ?? 'null'}');
 
     Widget content;
-    if (user == null) {
+    if (authResult?.uid == null) {
       content = const Authenticate();
     } else {
+      // Ensure UserDataProvider is available before calling its methods
+      final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+      // Call the daily activity check when the user is authenticated and data is loaded
+      // This will run on app startup/login and periodically as the Wrapper rebuilds
+      // (e.g., due to connectivity changes, though UserDataProvider itself will handle data updates)
+      if (!userDataProvider.isLoading && userDataProvider.userData != null) {
+        userDataProvider.checkDailyActivityAndReferralReward();
+      }
       content = const Home();
     }
 

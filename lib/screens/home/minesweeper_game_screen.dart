@@ -242,8 +242,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
                     Slider(
                       value: tempRows.toDouble(),
                       min: 5,
-                      max: 20,
-                      divisions: 15,
+                      max: 9,
+                      divisions: 4,
                       label: tempRows.toInt().toString(),
                       onChanged: (double value) {
                         setState(() {
@@ -255,8 +255,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
                     Slider(
                       value: tempCols.toDouble(),
                       min: 5,
-                      max: 20,
-                      divisions: 15,
+                      max: 9,
+                      divisions: 4,
                       label: tempCols.toInt().toString(),
                       onChanged: (double value) {
                         setState(() {

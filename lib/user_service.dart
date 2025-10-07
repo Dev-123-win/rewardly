@@ -13,7 +13,10 @@ class UserService {
   Future<void> createUserData(String uid, String email, {String? referralCode, String? deviceId, String? projectId}) async {
     try {
       await _firestore.runTransaction((transaction) async {
-        int initialCoins = 0;
+        // Client-side coin awarding for referred users.
+        // WARNING: This is highly insecure and should ideally be handled server-side.
+        // Any client-side logic can be tampered with.
+        int initialCoins = 5000; // Referred user gets 5000 coins
         String? actualReferredBy;
         String newReferralCode;
 
@@ -47,6 +50,10 @@ class UserService {
           'lastSpinWheelDate': '', // Initialize as empty, updated on first spin
           'deviceId': deviceId,
           'projectId': projectId,
+          'referredUserCreatedAt': Timestamp.now(), // Record registration time
+          'daysActiveCount': 0, // Initialize distinct active days to 0
+          'lastActiveDate': '', // Initialize last active date as empty
+          'referrerAwarded': false, // Initialize to false, to be set true after referrer is awarded
         });
       });
     } catch (e, s) {
@@ -66,14 +73,37 @@ class UserService {
     }
   }
 
-  // Increment ad-watched spin wheel spins
-  Future<void> incrementAdSpinWheelSpins(String uid) async {
+  // Increment ad-watched spin wheel spins, with a daily limit
+  Future<void> incrementAdSpinWheelSpins(String uid, int amount) async {
     try {
-      await _firestore.collection('users').doc(uid).update({
-        'spinWheelAdSpinsToday': FieldValue.increment(1),
+      await _firestore.runTransaction((transaction) async {
+        final userRef = _firestore.collection('users').doc(uid);
+        final userDoc = await transaction.get(userRef);
+
+        if (!userDoc.exists) {
+          throw Exception('User document not found.');
+        }
+
+        // The adSpinsEarnedToday logic is now handled in-app by UserDataProvider.
+        // This method only updates the spinWheelAdSpinsToday in Firestore.
+        transaction.update(userRef, {
+          'spinWheelAdSpinsToday': FieldValue.increment(amount),
+        });
       });
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error incrementing ad spin wheel spins');
+      rethrow;
+    }
+  }
+
+  // Decrement ad-watched spin wheel spins
+  Future<void> decrementAdSpinWheelSpins(String uid) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'spinWheelAdSpinsToday': FieldValue.increment(-1),
+      });
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error decrementing ad spin wheel spins');
     }
   }
 
@@ -162,15 +192,6 @@ class UserService {
     }
   }
 
-  // Check if user is admin
-  Future<bool> isAdmin(String uid) async {
-    final userDataSnapshot = await _firestore.collection('users').doc(uid).get();
-    if (userDataSnapshot.exists) {
-      final userData = userDataSnapshot.data();
-      return (userData != null && userData['isAdmin'] == true);
-    }
-    return false;
-  }
 
   // Get user by referral code
   Future<DocumentSnapshot?> getUserByReferralCode(String referralCode) async {
@@ -187,6 +208,84 @@ class UserService {
       await _firestore.collection('users').doc(uid).update(data);
     } catch (e, s) {
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating user data fields');
+    }
+  }
+
+  // Save preferred bank details
+  Future<void> savePreferredBankDetails(String uid, Map<String, dynamic> bankDetails) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'preferredBankDetails': bankDetails,
+      });
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error saving preferred bank details');
+    }
+  }
+
+  // Save preferred UPI details
+  Future<void> savePreferredUpiDetails(String uid, Map<String, dynamic> upiDetails) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'preferredUpiDetails': upiDetails,
+      });
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error saving preferred UPI details');
+    }
+  }
+
+  // Update last used withdrawal method
+  Future<void> updateLastUsedWithdrawalMethod(String uid, String method) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'lastUsedWithdrawalMethod': method,
+      });
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating last used withdrawal method');
+    }
+  }
+
+  // Get a stream of withdrawal requests for a user
+  Stream<List<DocumentSnapshot>> getWithdrawalRequestsStream(String uid) {
+    return _firestore
+        .collection('withdrawalRequests')
+        .where('uid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs);
+  }
+
+  // Award coins to the referrer and mark the referral as awarded.
+  // WARNING: This is highly insecure and should ideally be handled server-side.
+  // Any client-side logic can be tampered with.
+  Future<void> awardReferrerCoins(String referredUserId, String referrerCode) async {
+    try {
+      await _firestore.runTransaction((transaction) async {
+        // Find the referrer by their referralCode
+        final referrerQuery = await _firestore.collection('users').where('referralCode', isEqualTo: referrerCode).limit(1).get();
+
+        if (referrerQuery.docs.isNotEmpty) {
+          final referrerDoc = referrerQuery.docs.first;
+          final referrerRef = referrerDoc.reference;
+
+          // Increment referrer's coins by 10000
+          transaction.update(referrerRef, {
+            'coins': FieldValue.increment(10000),
+          });
+
+          // Mark the referred user as having awarded the referrer
+          final referredUserRef = _firestore.collection('users').doc(referredUserId);
+          transaction.update(referredUserRef, {
+            'referrerAwarded': true,
+          });
+          
+          FirebaseCrashlytics.instance.log('Referral reward: User $referredUserId awarded 10000 coins to referrer ${referrerDoc.id}');
+        } else {
+          FirebaseCrashlytics.instance.log('Referral reward: Referrer with code $referrerCode not found for referred user $referredUserId.');
+        }
+      });
+    } catch (e, s) {
+      FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error awarding referrer coins client-side');
+      rethrow;
     }
   }
 }

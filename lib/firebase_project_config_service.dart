@@ -56,12 +56,15 @@ class FirebaseProjectConfigService {
   // Simple round-robin sharding logic for new users
   static Future<String> getNextProjectIdForNewUser() async {
     final prefs = await SharedPreferences.getInstance();
-    _lastUsedProjectIndex = prefs.getInt(_lastUsedProjectIndexKey) ?? -1; // Load last used index
+    int currentLastUsedIndex = prefs.getInt(_lastUsedProjectIndexKey) ?? -1; // Load last used index
+    LoggerService.debug('FirebaseProjectConfigService: Current lastUsedProjectIndex: $currentLastUsedIndex');
 
-    _lastUsedProjectIndex = (_lastUsedProjectIndex + 1) % _projectOptions.length;
+    _lastUsedProjectIndex = (currentLastUsedIndex + 1) % _projectOptions.length;
     await prefs.setInt(_lastUsedProjectIndexKey, _lastUsedProjectIndex); // Save new index
 
-    return _projectOptions.keys.elementAt(_lastUsedProjectIndex);
+    String assignedProjectId = _projectOptions.keys.elementAt(_lastUsedProjectIndex);
+    LoggerService.debug('FirebaseProjectConfigService: New lastUsedProjectIndex: $_lastUsedProjectIndex, Assigned Project ID: $assignedProjectId');
+    return assignedProjectId;
   }
 
   static int _lastUsedProjectIndex = -1; // Initialize to -1 so first call gets index 0

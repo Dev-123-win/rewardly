@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../providers/user_data_provider.dart';
 import '../../auth_service.dart'; // Keep import for signOut
 import '../../shared/shimmer_loading.dart';
+import '../../models/auth_result.dart'; // Import AuthResult
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User?>(context);
+    final authResult = Provider.of<AuthResult?>(context);
     final userDataProvider = Provider.of<UserDataProvider>(context);
     final userData = userDataProvider.userData; // This is a DocumentSnapshot
 
-    if (user == null || userData == null || !userData.exists) {
+    if (authResult?.uid == null || userData == null || !userData.exists) {
       return const ProfileScreenLoading();
     }
 
@@ -36,7 +36,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 15),
             Text(
-              user.email ?? 'No Email',
+              authResult?.uid?.split('@')[0] ?? 'No Email', // Use uid as fallback for display
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87),
             ),
             const SizedBox(height: 30),

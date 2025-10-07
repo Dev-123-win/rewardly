@@ -1,12 +1,36 @@
-import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
+
 import '../../ad_service.dart';
-import '../../remote_config_service.dart';
 import '../../providers/user_data_provider.dart';
+import 'package:confetti/confetti.dart';
+
+// Enum for different reward tiers
+enum RewardTier {
+  none,
+  bronze,
+  silver,
+  gold,
+  platinum,
+  lose, // Added lose tier
+}
+
+// Class to define a single wheel reward segment
+class WheelReward {
+  final String text;
+  final int coins;
+  final Color color;
+  final RewardTier tier;
+
+  WheelReward({
+    required this.text,
+    required this.coins,
+    required this.color,
+    required this.tier,
+  });
+}
 
 class SpinWheelGameScreen extends StatefulWidget {
   const SpinWheelGameScreen({super.key});
@@ -15,306 +39,577 @@ class SpinWheelGameScreen extends StatefulWidget {
   State<SpinWheelGameScreen> createState() => _SpinWheelGameScreenState();
 }
 
-class _SpinWheelGameScreenState extends State<SpinWheelGameScreen> {
+class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
+    with TickerProviderStateMixin {
   final AdService _adService = AdService();
-  // UserService will be obtained from Provider
-  final RemoteConfigService _remoteConfigService = RemoteConfigService();
-  User? _currentUser;
+  late AnimationController _wheelController;
+  late Animation<double> _wheelAnimation;
+  late AnimationController _glowController;
+  late Animation<double> _glowAnimation;
+  late AnimationController _particleController;
+  late Animation<double> _particleAnimation;
+  late ConfettiController _confettiController;
+  late AnimationController _coinPulseController;
+  late Animation<double> _coinPulseAnimation;
 
-  StreamController<int> controller = StreamController<int>();
-  int _currentSpinIndex = 0;
+  double _currentRotation = 0.0;
   bool _isSpinning = false;
-  bool _isAdLoading = false;
 
-  // Spin wheel rewards (coins)
-  final List<int> _items = [
-    10, 50, 20, 100, 30, 75, 40, 150,
+  // Define the rewards for the wheel
+  final List<WheelReward> _rewards = [
+    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
+    WheelReward(text: '50', coins: 50, color: Colors.blue.shade700, tier: RewardTier.bronze),
+    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
+    WheelReward(text: '100', coins: 100, color: Colors.green.shade700, tier: RewardTier.silver),
+    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
+    WheelReward(text: '200', coins: 200, color: Colors.purple.shade700, tier: RewardTier.gold),
+    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
+    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum),
   ];
-
-  int _freeSpinsToday = 0;
-  int _adSpinsToday = 0;
-  int _spinWheelDailyAdLimit = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentUser = Provider.of<User?>(context, listen: false);
-    _adService.loadRewardedAd(); // Preload rewarded ad for extra spins
-    _loadRemoteConfig();
+    _adService.loadRewardedAd(); // Preload rewarded ad
+    _initializeSpinData(); // Initialize spin data from UserDataProvider
 
-    // Listen to user data changes to update spin counts
-    Provider.of<UserDataProvider>(context, listen: false).addListener(_onUserDataChanged);
-    _updateSpinCounts(); // Initial load of spin counts
+    _wheelController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    );
+    _wheelAnimation = CurvedAnimation(
+      parent: _wheelController,
+      curve: Curves.easeOutExpo,
+    );
+
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_glowController);
+
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+    _particleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_particleController);
+
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+
+    _coinPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _coinPulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _coinPulseController, curve: Curves.elasticOut),
+    );
   }
 
   @override
   void dispose() {
-    controller.close();
+    _wheelController.dispose();
+    _glowController.dispose();
+    _particleController.dispose();
+    _confettiController.dispose();
+    _coinPulseController.dispose();
     _adService.dispose();
-    Provider.of<UserDataProvider>(context, listen: false).removeListener(_onUserDataChanged);
     super.dispose();
   }
 
-  void _onUserDataChanged() {
-    if (!mounted) return;
-    _updateSpinCounts();
-  }
-
-  Future<void> _loadRemoteConfig() async {
-    await _remoteConfigService.initialize();
-    if (mounted) {
-      setState(() {
-        _spinWheelDailyAdLimit = _remoteConfigService.spinWheelDailyAdLimit;
-      });
-    }
-  }
-
-  Future<void> _updateSpinCounts() async {
-    if (!mounted || _currentUser == null) return;
-
+  Future<void> _initializeSpinData() async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    // Ensure daily counts are reset if date has changed using the sharded UserService
-    // ProjectId is no longer needed for client-side resetSpinWheelDailyCounts
-    await userDataProvider.shardedUserService!.resetSpinWheelDailyCounts(_currentUser!.uid);
-
-    final userData = userDataProvider.userData;
-
-    if (userData != null && userData.data() != null) {
-      final data = userData.data() as Map<String, dynamic>;
-      if (mounted) {
-        setState(() {
-          _freeSpinsToday = data['spinWheelFreeSpinsToday'] ?? 0;
-          _adSpinsToday = data['spinWheelAdSpinsToday'] ?? 0;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _freeSpinsToday = 0;
-          _adSpinsToday = 0;
-        });
-      }
-    }
+    await userDataProvider.resetSpinWheelDailyCounts(); // Reset daily counts if date changed
   }
 
-  void _spinWheel({bool isAdSpin = false}) async {
-    if (_isSpinning || _currentUser == null) return;
+  void _spinWheel() async {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+    final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
-    if (!isAdSpin && _freeSpinsToday <= 0) {
+    if (_isSpinning || (currentFreeSpins == 0 && currentAdSpins == 0)) {
+      if (!mounted) return; // Check mounted before using context
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No free spins left! Watch an ad for more.')),
-      );
-      return;
-    }
-
-    if (isAdSpin && _adSpinsToday >= _spinWheelDailyAdLimit) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You have reached your daily ad spin limit.')),
+        const SnackBar(content: Text('No spins left! Watch an ad or wait for free spins.')),
       );
       return;
     }
 
     setState(() {
       _isSpinning = true;
-      _currentSpinIndex = Random().nextInt(_items.length);
-      controller.add(_currentSpinIndex);
     });
 
-    // Wait for the wheel to stop spinning
-    await Future.delayed(const Duration(seconds: 5)); // Adjust duration based on animation
+    HapticFeedback.lightImpact();
 
-    if (!mounted) return;
-
-    setState(() {
-      _isSpinning = false;
-    });
-
-    final int earnedCoins = _items[_currentSpinIndex];
-    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    await userDataProvider.shardedUserService!.updateCoins(_currentUser!.uid, earnedCoins);
-
-    if (isAdSpin) {
-      await userDataProvider.shardedUserService!.incrementAdSpinWheelSpins(_currentUser!.uid);
-    } else {
-      await userDataProvider.shardedUserService!.decrementFreeSpinWheelSpins(_currentUser!.uid);
+    if (currentFreeSpins > 0) {
+      await userDataProvider.decrementFreeSpinWheelSpins();
+    } else if (currentAdSpins > 0) {
+      await userDataProvider.decrementAdSpinWheelSpins();
     }
 
+    final random = Random();
+    final double randomAngle = random.nextDouble() * (2 * pi); // Random angle for a full rotation
+    final double targetAngle = (2 * pi * 5) + randomAngle; // Spin 5 full rotations + random angle
+
+    _wheelController.reset();
+    _wheelAnimation = Tween<double>(
+      begin: _currentRotation,
+      end: targetAngle,
+    ).animate(
+      CurvedAnimation(
+        parent: _wheelController,
+        curve: Curves.easeOutExpo,
+      ),
+    );
+
+    _wheelController.forward().whenComplete(() {
+      setState(() {
+        _isSpinning = false;
+        _currentRotation = targetAngle % (2 * pi); // Keep rotation within 0-2pi
+
+        // Determine the winning segment
+        final double segmentAngle = (2 * pi) / _rewards.length;
+        final double normalizedRotation = (2 * pi - _currentRotation) % (2 * pi); // Normalize to 0-2pi clockwise
+        final int winningIndex = (normalizedRotation / segmentAngle).floor();
+        final WheelReward wonReward = _rewards[winningIndex];
+
+        _showWinDialog(wonReward);
+      });
+    });
+  }
+
+  void _showWinDialog(WheelReward reward) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('You won $earnedCoins coins!')),
+
+    if (reward.coins > 0) {
+      _updateUserCoins(reward.coins);
+      _confettiController.play();
+      _coinPulseController.forward(from: 0).whenComplete(() => _coinPulseController.reverse());
+    }
+    if (!mounted) return; // Check mounted before using context
+
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      builder: (BuildContext context) {
+        return WinDialog(
+          reward: reward,
+          onPlayAgain: () {
+            Navigator.of(context).pop();
+            // Optionally reset game state or just allow another spin
+          },
+        );
+      },
     );
   }
 
-  void _watchAdForSpin() {
-    if (_currentUser == null) {
+  Future<void> _updateUserCoins(int coins) async {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    if (coins > 0 && userDataProvider.userData?.id != null && userDataProvider.shardedUserService != null) {
+      await userDataProvider.updateUserCoins(coins);
+      if (!mounted) return; // Check mounted before using context
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to watch ads.')),
+        SnackBar(content: Text('You earned $coins coins!')),
       );
-      return;
-    }
-
-    if (_adSpinsToday >= _spinWheelDailyAdLimit) {
+    } else {
+      if (!mounted) return; // Check mounted before using context
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You have reached your daily ad spin limit.')),
+        const SnackBar(content: Text('Failed to update coins. Please try again.')),
       );
-      return;
     }
+  }
 
+  void _watchAdToSpin() {
     setState(() {
-      _isAdLoading = true;
+      _isSpinning = true; // Indicate ad loading
     });
-
     _adService.showRewardedAd(
-      onRewardEarned: (int rewardAmount) {
-        if (!mounted) return;
-        setState(() {
-          _isAdLoading = false;
-        });
-        _spinWheel(isAdSpin: true); // Grant a spin after watching ad
+      onRewardEarned: (int rewardAmount) async {
+        if (mounted) {
+          setState(() {
+            _isSpinning = false;
+          });
+          final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+          // Check if user has earned less than 10 ad spins today
+          if (userDataProvider.adSpinsEarnedToday < 10) {
+            await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
+            if (!mounted) return; // Check mounted before using context
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('You earned 2 spins!')),
+            );
+          } else {
+            if (!mounted) return; // Check mounted before using context
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
+            );
+          }
+        }
       },
       onAdFailedToLoad: () {
-        if (!mounted) return;
-        setState(() {
-          _isAdLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load ad. Please try again.')),
-        );
+        if (mounted) {
+          setState(() {
+            _isSpinning = false;
+          });
+          if (!mounted) return; // Check mounted before using context
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
+          );
+        }
       },
       onAdFailedToShow: () {
-        if (!mounted) return;
-        setState(() {
-          _isAdLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to show ad. Please try again.')),
-        );
+        if (mounted) {
+          setState(() {
+            _isSpinning = false;
+          });
+          if (!mounted) return; // Check mounted before using context
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
+          );
+        }
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final userDataProvider = Provider.of<UserDataProvider>(context);
-    final currentCoins = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['coins'] ?? 0;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Spin & Win'),
+        title: const Text('Spin the Wheel'),
         centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: _isAdLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.deepPurple))
-          : Column(
-              children: [
-                const SizedBox(height: 20),
-                _buildBalanceDisplay(currentCoins),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: FortuneWheel(
-                    selected: controller.stream,
-                    items: [
-                      for (var item in _items)
-                        FortuneItem(
-                          child: Text(
-                            '$item Coins',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+      body: Stack(
+        children: [
+          // Particle Background
+          AnimatedBuilder(
+            animation: _particleAnimation,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: ParticleBackgroundPainter(animation: _particleAnimation),
+                child: Container(),
+              );
+            },
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple
+              ],
+            ),
+          ),
+          Column(
+            children: [
+              // Coin Display and Spin Counter
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer<UserDataProvider>(
+                  builder: (context, userDataProvider, child) {
+                    final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                    final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                    final adsWatchedToday = userDataProvider.adSpinsEarnedToday; // Get ads watched today
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildInfoChip(context, Icons.monetization_on, 'Coins: ${userDataProvider.userData?.get('coins') ?? 0}', _coinPulseAnimation),
+                        _buildInfoChip(context, Icons.refresh, 'Free Spins: $freeSpins'),
+                        _buildInfoChip(context, Icons.videocam, 'Ad Spins: $adSpins ($adsWatchedToday/10 ads)'), // Display ads watched
+                      ],
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Spin Wheel
+                      AnimatedBuilder(
+                        animation: _wheelAnimation,
+                        builder: (context, child) {
+                          return Transform.rotate(
+                            angle: _wheelAnimation.value,
+                            child: CustomPaint(
+                              size: const Size(300, 300),
+                              painter: SpinWheelPainter(rewards: _rewards, glowAnimation: _glowAnimation),
                             ),
-                          ),
-                          style: FortuneItemStyle(
-                            color: _items.indexOf(item) % 2 == 0 ? Colors.deepPurple : Colors.deepPurpleAccent,
-                            borderColor: Colors.white,
-                            borderWidth: 2,
-                          ),
-                        ),
-                    ],
-                    onAnimationEnd: () {
-                      // Animation end is handled by the Future.delayed in _spinWheel
-                    },
-                    indicators: const <FortuneIndicator>[
-                      FortuneIndicator(
-                        alignment: Alignment.topCenter,
-                        child: TriangleIndicator(color: Colors.white),
+                          );
+                        },
+                      ),
+                      // Wheel Pointer
+                      CustomPaint(
+                        size: const Size(300, 300),
+                        painter: WheelPointerPainter(),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                _buildSpinButtons(),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+              // Action Buttons
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _isSpinning ? null : _spinWheel,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.deepOrange,
+                        foregroundColor: Colors.white,
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      child: _isSpinning
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Spin for Free'),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _isSpinning ? null : _watchAdToSpin,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 50),
+                        backgroundColor: Colors.purple,
+                        foregroundColor: Colors.white,
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      child: _isSpinning
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Watch Ad to Spin (2 Spins)'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildBalanceDisplay(int coins) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(15.0),
+  Widget _buildInfoChip(BuildContext context, IconData icon, String text, [Animation<double>? animation]) {
+    return ScaleTransition(
+      scale: animation ?? const AlwaysStoppedAnimation(1.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((0.1 * 255).round()),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.monetization_on, color: Colors.amber, size: 30),
-            const SizedBox(width: 10),
+            Icon(icon, size: 20, color: Theme.of(context).primaryColor),
+            const SizedBox(width: 8),
             Text(
-              'Your Coins: $coins',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildSpinButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        children: [
-          ElevatedButton.icon(
-            onPressed: _isSpinning || _freeSpinsToday <= 0 ? null : () => _spinWheel(isAdSpin: false),
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            label: Text(
-              'Spin for Free ($_freeSpinsToday left)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isSpinning || _freeSpinsToday <= 0 ? Colors.grey : Colors.deepPurple,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 5,
-            ),
+// Custom Painters (to be implemented in Phase 2)
+class SpinWheelPainter extends CustomPainter {
+  final List<WheelReward> rewards;
+  final Animation<double> glowAnimation;
+
+  SpinWheelPainter({required this.rewards, required this.glowAnimation}) : super(repaint: glowAnimation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final segmentAngle = (2 * pi) / rewards.length;
+
+    for (int i = 0; i < rewards.length; i++) {
+      final startAngle = i * segmentAngle;
+
+      final paint = Paint()..color = rewards[i].color;
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, segmentAngle, true, paint);
+
+
+      // Draw text
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: rewards[i].text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 15),
-          ElevatedButton.icon(
-            onPressed: _isSpinning || _adSpinsToday >= _spinWheelDailyAdLimit ? null : _watchAdForSpin,
-            icon: const Icon(Icons.videocam, color: Colors.white),
-            label: Text(
-              'Watch Ad for Spin ($_adSpinsToday/$_spinWheelDailyAdLimit today)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      // Position text radially
+      final textRadius = radius * 0.7; // Adjust text position
+      final textAngle = startAngle + segmentAngle / 2;
+      final textX = center.dx + textRadius * cos(textAngle);
+      final textY = center.dy + textRadius * sin(textAngle);
+
+      canvas.save();
+      canvas.translate(textX, textY);
+      canvas.rotate(textAngle + pi / 2); // Rotate text to align with segment
+      canvas.translate(-textPainter.width / 2, -textPainter.height / 2);
+      textPainter.paint(canvas, Offset.zero);
+      canvas.restore();
+    }
+
+    // Draw glow effect
+    final glowPaint = Paint()
+      ..color = Colors.yellow.withAlpha((0.5 * glowAnimation.value * 255).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowAnimation.value * 15);
+    canvas.drawCircle(center, radius, glowPaint);
+
+    // Draw border
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5.0;
+    canvas.drawCircle(center, radius, borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant SpinWheelPainter oldDelegate) {
+    return oldDelegate.rewards != rewards || oldDelegate.glowAnimation != glowAnimation;
+  }
+}
+
+class ParticleBackgroundPainter extends CustomPainter {
+  final Animation<double> animation;
+
+  ParticleBackgroundPainter({required this.animation}) : super(repaint: animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final random = Random(0); // Use a fixed seed for consistent particles
+    final particleCount = 50;
+    final particlePaint = Paint()..color = Colors.white.withAlpha((0.3 * 255).round());
+
+    for (int i = 0; i < particleCount; i++) {
+      final x = random.nextDouble() * size.width;
+      final y = (random.nextDouble() * size.height + animation.value * size.height) % size.height;
+      final radius = random.nextDouble() * 3 + 1;
+      canvas.drawCircle(Offset(x, y), radius, particlePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant ParticleBackgroundPainter oldDelegate) {
+    return oldDelegate.animation != animation;
+  }
+}
+
+class ConfettiPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // This painter is not directly used for confetti, as confetti_widget handles it.
+    // It's a placeholder if custom confetti drawing was needed.
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class WheelPointerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.red.shade800;
+    final path = Path();
+
+    // Triangle pointing upwards
+    path.moveTo(size.width / 2, size.height);
+    path.lineTo(size.width / 2 - 15, size.height - 30);
+    path.lineTo(size.width / 2 + 15, size.height - 30);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class WinDialog extends StatelessWidget {
+  final WheelReward reward;
+  final VoidCallback onPlayAgain;
+
+  const WinDialog({
+    super.key,
+    required this.reward,
+    required this.onPlayAgain,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String title;
+    String content;
+    IconData icon;
+    Color iconColor;
+
+    if (reward.coins > 0) {
+      title = 'Congratulations!';
+      content = 'You won ${reward.coins} coins!';
+      icon = Icons.celebration;
+      iconColor = Colors.amber;
+    } else {
+      title = 'Better luck next time!';
+      content = 'You landed on "0" coins.';
+      icon = Icons.sentiment_dissatisfied;
+      iconColor = Colors.grey;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.deepPurple.shade50,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: iconColor, size: 60),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _isSpinning || _adSpinsToday >= _spinWheelDailyAdLimit ? Colors.grey : Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 5,
+            const SizedBox(height: 10),
+            Text(
+              content,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: onPlayAgain,
+              child: const Text('Spin Again'),
+            ),
+          ],
+        ),
       ),
     );
   }

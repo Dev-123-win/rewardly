@@ -9,12 +9,11 @@ import 'logger_service.dart'; // Import LoggerService
 import 'package:rxdart/rxdart.dart'; // Import RxDart
 
 class AuthService {
-  // Use a nullable FirebaseAuth to represent the active instance, default to the main instance.
-  // This will be updated to the sharded project's instance upon successful login.
-  // FirebaseAuth? _activeFirebaseAuth = FirebaseAuth.instance; // No longer directly used for stream
+  // Temporary flag to enable/disable device ID check for debugging
+  static final bool _enableDeviceIdCheck = false; // Set to false to disable for now
 
-  // BehaviorSubject to emit the current authenticated user across all projects
-  final _userSubject = BehaviorSubject<User?>.seeded(null); // FIX: Using .seeded() constructor
+  // BehaviorSubject to emit the current authenticated user (and their project ID) across all projects
+  final _userSubject = BehaviorSubject<AuthResult?>.seeded(null);
 
   // Private constructor
   AuthService._internal() {
@@ -34,11 +33,8 @@ class AuthService {
       authInstance.authStateChanges().listen((User? user) {
         if (user != null) {
           LoggerService.info('Auth state changed: User ${user.uid} detected in project: $projectId');
-          _userSubject.add(user);
-        } else if (_userSubject.value?.uid == null || _userSubject.value?.email == null) {
-          // Only set to null if there's no other active user or it's currently null
-          // This prevents a sign-out from one shard from immediately signing out all if another is active.
-          // More complex logic might be needed here for true multi-shard sign-out management.
+          _userSubject.add(AuthResult.success(uid: user.uid, projectId: projectId));
+        } else if (_userSubject.value?.uid == null) { // Check only UID for simplicity in nulling out
           LoggerService.info('Auth state changed: No user detected in project: $projectId');
           _userSubject.add(null);
         }
@@ -48,8 +44,9 @@ class AuthService {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (user != null) {
         LoggerService.info('Auth state changed: User ${user.uid} detected in default project.');
-        _userSubject.add(user);
-      } else if (_userSubject.value?.uid == null || _userSubject.value?.email == null) {
+        // For the default instance, we don't have a specific projectId from sharding logic
+        _userSubject.add(AuthResult.success(uid: user.uid, projectId: null));
+      } else if (_userSubject.value?.uid == null) { // Check only UID for simplicity in nulling out
         LoggerService.info('Auth state changed: No user detected in default project.');
         _userSubject.add(null);
       }
@@ -64,39 +61,45 @@ class AuthService {
         return AuthResult.failure(message: 'Could not get device ID. Please try again.');
       }
 
-      // Revert temporary change: iterate through all projects for device ID check
-      for (String projectId in FirebaseProjectConfigService.projectIds) {
-        LoggerService.info('Checking device ID ($deviceId) in project: $projectId');
-        final FirebaseFirestore firestoreInstance = FirebaseFirestore.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
-        final deviceCheck = await firestoreInstance.collection('users').where('deviceId', isEqualTo: deviceId).limit(1).get();
-        if (deviceCheck.docs.isNotEmpty) {
-          LoggerService.warning('Device ID ($deviceId) already exists in project: $projectId');
-          return AuthResult.failure(message: 'Only one account per device is allowed.');
+      // Conditionally perform device ID check based on _enableDeviceIdCheck flag
+      if (_enableDeviceIdCheck) {
+        LoggerService.info('Device ID check is ENABLED.');
+        for (String projectId in FirebaseProjectConfigService.projectIds) {
+          LoggerService.info('Checking device ID ($deviceId) in project: $projectId');
+          final FirebaseFirestore firestoreInstance = FirebaseFirestore.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
+          final deviceCheck = await firestoreInstance.collection('users').where('deviceId', isEqualTo: deviceId).limit(1).get();
+          if (deviceCheck.docs.isNotEmpty) {
+            LoggerService.warning('Device ID ($deviceId) already exists in project: $projectId');
+            return AuthResult.failure(message: 'Only one account per device is allowed.');
+          }
         }
+      } else {
+        LoggerService.warning('Device ID check is DISABLED for debugging purposes.');
       }
 
       // Determine which project to shard the new user to
       final String targetProjectId = await FirebaseProjectConfigService.getNextProjectIdForNewUser();
-      LoggerService.info('Registering new user ($email) to project: $targetProjectId');
+      LoggerService.info('AuthService: Registering new user ($email) to project: $targetProjectId');
       final FirebaseAuth targetAuth = FirebaseAuth.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(targetProjectId));
       final FirebaseFirestore targetFirestore = FirebaseFirestore.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(targetProjectId));
 
       UserCredential result = await targetAuth.createUserWithEmailAndPassword(email: email, password: password);
       User? user = result.user;
       if (user != null) {
-        LoggerService.info('User created in project $targetProjectId with UID: ${user.uid}');
-        await UserService(firestoreInstance: targetFirestore).createUserData(user.uid, email, referralCode: referralCode, deviceId: deviceId, projectId: targetProjectId);
-        LoggerService.info('User data created in Firestore for UID: ${user.uid}');
-        _userSubject.add(user); // Add the newly registered user to the stream
-        return AuthResult.success(uid: user.uid);
-      }
-      return AuthResult.failure(message: 'User creation failed unexpectedly.');
+          LoggerService.info('AuthService: User created in project $targetProjectId with UID: ${user.uid}');
+          await UserService(firestoreInstance: targetFirestore).createUserData(user.uid, email, referralCode: referralCode, deviceId: deviceId, projectId: targetProjectId);
+          LoggerService.info('AuthService: User data created in Firestore for UID: ${user.uid}');
+          _userSubject.add(AuthResult.success(uid: user.uid, projectId: targetProjectId)); // Add the newly registered user to the stream
+          return AuthResult.success(uid: user.uid, projectId: targetProjectId);
+        }
+        LoggerService.error('AuthService: User creation failed unexpectedly for $email.');
+        return AuthResult.failure(message: 'User creation failed unexpectedly.');
     } on FirebaseAuthException catch (e, s) {
-      LoggerService.error('FirebaseAuthException during registration', e, s);
+      LoggerService.error('AuthService: FirebaseAuthException during registration for $email. Code: ${e.code}', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'FirebaseAuthException during registration');
       return AuthResult.failure(message: _getFriendlyErrorMessage(e.code));
     } catch (e, s) {
-      LoggerService.error('Unknown error during registration', e, s);
+      LoggerService.error('AuthService: Unknown error during registration for $email', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Unknown error during registration');
       return AuthResult.failure(message: 'An unexpected error occurred during registration.');
     }
@@ -104,33 +107,35 @@ class AuthService {
 
   // Sign in with email and password
   Future<AuthResult> signInWithEmailAndPassword(String email, String password) async {
-    LoggerService.info('Attempting to sign in user: $email');
+    LoggerService.info('AuthService: Attempting to sign in user: $email');
     for (String projectId in FirebaseProjectConfigService.projectIds) {
       try {
-        LoggerService.info('Trying to sign in $email in project: $projectId');
+        LoggerService.info('AuthService: Trying to sign in $email in project: $projectId');
         final FirebaseAuth targetAuth = FirebaseAuth.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
         UserCredential result = await targetAuth.signInWithEmailAndPassword(email: email, password: password);
         User? user = result.user;
         if (user != null) {
-          LoggerService.info('Successfully signed in $email to project: $projectId with UID: ${user.uid}');
-          _userSubject.add(user); // Add the newly logged-in user to the stream
-          return AuthResult.success(uid: user.uid);
+          LoggerService.info('AuthService: Successfully signed in $email to project: $projectId with UID: ${user.uid}');
+          _userSubject.add(AuthResult.success(uid: user.uid, projectId: projectId)); // Add the newly logged-in user to the stream
+          return AuthResult.success(uid: user.uid, projectId: projectId);
         }
       } on FirebaseAuthException catch (e, s) {
-        if (e.code == 'user-not-found' || e.code == 'wrong-password') {
-          LoggerService.info('Sign-in failed for $email in project $projectId with code: ${e.code}. Continuing to next project.');
+        LoggerService.debug('AuthService: FirebaseAuthException during sign-in for $email in project $projectId. Code: ${e.code}');
+        // Continue to next project if the error is related to credentials not matching in this specific project
+        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+          LoggerService.info('AuthService: Sign-in failed for $email in project $projectId with code: ${e.code}. Continuing to next project.');
         } else {
-          LoggerService.error('FirebaseAuthException during sign-in in project $projectId', e, s);
+          LoggerService.error('AuthService: FirebaseAuthException during sign-in in project $projectId', e, s);
           FirebaseCrashlytics.instance.recordError(e, s, reason: 'FirebaseAuthException during sign-in in project $projectId');
           return AuthResult.failure(message: _getFriendlyErrorMessage(e.code));
         }
       } catch (e, s) {
-        LoggerService.error('Unknown error during sign-in in project $projectId', e, s);
+        LoggerService.error('AuthService: Unknown error during sign-in in project $projectId', e, s);
         FirebaseCrashlytics.instance.recordError(e, s, reason: 'Unknown error during sign-in in project $projectId');
         return AuthResult.failure(message: 'An unexpected error occurred during sign-in.');
       }
     }
-    LoggerService.warning('No user found with $email and password across all projects.');
+    LoggerService.warning('AuthService: No user found with $email and password across all projects.');
     return AuthResult.failure(message: 'No user found with that email and password across all projects.');
   }
 
@@ -153,7 +158,7 @@ class AuthService {
   }
 
   // Get current user (from the BehaviorSubject)
-  User? getCurrentUser() {
+  AuthResult? getCurrentUser() {
     LoggerService.info('Getting current user from AuthService BehaviorSubject.');
     return _userSubject.value;
   }
@@ -203,7 +208,7 @@ class AuthService {
   }
 
   // Auth change user stream (exposes the BehaviorSubject stream)
-  Stream<User?> get user {
+  Stream<AuthResult?> get user {
     LoggerService.info('AuthService.user stream accessed. Current value: ${_userSubject.value?.uid}');
     return _userSubject.stream;
   }
