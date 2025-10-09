@@ -21,11 +21,12 @@ class ProfileScreen extends StatelessWidget {
     // Safely get data map from DocumentSnapshot, or an empty map if null
     Map<String, dynamic> userDataMap = (userData.data() as Map<String, dynamic>?) ?? {};
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const SizedBox(height: 50),
             CircleAvatar(
@@ -103,7 +104,7 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildAccountOption(BuildContext context, {required String title, required String value, required IconData icon}) {
@@ -167,11 +168,12 @@ class ProfileScreenLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             const SizedBox(height: 50),
             ShimmerLoading.circular(width: 120, height: 120),
@@ -221,6 +223,6 @@ class ProfileScreenLoading extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

@@ -421,56 +421,58 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
       context: context,
       isDismissible: false,
       builder: (BuildContext context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.deepPurple.shade50,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+        return SafeArea(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.shade50,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (gameResult == GameResult.win)
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (gameResult == GameResult.win)
+                    ScaleTransition(
+                      scale: _dialogScaleAnimation,
+                      child: const Icon(Icons.emoji_events,
+                          color: Colors.amber, size: 60),
+                    ),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 10),
                   ScaleTransition(
                     scale: _dialogScaleAnimation,
-                    child: const Icon(Icons.emoji_events,
-                        color: Colors.amber, size: 60),
+                    child: Text(
+                      content,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
                   ),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 10),
-                ScaleTransition(
-                  scale: _dialogScaleAnimation,
-                  child: Text(
-                    content,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _resetGame();
-                  },
-                  child: const Text('Play Again'),
-                ),
-                if (gameResult != GameResult.win &&
-                    gameResult != GameResult.draw)
-                  TextButton(
+                  const SizedBox(height: 20),
+                  ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      _showRewardedAdForCoins();
+                      _resetGame();
                     },
-                    child: const Text('Watch Ad for +X Coins'),
+                    child: const Text('Play Again'),
                   ),
-              ],
+                  if (gameResult != GameResult.win &&
+                      gameResult != GameResult.draw)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showRewardedAdForCoins();
+                      },
+                      child: const Text('Watch Ad for +X Coins'),
+                    ),
+                ],
+              ),
             ),
           ),
         );
@@ -519,144 +521,146 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _resetGame,
-        backgroundColor: Colors.blueGrey.shade400, // Updated FAB color
-        child: const Icon(Icons.refresh, color: Colors.white), // Icon color for contrast
-      ),
-      appBar: AppBar(
-        title: const Text('Tic Tac Toe'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.blueGrey.shade800, // Updated AppBar foreground color
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _showDifficultySettingsDialog, // Call new method
-            color: Colors.blueGrey.shade800, // Icon color
-          ),
-        ],
-      ),
-      body: AnimatedBuilder(
-        animation: _backgroundAnimationController,
-        builder: (context, child) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_gradientColor1.value!, _gradientColor2.value!],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+    return SafeArea(
+      child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+          onPressed: _resetGame,
+          backgroundColor: Colors.blueGrey.shade400, // Updated FAB color
+          child: const Icon(Icons.refresh, color: Colors.white), // Icon color for contrast
+        ),
+        appBar: AppBar(
+          title: const Text('Tic Tac Toe'),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.blueGrey.shade800, // Updated AppBar foreground color
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _showDifficultySettingsDialog, // Call new method
+              color: Colors.blueGrey.shade800, // Icon color
             ),
-            child: child,
-          );
-        },
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-                shouldLoop: false,
-                colors: const [
-                  Colors.green,
-                  Colors.blue,
-                  Colors.pink,
-                  Colors.orange,
-                  Colors.purple
-                ],
+          ],
+        ),
+        body: AnimatedBuilder(
+          animation: _backgroundAnimationController,
+          builder: (context, child) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_gradientColor1.value!, _gradientColor2.value!],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
-            ),
-            Column(
-              children: [
-                Padding(
-                padding: const EdgeInsets.all(20.0), // Increased padding
-                child: Column(
-                  children: [
-                    // Current Player Indicator
-                    _buildPlayerIndicator(context),
-                    // Removed Difficulty Selector from here
+              child: child,
+            );
+          },
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  colors: const [
+                    Colors.green,
+                    Colors.blue,
+                    Colors.pink,
+                    Colors.orange,
+                    Colors.purple
                   ],
                 ),
               ),
-              Center( // Wrap the board in a Center widget
-                child: Container(
-                  margin: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurple.shade50,
-                    borderRadius: BorderRadius.circular(15),
+              Column(
+                children: [
+                  Padding(
+                  padding: const EdgeInsets.all(20.0), // Increased padding
+                  child: Column(
+                    children: [
+                      // Current Player Indicator
+                      _buildPlayerIndicator(context),
+                      // Removed Difficulty Selector from here
+                    ],
                   ),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Removed 'spacing' as it's no longer used.
-                      return AspectRatio( // Ensure the board is square
-                        aspectRatio: 1,
-                        child: Stack(
-                          children: [
-                            GridView.count( // Changed to GridView.count as requested
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 2.0, // Small spacing for cell borders
-                              mainAxisSpacing: 2.0, // Small spacing for cell borders
-                              shrinkWrap: true, // Occupy only necessary space
-                              physics: const NeverScrollableScrollPhysics(), // Disable scrolling
-                              children: List.generate(9, (index) {
-                                // Pass constraints to _buildGameCell for responsive symbol sizing
-                                return _buildGameCell(index, constraints);
-                              }),
-                            ),
-                            // Winning line painter remains, but will draw over the new cell design
-                            if (_winningLine != null)
-                              CustomPaint(
-                                size: Size(
-                                    constraints.maxWidth, constraints.maxHeight),
-                                painter: WinningLinePainter(
-                                  winningLine: _winningLine!,
-                                  animation: _lineAnimationController,
-                                ),
+                ),
+                Center( // Wrap the board in a Center widget
+                  child: Container(
+                    margin: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.shade50,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Removed 'spacing' as it's no longer used.
+                        return AspectRatio( // Ensure the board is square
+                          aspectRatio: 1,
+                          child: Stack(
+                            children: [
+                              GridView.count( // Changed to GridView.count as requested
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 2.0, // Small spacing for cell borders
+                                mainAxisSpacing: 2.0, // Small spacing for cell borders
+                                shrinkWrap: true, // Occupy only necessary space
+                                physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+                                children: List.generate(9, (index) {
+                                  // Pass constraints to _buildGameCell for responsive symbol sizing
+                                  return _buildGameCell(index, constraints);
+                                }),
                               ),
-                            // The duplicate CustomPaint was removed as it was redundant
-                          ],
-                        ),
-                      );
-                    },
+                              // Winning line painter remains, but will draw over the new cell design
+                              if (_winningLine != null)
+                                CustomPaint(
+                                  size: Size(
+                                      constraints.maxWidth, constraints.maxHeight),
+                                  painter: WinningLinePainter(
+                                    winningLine: _winningLine!,
+                                    animation: _lineAnimationController,
+                                  ),
+                                ),
+                              // The duplicate CustomPaint was removed as it was redundant
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              // Computer thinking indicator
-              AnimatedOpacity(
-                opacity: _isComputerThinking ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: Text(
-                    'Computer is thinking...',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade900),
+                // Computer thinking indicator
+                AnimatedOpacity(
+                  opacity: _isComputerThinking ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Text(
+                      'Computer is thinking...',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade900),
+                    ),
                   ),
                 ),
+                // Banner Ad Placeholder
+                if (_adService.bannerAd != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 10), // Add some margin
+                    width: _adService.bannerAd!.size.width.toDouble(),
+                    height: _adService.bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _adService.bannerAd!),
+                  ),
+                ],
               ),
-              // Banner Ad Placeholder
-              if (_adService.bannerAd != null)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10), // Add some margin
-                  width: _adService.bannerAd!.size.width.toDouble(),
-                  height: _adService.bannerAd!.size.height.toDouble(),
-                  child: AdWidget(ad: _adService.bannerAd!),
-                ),
-              ],
-            ),
-            if (_isLoadingAd)
-              Positioned.fill(
-                child: Container(
-                  color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+              if (_isLoadingAd)
+                Positioned.fill(
+                  child: Container(
+                    color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
+                    child: const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

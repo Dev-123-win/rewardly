@@ -423,10 +423,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Minesweeper'),
-        actions: [
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Minesweeper'),
+          actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _showDifficultySettingsDialog,
@@ -531,7 +532,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
             ),
         ],
       ),
-    );
+    ));
   }
 
   Color _getAdjacentMineColor(int count) {

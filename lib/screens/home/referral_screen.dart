@@ -10,9 +10,10 @@ class ReferralScreenLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
         title: ShimmerLoading.rectangular(height: 24, width: 120),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -38,7 +39,7 @@ class ReferralScreenLoading extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -61,10 +62,11 @@ class ReferralScreen extends StatelessWidget {
 
     final data = userData.data() as Map<String, dynamic>?;
     final referralCode = data?['referralCode'] as String? ?? 'N/A';
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: Text(
           'We Share More.\nWe Earn More.',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
@@ -159,6 +161,6 @@ class ReferralScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

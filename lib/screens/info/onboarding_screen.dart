@@ -65,68 +65,70 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: onboardingPages.length,
-            onPageChanged: _onPageChanged,
-            itemBuilder: (context, index) {
-              return OnboardingPageContent(
-                title: onboardingPages[index]['title']!,
-                description: onboardingPages[index]['description']!,
-                imagePath: onboardingPages[index]['image']!,
-              );
-            },
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      onboardingPages.length,
-                      (index) => buildDot(index, context),
+    return SafeArea(
+      child: Scaffold(
+        body: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: onboardingPages.length,
+              onPageChanged: _onPageChanged,
+              itemBuilder: (context, index) {
+                return OnboardingPageContent(
+                  title: onboardingPages[index]['title']!,
+                  description: onboardingPages[index]['description']!,
+                  imagePath: onboardingPages[index]['image']!,
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 40.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        onboardingPages.length,
+                        (index) => buildDot(index, context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (_currentPage != onboardingPages.length - 1)
-                          TextButton(
-                            onPressed: _skipOnboarding,
-                            child: const Text('Skip', style: TextStyle(fontSize: 16)),
-                          ),
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: _nextPage,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (_currentPage != onboardingPages.length - 1)
+                            TextButton(
+                              onPressed: _skipOnboarding,
+                              child: const Text('Skip', style: TextStyle(fontSize: 16)),
+                            ),
+                          const Spacer(),
+                          ElevatedButton(
+                            onPressed: _nextPage,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              _currentPage == onboardingPages.length - 1 ? 'Get Started' : 'Next',
+                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
-                          child: Text(
-                            _currentPage == onboardingPages.length - 1 ? 'Get Started' : 'Next',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

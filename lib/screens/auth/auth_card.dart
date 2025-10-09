@@ -10,8 +10,9 @@ class AuthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Card(
+    return SafeArea(
+      child: Center(
+        child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0), // Adjusted margin for better fit
         elevation: 16.0, // Even more pronounced shadow for depth
         shape: RoundedRectangleBorder(
@@ -48,6 +49,6 @@ class AuthCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

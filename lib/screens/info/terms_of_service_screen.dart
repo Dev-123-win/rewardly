@@ -5,14 +5,15 @@ class TermsOfServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Terms of Service'),
-      ),
-      body: const SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Terms of Service'),
+        ),
+        body: const SingleChildScrollView(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Terms of Service for Rewardly App',
@@ -158,6 +159,6 @@ class TermsOfServiceScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

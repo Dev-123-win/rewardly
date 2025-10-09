@@ -145,9 +145,10 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackgroundColor, // Use neumorphic background color
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: kBackgroundColor, // Use neumorphic background color
+        appBar: AppBar(
         title: const Text('Watch & Earn Coins'),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -191,7 +192,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
           );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildAdCard(

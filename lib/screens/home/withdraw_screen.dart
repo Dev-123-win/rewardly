@@ -95,13 +95,14 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     int currentCoins = userData['coins'] ?? 0;
     double totalBalanceINR = currentCoins / 1000.0; // Assuming 1000 coins = 1 INR
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 30),
               // Current Balance Display
@@ -274,7 +275,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildRecentActivityList(String uid, UserService userService) {
@@ -622,12 +623,13 @@ class _WithdrawScreenLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 40),
             ShimmerLoading.rectangular(height: 150, width: double.infinity),
@@ -664,6 +666,6 @@ class _WithdrawScreenLoading extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

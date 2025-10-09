@@ -26,10 +26,11 @@ class _SignInState extends State<SignIn> {
   Widget build(BuildContext context) {
     return loading
         ? const AuthScreenLoading()
-        : Scaffold(
-            backgroundColor: Colors.white, // Plain white background
-            body: Center(
-              child: SingleChildScrollView(
+        : SafeArea(
+            child: Scaffold(
+              backgroundColor: Colors.white, // Plain white background
+              body: Center(
+                child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start, // Align to start for title
@@ -177,7 +178,7 @@ class _SignInState extends State<SignIn> {
                 ),
               ),
             ),
-          );
+          ));
   }
 }
 
@@ -186,9 +187,10 @@ class AuthScreenLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white, // Use white background for loading
-      body: Center(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white, // Use white background for loading
+        body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -206,6 +208,6 @@ class AuthScreenLoading extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

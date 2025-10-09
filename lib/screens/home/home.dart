@@ -78,11 +78,12 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white, // Ensure consistent background
-      body: Column(
-        children: [
-          Expanded(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white, // Ensure consistent background
+        body: Column(
+          children: [
+            Expanded(
             child: _buildScreens()[_selectedIndex],
           ),
         ],
@@ -100,7 +101,7 @@ class _HomeState extends State<Home> {
           });
         },
       ),
-    );
+    ));
   }
 
   Widget _buildHomePageContent() {
@@ -424,8 +425,9 @@ class HomeScreenLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
         backgroundColor: Colors.white, // White AppBar background
         title: const ShimmerLoading.rectangular(height: 18, width: 150),
         actions: <Widget>[
@@ -453,7 +455,7 @@ class HomeScreenLoading extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const ShimmerLoading.rectangular(height: 56),
-    );
+    ));
   }
 }
 
@@ -462,9 +464,11 @@ class _LoadingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
+    return SafeArea(
+      child: Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
     );
   }

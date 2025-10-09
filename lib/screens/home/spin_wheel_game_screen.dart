@@ -271,12 +271,13 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Spin the Wheel'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Spin the Wheel'),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
       ),
       body: Stack(
         children: [
@@ -390,7 +391,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildInfoChip(BuildContext context, IconData icon, String text, [Animation<double>? animation]) {
@@ -579,36 +580,38 @@ class WinDialog extends StatelessWidget {
       iconColor = Colors.grey;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.deepPurple.shade50,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.deepPurple.shade50,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: iconColor, size: 60),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              content,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: onPlayAgain,
-              child: const Text('Spin Again'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: iconColor, size: 60),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                content,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: onPlayAgain,
+                child: const Text('Spin Again'),
+              ),
+            ],
+          ),
         ),
       ),
     );

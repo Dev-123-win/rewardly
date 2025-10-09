@@ -7,7 +7,8 @@ class NoInternetScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(
+      child: Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -47,6 +48,6 @@ class NoInternetScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }

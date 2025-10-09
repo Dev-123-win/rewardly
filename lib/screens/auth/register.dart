@@ -29,10 +29,11 @@ class _RegisterState extends State<Register> {
   Widget build(BuildContext context) {
     return loading
         ? const AuthScreenLoading()
-        : Scaffold(
-            backgroundColor: Colors.white, // Plain white background
-            body: Center(
-              child: SingleChildScrollView(
+        : SafeArea(
+            child: Scaffold(
+              backgroundColor: Colors.white, // Plain white background
+              body: Center(
+                child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -277,6 +278,6 @@ class _RegisterState extends State<Register> {
                 ),
               ),
             ),
-          );
+          ));
   }
 }
