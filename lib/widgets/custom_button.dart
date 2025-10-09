@@ -10,7 +10,8 @@ class CustomButton extends StatefulWidget {
   final double? height;
   final double borderRadius;
   final TextStyle? textStyle;
-  final EdgeInsetsGeometry? padding; // Add padding parameter
+  final EdgeInsetsGeometry? padding;
+  final IconData? icon; // Add icon parameter
 
   const CustomButton({
     super.key,
@@ -20,9 +21,10 @@ class CustomButton extends StatefulWidget {
     this.endColor,
     this.width,
     this.height,
-    this.borderRadius = 10.0, // Changed default to 10.0 for consistency with image
+    this.borderRadius = 10.0,
     this.textStyle,
-    this.padding, // Initialize padding
+    this.padding,
+    this.icon, // Initialize icon
   });
 
   @override
@@ -35,36 +37,48 @@ class _CustomButtonState extends State<CustomButton> {
     return AnimatedTap(
       onTap: widget.onPressed,
       child: Container(
-        width: widget.width, // Removed default to double.infinity
+        width: widget.width,
         height: widget.height ?? 50.0,
-        padding: widget.padding, // Apply padding
+        padding: widget.padding,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient( // Use a specific gradient for the button
             colors: [
-              widget.startColor ?? const Color(0xFF8A2BE2), // Default purple
-              widget.endColor ?? const Color(0xFFDA70D6), // Default pink/orchid
+              Color(0xFF6200EE), // Deep Purple
+              Color(0xFFBB86FC), // Light Purple
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(widget.borderRadius),
           boxShadow: [
             BoxShadow(
-              color: (widget.endColor ?? const Color(0xFFDA70D6)).withAlpha(102),
+              color: const Color(0xFF6200EE).withAlpha((255 * 0.3).round()), // Shadow matching the button color
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Center(
-          child: Text(
-            widget.text,
-            style: widget.textStyle ??
-                const TextStyle(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.icon != null)
+                Icon(
+                  widget.icon,
                   color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  size: 20,
                 ),
+              if (widget.icon != null) const SizedBox(width: 8),
+              Text(
+                widget.text,
+                style: widget.textStyle ??
+                    const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
           ),
         ),
       ),

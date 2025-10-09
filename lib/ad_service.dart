@@ -28,7 +28,11 @@ class AdService {
 
   // Load Rewarded Ad
   void loadRewardedAd() {
-    if (_rewardedAd != null) return; // Ad already loaded
+    if (_rewardedAd != null) {
+      LoggerService.debug('RewardedAd already loaded, skipping load request.');
+      return; // Ad already loaded
+    }
+    LoggerService.debug('Attempting to load RewardedAd. Attempt: $_numRewardedLoadAttempts');
 
     RewardedAd.load(
       adUnitId: _rewardedAdUnitId,
@@ -37,14 +41,16 @@ class AdService {
         onAdLoaded: (RewardedAd ad) {
           _rewardedAd = ad;
           _numRewardedLoadAttempts = 0;
-          LoggerService.info('RewardedAd loaded.');
+          LoggerService.info('RewardedAd loaded successfully.');
         },
         onAdFailedToLoad: (LoadAdError error) {
           _rewardedAd = null;
           _numRewardedLoadAttempts++;
-          LoggerService.error('RewardedAd failed to load: $error');
+          LoggerService.error('RewardedAd failed to load: $error. Attempts: $_numRewardedLoadAttempts');
           if (_numRewardedLoadAttempts <= maxFailedLoadAttempts) {
             loadRewardedAd();
+          } else {
+            LoggerService.warning('Max rewarded ad load attempts reached. Stopping retries.');
           }
         },
       ),
@@ -54,15 +60,17 @@ class AdService {
   // Show Rewarded Ad
   void showRewardedAd({
     required Function onRewardEarned,
-    required Function onAdFailedToLoad,
-    required Function onAdFailedToShow,
+    required Function onAdFailedToLoad, // This callback is for when the ad fails to load (pre-show)
+    required Function onAdFailedToShow, // This callback is for when the ad fails to show
   }) {
     if (_rewardedAd == null) {
+      LoggerService.warning('RewardedAd is null when trying to show. Calling onAdFailedToShow.');
       onAdFailedToShow();
       loadRewardedAd(); // Try to load a new ad
       return;
     }
 
+    LoggerService.debug('Attempting to show RewardedAd.');
     _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdShowedFullScreenContent: (ad) => LoggerService.info('$ad onAdShowedFullScreenContent.'),
       onAdDismissedFullScreenContent: (ad) {
@@ -82,6 +90,7 @@ class AdService {
 
     _rewardedAd!.setImmersiveMode(true);
     _rewardedAd!.show(onUserEarnedReward: (ad, reward) {
+      LoggerService.info('User earned reward: ${reward.amount} ${reward.type}');
       onRewardEarned(reward.amount.toInt());
     });
     _rewardedAd = null; // Clear ad after showing

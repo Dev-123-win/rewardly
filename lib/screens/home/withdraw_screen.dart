@@ -6,7 +6,6 @@ import '../../providers/user_data_provider.dart';
 import '../../withdrawal_service.dart'; // Import WithdrawalService
 import '../../models/auth_result.dart'; // Import AuthResult
 import '../../user_service.dart'; // Import UserService
-import '../../shared/neuromorphic_constants.dart'; // Import Neuromorphic Constants
 
 enum WithdrawalMethod { bank, upi, none }
 
@@ -97,7 +96,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     double totalBalanceINR = currentCoins / 1000.0; // Assuming 1000 coins = 1 INR
 
     return Scaffold(
-      backgroundColor: kBackgroundColor,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -107,78 +106,75 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               const SizedBox(height: 30),
               // Current Balance Display
               Center(
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 10),
-                  padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
-                  decoration: kNeuromorphicBoxDecoration(
-                    isPressed: false,
-                    borderRadius: 20,
-                    backgroundColor: kBackgroundColor, // Use base background or a slight variation
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Your Current Balance',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black54),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '₹${totalBalanceINR.toStringAsFixed(2)}',
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 52,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 5.0,
-                              color: Colors.black.withAlpha(25), // Replaced withAlpha
-                              offset: const Offset(2.0, 2.0),
-                            ),
-                          ],
+                child: Card(
+                  elevation: 8.0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Your Current Balance',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
                         ),
-                      ),
-                      Text(
-                        '($currentCoins coins)',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black45),
-                      ),
-                    ],
+                        const SizedBox(height: 10),
+                        Text(
+                          '₹${totalBalanceINR.toStringAsFixed(2)}',
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            color: Theme.of(context).primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 52,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 5.0,
+                                color: Colors.black.withOpacity(0.25),
+                                offset: const Offset(2.0, 2.0),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '($currentCoins coins)',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black45),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 40),
               // Minimum Withdrawal Progress
-              Container(
-                padding: const EdgeInsets.all(18.0),
-                decoration: kNeuromorphicBoxDecoration(
-                  isPressed: false,
-                  borderRadius: 15.0,
-                  backgroundColor: kBackgroundColor,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Withdrawal Goal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 15),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: LinearProgressIndicator(
-                        value: currentCoins / _minWithdrawalCoins.toDouble(),
-                        backgroundColor: kDarkShadowColor.withAlpha(76), // Replaced withAlpha
-                        color: Theme.of(context).primaryColor,
-                        minHeight: 12,
+              Card(
+                elevation: 4.0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                child: Padding(
+                  padding: const EdgeInsets.all(18.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Withdrawal Goal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '${((currentCoins / _minWithdrawalCoins.toDouble()) * 100).toStringAsFixed(0)}% towards your goal',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
+                      const SizedBox(height: 15),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: currentCoins / _minWithdrawalCoins.toDouble(),
+                          backgroundColor: Colors.grey[300],
+                          color: Theme.of(context).primaryColor,
+                          minHeight: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${((currentCoins / _minWithdrawalCoins.toDouble()) * 100).toStringAsFixed(0)}% towards your goal',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -230,60 +226,22 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               // Withdraw Button
               if (_selectedMethod != WithdrawalMethod.none)
                 Center(
-                  child: Container(
+                  child: SizedBox(
                     width: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: () => _processWithdrawal(currentCoins),
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      label: Text(
+                        'Initiate Withdrawal',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
                         padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        backgroundColor: kBackgroundColor, // Set a base color for the button
-                        shadowColor: Colors.transparent, // Remove default shadow
-                        elevation: 0, // Remove default elevation
-                      ).copyWith(
-                        overlayColor: WidgetStateProperty.all(Theme.of(context).primaryColor.withAlpha(25)), // Replaced MaterialStateProperty and withOpacity
-                        surfaceTintColor: WidgetStateProperty.all(Colors.transparent), // Replaced MaterialStateProperty
-                        // Apply neuromorphic shadows
-                        shadowColor: WidgetStateProperty.resolveWith<Color>( // Replaced MaterialStateProperty
-                          (Set<WidgetState> states) { // Replaced MaterialState
-                            if (states.contains(WidgetState.pressed)) { // Replaced MaterialState
-                              return Colors.transparent; // No shadow when pressed
-                            }
-                            return Colors.transparent; // Default transparent
-                          },
-                        ),
-                        shape: WidgetStateProperty.all<RoundedRectangleBorder>( // Replaced MaterialStateProperty
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            side: BorderSide.none, // Remove default border
-                          ),
-                        ),
-                        elevation: WidgetStateProperty.resolveWith<double>( // Replaced MaterialStateProperty
-                          (Set<WidgetState> states) { // Replaced MaterialState
-                            if (states.contains(WidgetState.pressed)) { // Replaced MaterialState
-                              return 0; // No elevation when pressed
-                            }
-                            return 0; // Default elevation
-                          },
-                        ),
-                      ),
-                      child: Ink(
-                        decoration: kNeuromorphicBoxDecoration(
-                          isPressed: false, // Button is not pressed by default
-                          borderRadius: 15,
-                          backgroundColor: Theme.of(context).primaryColor, // Use primary color for the button's "surface"
-                        ),
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                          child: Text(
-                            'Initiate Withdrawal',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
-                        ),
+                        elevation: 5,
                       ),
                     ),
                   ),
@@ -371,53 +329,45 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              elevation: 0, // Remove default elevation
-              color: Colors.transparent, // Make card transparent to show neuromorphic background
+              elevation: 4.0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Container(
-                decoration: kNeuromorphicBoxDecoration(
-                  isPressed: false,
-                  borderRadius: 12,
-                  backgroundColor: kBackgroundColor,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(statusIcon, color: statusColor, size: 30),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Withdrawal of $amount coins',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Method: ${method.toUpperCase()}',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(statusIcon, color: statusColor, size: 30),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            status.toUpperCase(),
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+                            'Withdrawal of $amount coins',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
-                          if (request['createdAt'] != null)
-                            Text(
-                              (request['createdAt'] as Timestamp).toDate().toLocal().toString().split(' ')[0],
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
-                            ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'Method: ${method.toUpperCase()}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          status.toUpperCase(),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+                        ),
+                        if (request['createdAt'] != null)
+                          Text(
+                            (request['createdAt'] as Timestamp).toDate().toLocal().toString().split(' ')[0],
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             );
@@ -436,49 +386,34 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        Container(
-          decoration: kNeuromorphicBoxDecoration(isPressed: true, borderRadius: 15, backgroundColor: kBackgroundColor),
-          child: TextFormField(
-            controller: _bankAccountController,
-            decoration: InputDecoration(
-              labelText: 'Bank Account Number',
-              hintText: 'e.g., 1234567890',
-              border: InputBorder.none, // Remove standard border
-              prefixIcon: const Icon(Icons.account_balance_wallet, color: Colors.grey),
-              filled: true,
-              fillColor: kBackgroundColor, // Use neuromorphic background color
-            ),
-            keyboardType: TextInputType.number,
+        TextFormField(
+          controller: _bankAccountController,
+          decoration: InputDecoration(
+            labelText: 'Bank Account Number',
+            hintText: 'e.g., 1234567890',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            prefixIcon: const Icon(Icons.account_balance_wallet),
+          ),
+          keyboardType: TextInputType.number,
+        ),
+        const SizedBox(height: 20),
+        TextFormField(
+          controller: _ifscCodeController,
+          decoration: InputDecoration(
+            labelText: 'IFSC Code',
+            hintText: 'e.g., HDFC0001234',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            prefixIcon: const Icon(Icons.code),
           ),
         ),
         const SizedBox(height: 20),
-        Container(
-          decoration: kNeuromorphicBoxDecoration(isPressed: true, borderRadius: 15, backgroundColor: kBackgroundColor),
-          child: TextFormField(
-            controller: _ifscCodeController,
-            decoration: InputDecoration(
-              labelText: 'IFSC Code',
-              hintText: 'e.g., HDFC0001234',
-              border: InputBorder.none, // Remove standard border
-              prefixIcon: const Icon(Icons.code, color: Colors.grey),
-              filled: true,
-              fillColor: kBackgroundColor, // Use neuromorphic background color
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          decoration: kNeuromorphicBoxDecoration(isPressed: true, borderRadius: 15, backgroundColor: kBackgroundColor),
-          child: TextFormField(
-            controller: _accountHolderNameController,
-            decoration: InputDecoration(
-              labelText: 'Account Holder Name',
-              hintText: 'e.g., John Doe',
-              border: InputBorder.none, // Remove standard border
-              prefixIcon: const Icon(Icons.person, color: Colors.grey),
-              filled: true,
-              fillColor: kBackgroundColor, // Use neuromorphic background color
-            ),
+        TextFormField(
+          controller: _accountHolderNameController,
+          decoration: InputDecoration(
+            labelText: 'Account Holder Name',
+            hintText: 'e.g., John Doe',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            prefixIcon: const Icon(Icons.person),
           ),
         ),
         const SizedBox(height: 20),
@@ -496,20 +431,15 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 20),
-        Container(
-          decoration: kNeuromorphicBoxDecoration(isPressed: true, borderRadius: 15, backgroundColor: kBackgroundColor),
-          child: TextFormField(
-            controller: _upiIdController,
-            decoration: InputDecoration(
-              labelText: 'UPI ID',
-              hintText: 'e.g., yourname@bank',
-              border: InputBorder.none, // Remove standard border
-              prefixIcon: const Icon(Icons.qr_code, color: Colors.grey),
-              filled: true,
-              fillColor: kBackgroundColor, // Use neuromorphic background color
-            ),
-            keyboardType: TextInputType.emailAddress,
+        TextFormField(
+          controller: _upiIdController,
+          decoration: InputDecoration(
+            labelText: 'UPI ID',
+            hintText: 'e.g., yourname@bank',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            prefixIcon: const Icon(Icons.qr_code),
           ),
+          keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 20),
         _buildSaveDetailsCheckbox(),
@@ -640,39 +570,46 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        width: double.infinity, // Full width for list-type cards
-        decoration: kNeuromorphicBoxDecoration(
-          isPressed: isSelected, // Card appears "pressed in" when selected
-          borderRadius: 15.0,
-          backgroundColor: kBackgroundColor,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0), // Adjusted padding
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 30, // Adjusted icon size
-                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
-              ),
-              const SizedBox(width: 15), // Spacing between icon and text
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                      fontSize: 16,
-                    ),
-              ),
-              const Spacer(), // Pushes content to the left and right
-              if (isSelected)
-                Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: 24),
-            ],
+    return Card(
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: double.infinity, // Full width for list-type cards
+          decoration: BoxDecoration(
+            color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.white,
+            borderRadius: BorderRadius.circular(15.0),
+            border: Border.all(
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+              width: isSelected ? 2.0 : 1.0,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0), // Adjusted padding
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 30, // Adjusted icon size
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
+                ),
+                const SizedBox(width: 15), // Spacing between icon and text
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                ),
+                const Spacer(), // Pushes content to the left and right
+                if (isSelected)
+                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: 24),
+              ],
+            ),
           ),
         ),
       ),
@@ -686,7 +623,7 @@ class _WithdrawScreenLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBackgroundColor,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(

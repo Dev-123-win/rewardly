@@ -29,3 +29,6 @@ Purple is often associated with royalty, creativity, and luxury.
 Blue is a popular choice for financial and tech companies because it conveys trust, stability, and intelligence.
 
 Gold symbolizes wealth, success, and prestige, making it a strong accent color for a financial app.
+
+ Flutter Bottomsheet for bottom slide things
+ 

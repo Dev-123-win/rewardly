@@ -4,6 +4,7 @@ import 'dart:async'; // For Timer
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart'; // For neumorphic design
+import '../../logger_service.dart'; // Import LoggerService
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -31,6 +32,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
   @override
   void initState() {
     super.initState();
+    LoggerService.debug('EarnCoinsScreen: initState - Loading rewarded ad.');
     _adService.loadRewardedAd(); // Preload rewarded ad
     _initializeAdProgress();
 
@@ -52,6 +54,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
   }
 
   Future<void> _initializeAdProgress() async {
+    LoggerService.debug('EarnCoinsScreen: _initializeAdProgress called.');
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
     await userDataProvider.resetDailyAdWatchCount(); // Reset if new day
 
@@ -84,6 +87,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
   }
 
   void _watchAd(int adIndex) async {
+    LoggerService.debug('EarnCoinsScreen: _watchAd called for adIndex: $adIndex. Current adIndex: $_currentAdIndex, secondsRemaining: $_secondsRemaining, adsWatchedToday: $_adsWatchedToday');
     if (_isAdLoading || adIndex != _currentAdIndex || _secondsRemaining > 0 || _adsWatchedToday >= _dailyAdLimit) {
       return; // Prevent multiple ad loads, wrong index, or if timer is active/limit reached
     }
@@ -91,6 +95,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
     setState(() {
       _isAdLoading = true;
     });
+    LoggerService.debug('EarnCoinsScreen: _watchAd - Calling _adService.showRewardedAd().');
 
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
@@ -126,6 +131,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
         );
       },
       onAdFailedToShow: () {
+        LoggerService.error('EarnCoinsScreen: _watchAd - Ad failed to show.');
         if (!mounted) return;
         setState(() {
           _isAdLoading = false;
@@ -251,7 +257,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Ad #$adNumber', // Fix unnecessary braces
+                    'Earn $_coinsPerAd Coins',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: kTextColor,
                           fontWeight: FontWeight.bold,
