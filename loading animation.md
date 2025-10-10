@@ -32,3 +32,8 @@ Gold symbolizes wealth, success, and prestige, making it a strong accent color f
 
  Flutter Bottomsheet for bottom slide things
  
+
+
+ elevation: 2.0, // This creates a soft shadow
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(16.0),

@@ -242,6 +242,8 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
                     },
+                    startColor: Colors.orange.shade400,
+                    endColor: Colors.orange.shade700,
                   ),
                   const SizedBox(width: 15),
                   _buildQuickActionCard(
@@ -251,6 +253,8 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
                     },
+                    startColor: Colors.blue.shade400,
+                    endColor: Colors.blue.shade700,
                   ),
                   const SizedBox(width: 15),
                   _buildQuickActionCard(
@@ -262,6 +266,8 @@ class _HomeState extends State<Home> {
                         _selectedIndex = 0; // Navigate to WithdrawScreen
                       });
                     },
+                    startColor: Colors.green.shade400,
+                    endColor: Colors.green.shade700,
                   ),
                 ],
               ),
@@ -293,6 +299,8 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
                     },
+                    startColor: Colors.purple.shade400,
+                    endColor: Colors.purple.shade700,
                   ),
                   _buildOfferCard(
                     context,
@@ -302,6 +310,8 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
                     },
+                    startColor: Colors.red.shade400,
+                    endColor: Colors.red.shade700,
                   ),
                   _buildOfferCard(
                     context,
@@ -311,6 +321,8 @@ class _HomeState extends State<Home> {
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
                     },
+                    startColor: Colors.teal.shade400,
+                    endColor: Colors.teal.shade700,
                   ),
                   // The "Watch Ads" card is now in Quick Actions, so it's removed from here.
                   // Add more offer cards here as needed
@@ -329,21 +341,27 @@ class _HomeState extends State<Home> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required Color startColor,
+    required Color endColor,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        elevation: 2.0, // Soft shadow as requested
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // Rounded corners as requested
         child: Container(
           width: 120, // Fixed width for quick action cards
           padding: const EdgeInsets.all(10.0),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15.0),
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16.0), // Match card border radius
             boxShadow: [
               BoxShadow(
-                color: Color.fromARGB(13, 0, 0, 0),
+                color: endColor.withOpacity(0.4), // Shadow matching the gradient end color
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -352,12 +370,12 @@ class _HomeState extends State<Home> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 30, color: Theme.of(context).primaryColor),
+              Icon(icon, size: 30, color: Colors.white), // White icons for contrast
               const SizedBox(height: 8),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600), // White text for contrast
               ),
             ],
           ),
@@ -372,20 +390,26 @@ class _HomeState extends State<Home> {
     required String subtitle,
     required String imagePath,
     required VoidCallback onTap,
+    required Color startColor,
+    required Color endColor,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+        elevation: 2.0, // Soft shadow as requested
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // Rounded corners as requested
         clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white, // Solid white background
-            borderRadius: BorderRadius.circular(15.0),
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16.0), // Match card border radius
             boxShadow: [
               BoxShadow(
-                color: Color.fromARGB(13, 0, 0, 0),
+                color: endColor.withOpacity(0.4), // Shadow matching the gradient end color
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -399,18 +423,19 @@ class _HomeState extends State<Home> {
                 height: 60, // Adjusted image size
                 width: 60,
                 fit: BoxFit.contain,
+                color: Colors.white, // Tint image white for better contrast on gradient
               ),
               const SizedBox(height: 10),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold), // White text for contrast
               ),
               const SizedBox(height: 5),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70), // Lighter white for subtitle
               ),
             ],
           ),

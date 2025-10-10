@@ -187,16 +187,98 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     }
     if (!mounted) return; // Check mounted before using context
 
+    String title;
+    String content;
+    IconData icon;
+    Color iconColor;
+
+    if (reward.coins > 0) {
+      title = 'Congratulations!';
+      content = 'You won ${reward.coins} coins!';
+      icon = Icons.celebration;
+      iconColor = Colors.amber;
+    } else {
+      title = 'Better luck next time!';
+      content = 'You landed on "0" coins.';
+      icon = Icons.sentiment_dissatisfied;
+      iconColor = Colors.grey;
+    }
+
     showModalBottomSheet(
       context: context,
       isDismissible: false,
+      isScrollControlled: true, // Allow the bottom sheet to be full height
       builder: (BuildContext context) {
-        return WinDialog(
-          reward: reward,
-          onPlayAgain: () {
-            Navigator.of(context).pop();
-            // Optionally reset game state or just allow another spin
-          },
+        return FractionallySizedBox(
+          heightFactor: 0.7, // Make it cover 70% of the screen height
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor, // Use theme card color
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(25), // Slightly larger radius
+                topRight: Radius.circular(25),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(30.0), // Increased padding
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+                mainAxisSize: MainAxisSize.max, // Take max available height
+                children: [
+                  ScaleTransition(
+                    scale: _coinPulseAnimation,
+                    child: CircleAvatar(
+                      backgroundColor: iconColor.withOpacity(0.2),
+                      radius: 50, // Larger icon
+                      child: Icon(icon, color: iconColor, size: 60),
+                    ),
+                  ),
+                  const SizedBox(height: 25), // Increased spacing
+                  ScaleTransition(
+                    scale: _coinPulseAnimation,
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark), // Enhanced text style
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    content,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
+                  ),
+                  const SizedBox(height: 40), // Increased spacing
+                  SizedBox(
+                    width: double.infinity, // Full width button
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        // Optionally reset game state or just allow another spin
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor, // Use primary color for button
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18), // Larger padding
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12), // Rounded button
+                        ),
+                      ),
+                      child: const Text('Spin Again'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
@@ -549,71 +631,4 @@ class WheelPointerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class WinDialog extends StatelessWidget {
-  final WheelReward reward;
-  final VoidCallback onPlayAgain;
-
-  const WinDialog({
-    super.key,
-    required this.reward,
-    required this.onPlayAgain,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    String title;
-    String content;
-    IconData icon;
-    Color iconColor;
-
-    if (reward.coins > 0) {
-      title = 'Congratulations!';
-      content = 'You won ${reward.coins} coins!';
-      icon = Icons.celebration;
-      iconColor = Colors.amber;
-    } else {
-      title = 'Better luck next time!';
-      content = 'You landed on "0" coins.';
-      icon = Icons.sentiment_dissatisfied;
-      iconColor = Colors.grey;
-    }
-
-    return SafeArea(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.deepPurple.shade50,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: iconColor, size: 60),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                content,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: onPlayAgain,
-                child: const Text('Spin Again'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

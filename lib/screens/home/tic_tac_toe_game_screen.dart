@@ -420,56 +420,106 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     showModalBottomSheet(
       context: context,
       isDismissible: false,
+      isScrollControlled: true, // Allow the bottom sheet to be full height
       builder: (BuildContext context) {
-        return SafeArea(
+        return FractionallySizedBox(
+          heightFactor: 0.7, // Make it cover 70% of the screen height
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50,
+              color: Theme.of(context).cardColor, // Use theme card color
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+                topLeft: Radius.circular(25), // Slightly larger radius
+                topRight: Radius.circular(25),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(30.0), // Increased padding
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+                mainAxisSize: MainAxisSize.max, // Take max available height
                 children: [
-                  if (gameResult == GameResult.win)
-                    ScaleTransition(
-                      scale: _dialogScaleAnimation,
-                      child: const Icon(Icons.emoji_events,
-                          color: Colors.amber, size: 60),
+                  ScaleTransition(
+                    scale: _dialogScaleAnimation,
+                    child: CircleAvatar(
+                      backgroundColor: (gameResult == GameResult.win
+                              ? Colors.amber
+                              : gameResult == GameResult.lose
+                                  ? Colors.red
+                                  : Colors.blueGrey)
+                          .withOpacity(0.2),
+                      radius: 50, // Larger icon
+                      child: Icon(
+                        gameResult == GameResult.win
+                            ? Icons.emoji_events
+                            : gameResult == GameResult.lose
+                                ? Icons.sentiment_dissatisfied
+                                : Icons.handshake,
+                        color: gameResult == GameResult.win
+                            ? Colors.amber
+                            : gameResult == GameResult.lose
+                                ? Colors.red
+                                : Colors.blueGrey,
+                        size: 60,
+                      ),
                     ),
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 25), // Increased spacing
                   ScaleTransition(
                     scale: _dialogScaleAnimation,
                     child: Text(
-                      content,
+                      title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark), // Enhanced text style
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      _resetGame();
-                    },
-                    child: const Text('Play Again'),
+                  const SizedBox(height: 15),
+                  Text(
+                    content,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
                   ),
-                  if (gameResult != GameResult.win &&
-                      gameResult != GameResult.draw)
-                    TextButton(
+                  const SizedBox(height: 40), // Increased spacing
+                  SizedBox(
+                    width: double.infinity, // Full width button
+                    child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        _showRewardedAdForCoins();
+                        _resetGame();
                       },
-                      child: const Text('Watch Ad for +X Coins'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor, // Use primary color for button
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18), // Larger padding
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12), // Rounded button
+                        ),
+                      ),
+                      child: const Text('Play Again'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (gameResult != GameResult.win && gameResult != GameResult.draw)
+                    SizedBox(
+                      width: double.infinity, // Full width button
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _showRewardedAdForCoins();
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.blueGrey,
+                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), // Larger text
+                        ),
+                        child: const Text('Watch Ad for +X Coins'),
+                      ),
                     ),
                 ],
               ),
@@ -667,42 +717,61 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
   }
 
   void _showDifficultySettingsDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Select Difficulty'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              grp.RadioGroup<GameMode>.builder(
-                direction: Axis.vertical,
-                groupValue: selectedMode,
-                onChanged: (GameMode? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      selectedMode = newValue;
-                      _resetGame();
-                    });
-                    Navigator.of(context).pop(); // Close the dialog
-                  }
-                },
-                items: GameMode.values,
-                itemBuilder: (item) => grp.RadioButtonBuilder(
-                  item.toString().split('.').last,
-                  textPosition: grp.RadioButtonTextPosition.right,
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Select Difficulty',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 20),
+                    grp.RadioGroup<GameMode>.builder(
+                      direction: Axis.vertical,
+                      groupValue: selectedMode,
+                      onChanged: (GameMode? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            selectedMode = newValue;
+                            _resetGame();
+                          });
+                          Navigator.of(context).pop(); // Close the dialog
+                        }
+                      },
+                      items: GameMode.values,
+                      itemBuilder: (item) => grp.RadioButtonBuilder(
+                        item.toString().split('.').last,
+                        textPosition: grp.RadioButtonTextPosition.right,
+                      ),
+                      activeColor: Theme.of(context).primaryColor,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Close'),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+            );
+          },
         );
       },
     );

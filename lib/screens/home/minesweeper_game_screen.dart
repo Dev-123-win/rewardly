@@ -16,7 +16,8 @@ class MinesweeperGameScreen extends StatefulWidget {
   State<MinesweeperGameScreen> createState() => _MinesweeperGameScreenState();
 }
 
-class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
+class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
+    with TickerProviderStateMixin {
   // Game state variables
   int _rows = 9;
   int _cols = 9;
@@ -29,6 +30,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
   late Timer _timer;
   late Random _random; // For better mine placement
   late AdService _adService; // AdService instance
+  late AnimationController _dialogAnimationController;
+  late Animation<double> _dialogScaleAnimation;
   // UserService will be obtained from Provider
 
   // Custom difficulty settings
@@ -43,12 +46,24 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
     _timer = Timer(Duration.zero, () {}); // Initialize with a dummy timer
     _adService = AdService(); // Initialize AdService
     _adService.loadBannerAd(); // Load banner ad
+
+    _dialogAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _dialogScaleAnimation = CurvedAnimation(
+      parent: _dialogAnimationController,
+      curve: Curves.elasticOut,
+    );
+
     _initializeGame(_selectedRows, _selectedCols, _selectedMines);
   }
 
   @override
   void dispose() {
     _timer.cancel();
+    _dialogAnimationController.dispose();
     super.dispose();
   }
 
@@ -223,85 +238,123 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
   }
 
   void _showDifficultySettingsDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         int tempRows = _selectedRows;
         int tempCols = _selectedCols;
         int tempMines = _selectedMines;
 
-        return AlertDialog(
-          title: const Text('Custom Difficulty'),
-          content: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setState) {
-              return SingleChildScrollView(
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(20.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Rows: ${tempRows.toInt()}'),
-                    Slider(
-                      value: tempRows.toDouble(),
-                      min: 5,
-                      max: 9,
-                      divisions: 4,
-                      label: tempRows.toInt().toString(),
-                      onChanged: (double value) {
-                        setState(() {
-                          tempRows = value.toInt();
-                        });
-                      },
+                    Text(
+                      'Custom Difficulty',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    Text('Columns: ${tempCols.toInt()}'),
-                    Slider(
-                      value: tempCols.toDouble(),
-                      min: 5,
-                      max: 9,
-                      divisions: 4,
-                      label: tempCols.toInt().toString(),
-                      onChanged: (double value) {
-                        setState(() {
-                          tempCols = value.toInt();
-                        });
-                      },
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        const Text('Rows:'),
+                        Expanded(
+                          child: Slider(
+                            value: tempRows.toDouble(),
+                            min: 5,
+                            max: 9,
+                            divisions: 4,
+                            label: tempRows.toInt().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                tempRows = value.toInt();
+                              });
+                            },
+                          ),
+                        ),
+                        Text(tempRows.toInt().toString()),
+                      ],
                     ),
-                    Text('Mines: ${tempMines.toInt()}'),
-                    Slider(
-                      value: tempMines.toDouble(),
-                      min: 3,
-                      max: 15,
-                      divisions: 12,
-                      label: tempMines.toInt().toString(),
-                      onChanged: (double value) {
-                        setState(() {
-                          tempMines = value.toInt();
-                        });
-                      },
+                    Row(
+                      children: [
+                        const Text('Columns:'),
+                        Expanded(
+                          child: Slider(
+                            value: tempCols.toDouble(),
+                            min: 5,
+                            max: 9,
+                            divisions: 4,
+                            label: tempCols.toInt().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                tempCols = value.toInt();
+                              });
+                            },
+                          ),
+                        ),
+                        Text(tempCols.toInt().toString()),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('Mines:'),
+                        Expanded(
+                          child: Slider(
+                            value: tempMines.toDouble(),
+                            min: 3,
+                            max: 15,
+                            divisions: 12,
+                            label: tempMines.toInt().toString(),
+                            onChanged: (double value) {
+                              setState(() {
+                                tempMines = value.toInt();
+                              });
+                            },
+                          ),
+                        ),
+                        Text(tempMines.toInt().toString()),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        CustomButton(
+                          text: 'Cancel',
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        CustomButton(
+                          text: 'Apply',
+                          onPressed: () {
+                            setState(() {
+                              _selectedRows = tempRows;
+                              _selectedCols = tempCols;
+                              _selectedMines = tempMines;
+                              _initializeGame(_selectedRows, _selectedCols, _selectedMines);
+                            });
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Apply'),
-              onPressed: () {
-                setState(() {
-                  _selectedRows = tempRows;
-                  _selectedCols = tempCols;
-                  _selectedMines = tempMines;
-                  _initializeGame(_selectedRows, _selectedCols, _selectedMines);
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+              ),
+            );
+          },
         );
       },
     );
@@ -382,39 +435,114 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen> {
       userDataProvider.updateUserCoins(coinsEarned);
     }
 
-    showDialog(
+    _dialogAnimationController.forward(from: 0); // Start animation
+
+    IconData icon;
+    Color iconColor;
+    String title;
+    String content;
+
+    if (isCashOut) {
+      icon = Icons.monetization_on;
+      iconColor = Colors.green.shade700;
+      title = 'CASHED OUT!';
+      content = 'You cashed out and earned $coinsEarned coins!';
+    } else if (win) {
+      icon = Icons.emoji_events;
+      iconColor = Colors.amber.shade700;
+      title = 'YOU WON!';
+      content = 'Congratulations! You earned $coinsEarned coins!';
+    } else {
+      icon = Icons.sentiment_dissatisfied;
+      iconColor = Colors.red.shade700;
+      title = 'GAME OVER!';
+      content = 'Better luck next time!';
+    }
+
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
+      isDismissible: false,
+      isScrollControlled: true, // Allow the bottom sheet to be full height
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isCashOut ? 'CASHED OUT!' : (win ? 'YOU WON!' : 'GAME OVER!')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(isCashOut
-                  ? 'You cashed out and earned $coinsEarned coins!'
-                  : (win
-                      ? 'Congratulations! You earned $coinsEarned coins!'
-                      : 'Better luck next time!')),
-              const SizedBox(height: 20),
-              CustomButton(
-                text: 'Play Again',
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _initializeGame(_selectedRows, _selectedCols, _selectedMines);
-                  _showInterstitialAd();
-                },
+        return FractionallySizedBox(
+          heightFactor: 0.7, // Make it cover 70% of the screen height
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor, // Use theme card color
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(25), // Slightly larger radius
+                topRight: Radius.circular(25),
               ),
-              const SizedBox(height: 10),
-              if (!win && !isCashOut) // Only show hint if lost and not cashed out
-                CustomButton(
-                  text: 'Get a Hint (Watch Ad)',
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    _showRewardedAdForHint();
-                  },
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5),
                 ),
-            ],
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(30.0), // Increased padding
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+                mainAxisSize: MainAxisSize.max, // Take max available height
+                children: [
+                  ScaleTransition(
+                    scale: _dialogScaleAnimation,
+                    child: CircleAvatar(
+                      backgroundColor: iconColor.withOpacity(0.2),
+                      radius: 50, // Larger icon
+                      child: Icon(icon, color: iconColor, size: 60),
+                    ),
+                  ),
+                  const SizedBox(height: 25), // Increased spacing
+                  ScaleTransition(
+                    scale: _dialogScaleAnimation,
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark), // Enhanced text style
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    content,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
+                  ),
+                  const SizedBox(height: 40), // Increased spacing
+                  SizedBox(
+                    width: double.infinity, // Full width button
+                    child: CustomButton(
+                      text: 'Play Again',
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _initializeGame(_selectedRows, _selectedCols, _selectedMines);
+                        _showInterstitialAd();
+                      },
+                      startColor: Theme.of(context).primaryColor,
+                      endColor: Theme.of(context).primaryColor.withOpacity(0.7),
+                      textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (!win && !isCashOut)
+                    SizedBox(
+                      width: double.infinity, // Full width button
+                      child: CustomButton(
+                        text: 'Get a Hint (Watch Ad)',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _showRewardedAdForHint();
+                        },
+                        startColor: Colors.blueGrey,
+                        endColor: Colors.blueGrey.withOpacity(0.7),
+                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         );
       },
