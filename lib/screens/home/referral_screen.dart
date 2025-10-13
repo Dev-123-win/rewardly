@@ -65,23 +65,17 @@ class ReferralScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: Text(
-          'We Share More.\nWe Earn More.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
-        toolbarHeight: 100, // Adjust height to accommodate two lines
-      ),
-      body: SingleChildScrollView(
+        body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
+            Text(
+              'We Share More.\nWe Earn More.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20), // Add some spacing after the title
             Text(
               'Invite your Friends, Win Rewards!',
               textAlign: TextAlign.center,
@@ -123,7 +117,7 @@ class ReferralScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(25.0),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
                 child: Row(

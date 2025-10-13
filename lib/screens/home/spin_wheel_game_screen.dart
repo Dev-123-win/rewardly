@@ -6,6 +6,7 @@ import 'dart:math';
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import 'package:confetti/confetti.dart';
+import 'package:lottie/lottie.dart'; // Import Lottie package
 
 // Enum for different reward tiers
 enum RewardTier {
@@ -57,13 +58,13 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
   // Define the rewards for the wheel
   final List<WheelReward> _rewards = [
-    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
-    WheelReward(text: '50', coins: 50, color: Colors.blue.shade700, tier: RewardTier.bronze),
-    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
-    WheelReward(text: '100', coins: 100, color: Colors.green.shade700, tier: RewardTier.silver),
-    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
-    WheelReward(text: '200', coins: 200, color: Colors.purple.shade700, tier: RewardTier.gold),
-    WheelReward(text: '0', coins: 0, color: Colors.grey.shade700, tier: RewardTier.lose),
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
+    WheelReward(text: '100', coins: 100, color: Colors.amber.shade700, tier: RewardTier.silver),
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
+    WheelReward(text: '200', coins: 200, color: Colors.amber.shade700, tier: RewardTier.gold),
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
+    WheelReward(text: '150', coins: 150, color: Colors.amber.shade700, tier: RewardTier.bronze),
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
     WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum),
   ];
 
@@ -168,8 +169,28 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
         // Determine the winning segment
         final double segmentAngle = (2 * pi) / _rewards.length;
-        final double normalizedRotation = (2 * pi - _currentRotation) % (2 * pi); // Normalize to 0-2pi clockwise
-        final int winningIndex = (normalizedRotation / segmentAngle).floor();
+        // The pointer is at the top, which corresponds to an angle of 3*pi/2 (270 degrees) in Flutter's canvas (0 is right, clockwise positive).
+        // We need to find which segment is under this pointer.
+        // The wheel rotates clockwise, so we need to adjust the current rotation relative to the pointer.
+        // We want to find the segment that is "under" the pointer.
+        // The segments are drawn starting from angle 0 (right) and going clockwise.
+        // If the wheel has rotated by _currentRotation, then the segment that was originally at angle `(3*pi/2 - _currentRotation)`
+        // (modulo 2*pi) is now under the pointer.
+        double pointerAngle = (3 * pi / 2); // Pointer is at the top (270 degrees)
+        double adjustedRotation = (_currentRotation + pointerAngle) % (2 * pi);
+
+        // Calculate the index. The segments are ordered clockwise starting from the right.
+        // We need to reverse the order for the visual representation to match the logical index.
+        // The first segment (index 0) is drawn from 0 to segmentAngle.
+        // If the pointer is at the top, it's pointing at the segment whose start angle is just before 3*pi/2.
+        // The segments are drawn starting from index 0 at the right, then 1, 2, etc., clockwise.
+        // To get the correct index, we need to consider the angle from the "top" position.
+        // The angle from the top (3*pi/2) to the start of the first segment (0) is pi/2.
+        // So, we need to shift the angle by pi/2 to align the "top" with the start of the first segment.
+        double normalizedWinningAngle = (adjustedRotation + pi / 2) % (2 * pi);
+        int winningIndex = (_rewards.length - 1) - (normalizedWinningAngle / segmentAngle).floor();
+        winningIndex = winningIndex % _rewards.length; // Ensure index is within bounds
+
         final WheelReward wonReward = _rewards[winningIndex];
 
         _showWinDialog(wonReward);
@@ -189,19 +210,16 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
     String title;
     String content;
-    IconData icon;
-    Color iconColor;
+    String lottieAsset;
 
     if (reward.coins > 0) {
       title = 'Congratulations!';
       content = 'You won ${reward.coins} coins!';
-      icon = Icons.celebration;
-      iconColor = Colors.amber;
+      lottieAsset = 'assets/lottie/win animation.json';
     } else {
       title = 'Better luck next time!';
       content = 'You landed on "0" coins.';
-      icon = Icons.sentiment_dissatisfied;
-      iconColor = Colors.grey;
+      lottieAsset = 'assets/lottie/lose and draw.json';
     }
 
     showModalBottomSheet(
@@ -234,10 +252,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                 children: [
                   ScaleTransition(
                     scale: _coinPulseAnimation,
-                    child: CircleAvatar(
-                      backgroundColor: iconColor.withOpacity(0.2),
-                      radius: 50, // Larger icon
-                      child: Icon(icon, color: iconColor, size: 60),
+                    child: Lottie.asset(
+                      lottieAsset,
+                      width: 150, // Adjust size as needed
+                      height: 150, // Adjust size as needed
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 25), // Increased spacing
@@ -360,77 +379,110 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
-      ),
-      body: Stack(
-        children: [
-          // Particle Background
-          AnimatedBuilder(
-            animation: _particleAnimation,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: ParticleBackgroundPainter(animation: _particleAnimation),
-                child: Container(),
-              );
-            },
-          ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-              colors: const [
-                Colors.green,
-                Colors.blue,
-                Colors.pink,
-                Colors.orange,
-                Colors.purple
-              ],
-            ),
-          ),
-          Column(
-            children: [
-              // Coin Display and Spin Counter
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Consumer<UserDataProvider>(
-                  builder: (context, userDataProvider, child) {
-                    final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                    final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
-                    final adsWatchedToday = userDataProvider.adSpinsEarnedToday; // Get ads watched today
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildInfoChip(context, Icons.monetization_on, 'Coins: ${userDataProvider.userData?.get('coins') ?? 0}', _coinPulseAnimation),
-                        _buildInfoChip(context, Icons.refresh, 'Free Spins: $freeSpins'),
-                        _buildInfoChip(context, Icons.videocam, 'Ad Spins: $adSpins ($adsWatchedToday/10 ads)'), // Display ads watched
-                      ],
-                    );
-                  },
-                ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Consumer<UserDataProvider>(
+                builder: (context, userDataProvider, child) {
+                  return _buildInfoChip(context, Icons.monetization_on, 'Coins: ${userDataProvider.userData?.get('coins') ?? 0}', _coinPulseAnimation);
+                },
               ),
-              Expanded(
-                child: Center(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Spin Wheel
-                      AnimatedBuilder(
-                        animation: _wheelAnimation,
-                        builder: (context, child) {
-                          return Transform.rotate(
-                            angle: _wheelAnimation.value,
-                            child: CustomPaint(
-                              size: const Size(300, 300),
-                              painter: SpinWheelPainter(rewards: _rewards, glowAnimation: _glowAnimation),
-                            ),
-                          );
-                        },
-                      ),
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            // Particle Background
+            AnimatedBuilder(
+              animation: _particleAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: ParticleBackgroundPainter(animation: _particleAnimation),
+                  child: Container(),
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple
+                ],
+              ),
+            ),
+            Column(
+              children: [
+                // Spin Counter
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Consumer<UserDataProvider>(
+                    builder: (context, userDataProvider, child) {
+                      final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                      final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                      final adsWatchedToday = userDataProvider.adSpinsEarnedToday; // Get ads watched today
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildInfoChip(context, Icons.refresh, 'Free Spins: $freeSpins'),
+                          _buildInfoChip(context, Icons.videocam, 'Ad Spins: $adSpins ($adsWatchedToday/10 ads)'), // Display ads watched
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Spin Wheel
+                        AnimatedBuilder(
+                          animation: _wheelAnimation,
+                          builder: (context, child) {
+                            return Transform.rotate(
+                              angle: _wheelAnimation.value,
+                              child: CustomPaint(
+                                size: const Size(300, 300),
+                                painter: SpinWheelPainter(rewards: _rewards, glowAnimation: _glowAnimation),
+                              ),
+                            );
+                          },
+                        ),
                       // Wheel Pointer
                       CustomPaint(
                         size: const Size(300, 300),
                         painter: WheelPointerPainter(),
+                      ),
+                      // Central "SPIN" text
+                      GestureDetector(
+                        onTap: _isSpinning ? null : _spinWheel,
+                        child: Container(
+                          width: 100, // Size of the tappable area
+                          height: 100,
+                          alignment: Alignment.center,
+                          child: Text(
+                            'SPIN',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 5.0,
+                                  color: Colors.black.withOpacity(0.5),
+                                  offset: const Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -483,14 +535,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((0.1 * 255).round()),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(25.0),
+          // Removed boxShadow for no elevation
         ),
         child: Row(
           children: [
@@ -529,14 +575,13 @@ class SpinWheelPainter extends CustomPainter {
       final paint = Paint()..color = rewards[i].color;
       canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, segmentAngle, true, paint);
 
-
       // Draw text
       final textPainter = TextPainter(
         text: TextSpan(
           text: rewards[i].text,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 24,
+            fontSize: 20, // Slightly smaller font size
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -544,8 +589,8 @@ class SpinWheelPainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Position text radially
-      final textRadius = radius * 0.7; // Adjust text position
+      // Position text radially, closer to the center
+      final textRadius = radius * 0.6; // Adjust text position
       final textAngle = startAngle + segmentAngle / 2;
       final textX = center.dx + textRadius * cos(textAngle);
       final textY = center.dy + textRadius * sin(textAngle);
@@ -558,18 +603,24 @@ class SpinWheelPainter extends CustomPainter {
       canvas.restore();
     }
 
-    // Draw glow effect
-    final glowPaint = Paint()
-      ..color = Colors.yellow.withAlpha((0.5 * glowAnimation.value * 255).round())
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, glowAnimation.value * 15);
-    canvas.drawCircle(center, radius, glowPaint);
-
-    // Draw border
-    final borderPaint = Paint()
+    // Draw outer border
+    final outerBorderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0;
-    canvas.drawCircle(center, radius, borderPaint);
+      ..strokeWidth = 10.0; // Thicker border
+    canvas.drawCircle(center, radius, outerBorderPaint);
+
+    // Draw inner black circle
+    final innerCirclePaint = Paint()..color = Colors.black;
+    final innerRadius = radius * 0.4; // Adjust size of inner circle
+    canvas.drawCircle(center, innerRadius, innerCirclePaint);
+
+    // Draw inner white border for the black circle
+    final innerBorderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawCircle(center, innerRadius, innerBorderPaint);
   }
 
   @override
@@ -617,13 +668,13 @@ class ConfettiPainter extends CustomPainter {
 class WheelPointerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.red.shade800;
+    final paint = Paint()..color = Colors.red; // Changed color to red
     final path = Path();
 
-    // Triangle pointing upwards
-    path.moveTo(size.width / 2, size.height);
-    path.lineTo(size.width / 2 - 15, size.height - 30);
-    path.lineTo(size.width / 2 + 15, size.height - 30);
+    // Triangle pointing downwards at the top of the wheel
+    path.moveTo(size.width / 2, 0); // Top center
+    path.lineTo(size.width / 2 - 20, 40); // Bottom-left point
+    path.lineTo(size.width / 2 + 20, 40); // Bottom-right point
     path.close();
 
     canvas.drawPath(path, paint);

@@ -19,6 +19,11 @@ class AdService {
   int _numInterstitialLoadAttempts = 0;
   final String _interstitialAdUnitId = 'ca-app-pub-3863562453957252/8204266334'; // TODO: Replace with actual production ad unit ID from Google AdMob
 
+  // Rewarded Interstitial Ad
+  RewardedInterstitialAd? _rewardedInterstitialAd;
+  int _numRewardedInterstitialLoadAttempts = 0;
+  final String _rewardedInterstitialAdUnitId = 'ca-app-pub-3863562453957252/7908873970'; // Provided by user
+
   // Banner Ad
   BannerAd? _bannerAd;
   final String _bannerAdUnitId = 'ca-app-pub-3863562453957252/8322001628'; // TODO: Replace with actual production ad unit ID from Google AdMob
@@ -181,6 +186,78 @@ class AdService {
   void dispose() {
     _rewardedAd?.dispose();
     _interstitialAd?.dispose();
+    _rewardedInterstitialAd?.dispose(); // Dispose rewarded interstitial ad
     _bannerAd?.dispose();
+  }
+
+  // Load Rewarded Interstitial Ad
+  void loadRewardedInterstitialAd() {
+    if (_rewardedInterstitialAd != null) {
+      LoggerService.debug('RewardedInterstitialAd already loaded, skipping load request.');
+      return;
+    }
+    LoggerService.debug('Attempting to load RewardedInterstitialAd. Attempt: $_numRewardedInterstitialLoadAttempts');
+
+    RewardedInterstitialAd.load(
+      adUnitId: _rewardedInterstitialAdUnitId,
+      request: const AdRequest(),
+      rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
+        onAdLoaded: (RewardedInterstitialAd ad) {
+          _rewardedInterstitialAd = ad;
+          _numRewardedInterstitialLoadAttempts = 0;
+          LoggerService.info('RewardedInterstitialAd loaded successfully.');
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          _rewardedInterstitialAd = null;
+          _numRewardedInterstitialLoadAttempts++;
+          LoggerService.error('RewardedInterstitialAd failed to load: $error. Attempts: $_numRewardedInterstitialLoadAttempts');
+          if (_numRewardedInterstitialLoadAttempts <= maxFailedLoadAttempts) {
+            loadRewardedInterstitialAd();
+          } else {
+            LoggerService.warning('Max rewarded interstitial ad load attempts reached. Stopping retries.');
+          }
+        },
+      ),
+    );
+  }
+
+  // Show Rewarded Interstitial Ad
+  void showRewardedInterstitialAd({
+    required Function onAdDismissed,
+    required Function onAdFailedToShow,
+    required Function(int rewardAmount) onRewardEarned,
+  }) {
+    if (_rewardedInterstitialAd == null) {
+      LoggerService.warning('RewardedInterstitialAd is null when trying to show. Calling onAdFailedToShow.');
+      onAdFailedToShow();
+      loadRewardedInterstitialAd(); // Try to load a new ad
+      return;
+    }
+
+    LoggerService.debug('Attempting to show RewardedInterstitialAd.');
+    _rewardedInterstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) => LoggerService.info('$ad onAdShowedFullScreenContent.'),
+      onAdDismissedFullScreenContent: (ad) {
+        LoggerService.info('$ad onAdDismissedFullScreenContent.');
+        ad.dispose();
+        _rewardedInterstitialAd = null;
+        onAdDismissed();
+        loadRewardedInterstitialAd(); // Load a new ad after the current one is dismissed
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        LoggerService.error('$ad onAdFailedToShowFullScreenContent: $error');
+        ad.dispose();
+        _rewardedInterstitialAd = null;
+        onAdFailedToShow();
+        loadRewardedInterstitialAd(); // Load a new ad if showing failed
+      },
+    );
+
+    _rewardedInterstitialAd!.setImmersiveMode(true);
+    _rewardedInterstitialAd!.show(onUserEarnedReward: (ad, reward) {
+      LoggerService.info('User earned reward from RewardedInterstitialAd: ${reward.amount} ${reward.type}');
+      onRewardEarned(reward.amount.toInt());
+    });
+    _rewardedInterstitialAd = null; // Clear ad after showing
   }
 }

@@ -9,8 +9,10 @@ import 'withdraw_screen.dart';
 import 'tic_tac_toe_game_screen.dart';
 import 'minesweeper_game_screen.dart';
 import 'spin_wheel_game_screen.dart';
+import 'read_and_earn_screen.dart'; // New import for Read & Earn
 import '../../logger_service.dart';
 import '../../models/auth_result.dart';
+import '../../widgets/custom_button.dart'; // Ensure CustomButton is imported
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -180,8 +182,8 @@ class _HomeState extends State<Home> {
                       },
                       child: Card(
                         color: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        elevation: 8.0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)), // Smoother corners
+                        elevation: 0.0, // No elevation
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
                           child: Row(
@@ -284,48 +286,85 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 15,
-                mainAxisSpacing: 15,
+              child: Column(
                 children: [
-                  _buildOfferCard(
-                    context,
-                    title: 'Spin & Win',
-                    subtitle: 'Try your luck!',
-                    imagePath: 'assets/coin.png', // Using coin image for now
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
-                    },
-                    startColor: Colors.purple.shade400,
-                    endColor: Colors.purple.shade700,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildLargeOfferCard(
+                          context,
+                          title: 'Spin & Win',
+                          subtitle: 'Try your luck!',
+                          imagePath: 'assets/coin.png',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
+                          },
+                          startColor: Colors.deepPurple.shade400,
+                          endColor: Colors.deepPurple.shade700,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: _buildLargeOfferCard(
+                          context,
+                          title: 'Watch & Earn',
+                          subtitle: 'Get coins by watching ads!',
+                          imagePath: 'assets/watch_ads.png',
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                          },
+                          startColor: Colors.purple.shade400,
+                          endColor: Colors.purple.shade700,
+                        ),
+                      ),
+                    ],
                   ),
-                  _buildOfferCard(
+                  const SizedBox(height: 15),
+                  _buildSuperOfferCard(
                     context,
-                    title: 'Tic Tac Toe',
-                    subtitle: 'Play against NPC!',
-                    imagePath: 'assets/tic_tac_toe.png',
+                    title: 'Read & Earn',
+                    subtitle: 'Earn Upto 100k',
+                    imagePath: 'assets/coin.png', // Placeholder image
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
                     },
-                    startColor: Colors.red.shade400,
-                    endColor: Colors.red.shade700,
+                    startColor: Colors.orange.shade400,
+                    endColor: Colors.orange.shade700,
+                    buttonText: 'Start Reading',
                   ),
-                  _buildOfferCard(
-                    context,
-                    title: 'Minesweeper',
-                    subtitle: 'Find the mines!',
-                    imagePath: 'assets/minesweeper.png',
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
-                    },
-                    startColor: Colors.teal.shade400,
-                    endColor: Colors.teal.shade700,
+                  const SizedBox(height: 15),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    children: [
+                      _buildOfferCard(
+                        context,
+                        title: 'Tic Tac Toe',
+                        subtitle: 'Play against NPC!',
+                        imagePath: 'assets/tic_tac_toe.png',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                        },
+                        startColor: Colors.red.shade400,
+                        endColor: Colors.red.shade700,
+                      ),
+                      _buildOfferCard(
+                        context,
+                        title: 'Minesweeper',
+                        subtitle: 'Find the mines!',
+                        imagePath: 'assets/minesweeper.png',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
+                        },
+                        startColor: Colors.teal.shade400,
+                        endColor: Colors.teal.shade700,
+                      ),
+                      // Add more offer cards here as needed
+                    ],
                   ),
-                  // The "Watch Ads" card is now in Quick Actions, so it's removed from here.
-                  // Add more offer cards here as needed
                 ],
               ),
             ),
@@ -347,8 +386,8 @@ class _HomeState extends State<Home> {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 2.0, // Soft shadow as requested
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // Rounded corners as requested
+        elevation: 0.0, // Remove default elevation
+        color: Colors.transparent, // Make card transparent to show container's decoration
         child: Container(
           width: 120, // Fixed width for quick action cards
           padding: const EdgeInsets.all(10.0),
@@ -358,10 +397,10 @@ class _HomeState extends State<Home> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16.0), // Match card border radius
+            borderRadius: BorderRadius.circular(25.0), // More rounded corners
             boxShadow: [
               BoxShadow(
-                color: endColor.withOpacity(0.4), // Shadow matching the gradient end color
+                color: Colors.black.withOpacity(0.1), // Subtle shadow
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -384,6 +423,156 @@ class _HomeState extends State<Home> {
     );
   }
 
+  Widget _buildLargeOfferCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String imagePath,
+    required VoidCallback onTap,
+    required Color startColor,
+    required Color endColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 0.0,
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          height: 180, // Height for large offer cards
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 15.0),
+                child: Image.asset(
+                  imagePath,
+                  height: 80,
+                  width: 80,
+                  fit: BoxFit.contain,
+                  color: Colors.white,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Column(
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuperOfferCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required String imagePath,
+    required VoidCallback onTap,
+    required Color startColor,
+    required Color endColor,
+    required String buttonText,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        elevation: 0.0,
+        color: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          height: 100, // Height for super offer card
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Image.asset(
+                  imagePath,
+                  height: 50,
+                  width: 50,
+                  fit: BoxFit.contain,
+                  color: Colors.white,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: CustomButton(
+                  text: buttonText,
+                  onPressed: onTap,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  startColor: Colors.white,
+                  endColor: Colors.white,
+                  textStyle: TextStyle(color: startColor, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOfferCard(
     BuildContext context, {
     required String title,
@@ -396,8 +585,8 @@ class _HomeState extends State<Home> {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 2.0, // Soft shadow as requested
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)), // Rounded corners as requested
+        elevation: 0.0, // Remove default elevation
+        color: Colors.transparent, // Make card transparent to show container's decoration
         clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
@@ -406,10 +595,10 @@ class _HomeState extends State<Home> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(16.0), // Match card border radius
+            borderRadius: BorderRadius.circular(20.0), // More rounded corners
             boxShadow: [
               BoxShadow(
-                color: endColor.withOpacity(0.4), // Shadow matching the gradient end color
+                color: Colors.black.withOpacity(0.1), // Subtle shadow
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

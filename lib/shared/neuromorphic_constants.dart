@@ -21,31 +21,31 @@ const double kSpreadRadius = 1.0; // Reduced spread for subtlety
 // Neuromorphic Box Shadows
 const List<BoxShadow> kNeumorphicShadows = [
   BoxShadow(
-    color: kDarkShadowColor,
-    offset: Offset(5, 5),
-    blurRadius: kBlurRadius,
-    spreadRadius: kSpreadRadius,
+    color: Colors.transparent,
+    offset: Offset(0, 0),
+    blurRadius: 0,
+    spreadRadius: 0,
   ),
   BoxShadow(
-    color: kLightShadowColor,
-    offset: Offset(-5, -5),
-    blurRadius: kBlurRadius,
-    spreadRadius: kSpreadRadius,
+    color: Colors.transparent,
+    offset: Offset(0, 0),
+    blurRadius: 0,
+    spreadRadius: 0,
   ),
 ];
 
 const List<BoxShadow> kNeumorphicPressedShadows = [
   BoxShadow(
-    color: kDarkShadowColor,
-    offset: Offset(2, 2),
-    blurRadius: kBlurRadius,
-    spreadRadius: kSpreadRadius,
+    color: Colors.transparent,
+    offset: Offset(0, 0),
+    blurRadius: 0,
+    spreadRadius: 0,
   ),
   BoxShadow(
-    color: kLightShadowColor,
-    offset: Offset(-2, -2),
-    blurRadius: kBlurRadius,
-    spreadRadius: kSpreadRadius,
+    color: Colors.transparent,
+    offset: Offset(0, 0),
+    blurRadius: 0,
+    spreadRadius: 0,
   ),
 ];
 

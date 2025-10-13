@@ -4,6 +4,8 @@ import '../../providers/user_data_provider.dart';
 import '../../auth_service.dart'; // Keep import for signOut
 import '../../shared/shimmer_loading.dart';
 import '../../models/auth_result.dart'; // Import AuthResult
+import '../info/privacy_policy_screen.dart'; // Import PrivacyPolicyScreen
+import '../info/terms_of_service_screen.dart'; // Import TermsOfServiceScreen
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -83,14 +85,20 @@ class ProfileScreen extends StatelessWidget {
               context,
               title: 'Privacy',
               onTap: () {
-                // Navigate to privacy settings
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                );
               },
             ),
             _buildSettingsOption(
               context,
-              title: 'Security',
+              title: 'Terms and Conditions',
               onTap: () {
-                // Navigate to security settings
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
+                );
               },
             ),
             _buildSettingsOption(
@@ -113,7 +121,7 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(25.0),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -144,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(25.0),
           ),
           child: ListTile(
             title: Text(

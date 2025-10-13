@@ -108,8 +108,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               // Current Balance Display
               Center(
                 child: Card(
-                  elevation: 8.0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 0.0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
@@ -148,8 +148,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               const SizedBox(height: 40),
               // Minimum Withdrawal Progress
               Card(
-                elevation: 4.0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                elevation: 0.0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
                 child: Padding(
                   padding: const EdgeInsets.all(18.0),
                   child: Column(
@@ -330,8 +330,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              elevation: 4.0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 0.0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -572,8 +572,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     required VoidCallback onTap,
   }) {
     return Card(
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
+      elevation: 0.0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(

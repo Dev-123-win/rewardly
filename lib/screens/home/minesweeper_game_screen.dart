@@ -5,6 +5,7 @@ import 'package:provider/provider.dart'; // Import for Provider
 import '../../widgets/custom_button.dart';
 import '../../ad_service.dart'; // Import AdService
 import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerAd
+import 'package:lottie/lottie.dart'; // Import Lottie package
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import '../../logger_service.dart'; // Import LoggerService
 // Removed direct import of UserService as it will be accessed via UserDataProvider
@@ -35,9 +36,9 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
   // UserService will be obtained from Provider
 
   // Custom difficulty settings
-  int _selectedRows = 9;
-  int _selectedCols = 9;
-  int _selectedMines = 10; // Default to 10 mines for initial easy level
+  int _selectedRows = 5; // Set to lowest available
+  int _selectedCols = 5; // Set to lowest available
+  int _selectedMines = 3; // Set to lowest available
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     _timer = Timer(Duration.zero, () {}); // Initialize with a dummy timer
     _adService = AdService(); // Initialize AdService
     _adService.loadBannerAd(); // Load banner ad
+    _adService.loadRewardedInterstitialAd(); // Load rewarded interstitial ad
 
     _dialogAnimationController = AnimationController(
       vsync: this,
@@ -98,6 +100,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
 
     _adService.loadInterstitialAd(); // Load interstitial ad
     _adService.loadRewardedAd(); // Load rewarded ad
+    _adService.loadRewardedInterstitialAd(); // Load rewarded interstitial ad
   }
 
   void _placeMines() {
@@ -222,20 +225,6 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     );
   }
 
-  void _showRewardedAdForHint() {
-    _adService.showRewardedAd(
-      onRewardEarned: (int rewardAmount) {
-        // Rewarded Ad: User earned $rewardAmount coins for a hint!
-        _revealRandomSafeCell(); // Reveal a safe cell as a hint
-      },
-      onAdFailedToLoad: () {
-        // Rewarded Ad Failed to Load
-      },
-      onAdFailedToShow: () {
-        // Rewarded Ad Failed to Show
-      },
-    );
-  }
 
   void _showDifficultySettingsDialog() {
     showModalBottomSheet(
@@ -268,53 +257,44 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                     const SizedBox(height: 20),
                     Row(
                       children: [
-                        const Text('Rows:'),
-                        Expanded(
-                          child: Slider(
-                            value: tempRows.toDouble(),
-                            min: 5,
-                            max: 9,
-                            divisions: 4,
-                            label: tempRows.toInt().toString(),
-                            onChanged: (double value) {
+                        const Text('Board Size:'),
+                        const SizedBox(width: 10),
+                        DropdownButton<int>(
+                          value: tempRows, // Assuming rows and cols are always equal for board size
+                          items: const [
+                            DropdownMenuItem(value: 3, child: Text('3x3')),
+                            DropdownMenuItem(value: 4, child: Text('4x4')),
+                            DropdownMenuItem(value: 5, child: Text('5x5')),
+                            DropdownMenuItem(value: 6, child: Text('6x6')),
+                          ],
+                          onChanged: (int? newValue) {
+                            if (newValue != null) {
                               setState(() {
-                                tempRows = value.toInt();
+                                tempRows = newValue;
+                                tempCols = newValue;
+                                // Adjust mines if current selection is too high for new board size
+                                if (tempMines > (newValue * newValue) ~/ 3) {
+                                  tempMines = (newValue * newValue) ~/ 3;
+                                }
+                                if (tempMines > 9) { // Ensure mines don't exceed 9
+                                  tempMines = 9;
+                                }
                               });
-                            },
-                          ),
+                            }
+                          },
                         ),
-                        Text(tempRows.toInt().toString()),
                       ],
                     ),
-                    Row(
-                      children: [
-                        const Text('Columns:'),
-                        Expanded(
-                          child: Slider(
-                            value: tempCols.toDouble(),
-                            min: 5,
-                            max: 9,
-                            divisions: 4,
-                            label: tempCols.toInt().toString(),
-                            onChanged: (double value) {
-                              setState(() {
-                                tempCols = value.toInt();
-                              });
-                            },
-                          ),
-                        ),
-                        Text(tempCols.toInt().toString()),
-                      ],
-                    ),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         const Text('Mines:'),
                         Expanded(
                           child: Slider(
                             value: tempMines.toDouble(),
-                            min: 3,
-                            max: 15,
-                            divisions: 12,
+                            min: 1, // Minimum 1 mine
+                            max: min(9, (tempRows * tempCols) - 1).toDouble(), // Max 9 mines or (rows*cols - 1)
+                            divisions: min(9, (tempRows * tempCols) - 1) - 1, // Divisions based on max mines
                             label: tempMines.toInt().toString(),
                             onChanged: (double value) {
                               setState(() {
@@ -339,13 +319,14 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         CustomButton(
                           text: 'Apply',
                           onPressed: () {
+                            Navigator.of(context).pop(); // Dismiss the bottom sheet first
+                            // Update the main state to apply new settings
                             setState(() {
                               _selectedRows = tempRows;
                               _selectedCols = tempCols;
                               _selectedMines = tempMines;
-                              _initializeGame(_selectedRows, _selectedCols, _selectedMines);
                             });
-                            Navigator.of(context).pop();
+                            _initializeGame(_selectedRows, _selectedCols, _selectedMines);
                           },
                         ),
                       ],
@@ -360,34 +341,6 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     );
   }
 
-  void _revealRandomSafeCell() {
-    if (gameOver) return;
-
-    List<MinesweeperCell> unrevealedSafeCells = [];
-    for (int r = 0; r < _rows; r++) {
-      for (int c = 0; c < _cols; c++) {
-        if (!board[r][c].isRevealed && !board[r][c].hasMine) {
-          unrevealedSafeCells.add(board[r][c]);
-        }
-      }
-    }
-
-    if (unrevealedSafeCells.isNotEmpty) {
-      MinesweeperCell randomSafeCell = unrevealedSafeCells[_random.nextInt(unrevealedSafeCells.length)];
-      // Find the coordinates of the randomSafeCell
-      for (int r = 0; r < _rows; r++) {
-        for (int c = 0; c < _cols; c++) {
-          if (board[r][c] == randomSafeCell) {
-            _revealCell(r, c);
-            LoggerService.info('Hint provided: revealed safe cell at ($r, $c)');
-            return;
-          }
-        }
-      }
-    } else {
-      LoggerService.info('No unrevealed safe cells available for a hint.');
-    }
-  }
 
   int _calculateCoinsEarned(int revealedSafeTiles) {
     // Max coins per tile is 50.
@@ -422,11 +375,39 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     }
 
     int coinsEarned = _calculateCoinsEarned(revealedSafeTiles);
-    setState(() {
-      gameOver = true;
-      _timer.cancel();
-    });
-    _showGameResultDialog(true, coinsEarned, isCashOut: true);
+
+    // Ensure rewarded interstitial ad is loaded before showing
+    _adService.loadRewardedInterstitialAd();
+
+    // Show rewarded interstitial ad for cash out
+    _adService.showRewardedInterstitialAd(
+      onRewardEarned: (int rewardAmount) {
+        LoggerService.info('Rewarded Interstitial Ad: User earned $rewardAmount for cashing out.');
+        setState(() {
+          gameOver = true;
+          _timer.cancel();
+        });
+        _showGameResultDialog(true, coinsEarned, isCashOut: true);
+      },
+      onAdDismissed: () {
+        LoggerService.info('Rewarded Interstitial Ad for cash out dismissed.');
+        // If ad is dismissed without earning reward, still cash out but without extra reward
+        setState(() {
+          gameOver = true;
+          _timer.cancel();
+        });
+        _showGameResultDialog(true, coinsEarned, isCashOut: true);
+      },
+      onAdFailedToShow: () {
+        LoggerService.error('Rewarded Interstitial Ad for cash out failed to show.');
+        // If ad fails to show, proceed with cash out without ad reward
+        setState(() {
+          gameOver = true;
+          _timer.cancel();
+        });
+        _showGameResultDialog(true, coinsEarned, isCashOut: true);
+      },
+    );
   }
 
   void _showGameResultDialog(bool win, int coinsEarned, {bool isCashOut = false}) {
@@ -437,24 +418,20 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
 
     _dialogAnimationController.forward(from: 0); // Start animation
 
-    IconData icon;
-    Color iconColor;
+    String lottieAsset;
     String title;
     String content;
 
     if (isCashOut) {
-      icon = Icons.monetization_on;
-      iconColor = Colors.green.shade700;
+      lottieAsset = 'assets/lottie/cash out.json'; // Use cash out animation
       title = 'CASHED OUT!';
       content = 'You cashed out and earned $coinsEarned coins!';
     } else if (win) {
-      icon = Icons.emoji_events;
-      iconColor = Colors.amber.shade700;
+      lottieAsset = 'assets/lottie/win animation.json';
       title = 'YOU WON!';
       content = 'Congratulations! You earned $coinsEarned coins!';
     } else {
-      icon = Icons.sentiment_dissatisfied;
-      iconColor = Colors.red.shade700;
+      lottieAsset = 'assets/lottie/Game Over.json'; // Use Game Over animation for game over
       title = 'GAME OVER!';
       content = 'Better luck next time!';
     }
@@ -489,10 +466,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                 children: [
                   ScaleTransition(
                     scale: _dialogScaleAnimation,
-                    child: CircleAvatar(
-                      backgroundColor: iconColor.withOpacity(0.2),
-                      radius: 50, // Larger icon
-                      child: Icon(icon, color: iconColor, size: 60),
+                    child: Lottie.asset(
+                      lottieAsset,
+                      width: 150, // Adjust size as needed
+                      height: 150, // Adjust size as needed
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 25), // Increased spacing
@@ -511,6 +489,64 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
                   ),
                   const SizedBox(height: 40), // Increased spacing
+
+                  if (win && !isCashOut) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: CustomButton(
+                        text: 'Claim $coinsEarned Coins (Watch Ad)',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _adService.loadRewardedInterstitialAd(); // Ensure ad is loaded
+                          _adService.showRewardedInterstitialAd(
+                            onRewardEarned: (int rewardAmount) {
+                              LoggerService.info('Rewarded Interstitial Ad: User claimed $coinsEarned coins.');
+                              // Coins are already added in _showGameResultDialog, no need to add again
+                            },
+                            onAdDismissed: () {
+                              LoggerService.info('Rewarded Interstitial Ad for claiming dismissed.');
+                            },
+                            onAdFailedToShow: () {
+                              LoggerService.error('Rewarded Interstitial Ad for claiming failed to show.');
+                            },
+                          );
+                          _initializeGame(_selectedRows, _selectedCols, _selectedMines);
+                        },
+                        startColor: Colors.green,
+                        endColor: Colors.green.withAlpha((255 * 0.7).round()),
+                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: CustomButton(
+                        text: 'Double $coinsEarned Coins (Watch Ad)',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _adService.loadRewardedInterstitialAd(); // Ensure ad is loaded
+                          _adService.showRewardedInterstitialAd(
+                            onRewardEarned: (int rewardAmount) {
+                              LoggerService.info('Rewarded Interstitial Ad: User doubled $coinsEarned coins.');
+                              userDataProvider.updateUserCoins(coinsEarned); // Add coins again to double
+                            },
+                            onAdDismissed: () {
+                              LoggerService.info('Rewarded Interstitial Ad for doubling dismissed.');
+                            },
+                            onAdFailedToShow: () {
+                              LoggerService.error('Rewarded Interstitial Ad for doubling failed to show.');
+                            },
+                          );
+                          _initializeGame(_selectedRows, _selectedCols, _selectedMines);
+                        },
+                        startColor: Colors.blueAccent,
+                        endColor: Colors.blueAccent.withOpacity(0.7),
+                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+
                   SizedBox(
                     width: double.infinity, // Full width button
                     child: CustomButton(
@@ -526,20 +562,6 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                     ),
                   ),
                   const SizedBox(height: 10),
-                  if (!win && !isCashOut)
-                    SizedBox(
-                      width: double.infinity, // Full width button
-                      child: CustomButton(
-                        text: 'Get a Hint (Watch Ad)',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _showRewardedAdForHint();
-                        },
-                        startColor: Colors.blueGrey,
-                        endColor: Colors.blueGrey.withOpacity(0.7),
-                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -556,111 +578,169 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
         appBar: AppBar(
           title: const Text('Minesweeper'),
           actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _showDifficultySettingsDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _initializeGame(_selectedRows, _selectedCols, _selectedMines),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: _showDifficultySettingsDialog,
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => _initializeGame(_selectedRows, _selectedCols, _selectedMines),
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Column(
               children: [
-                _buildInfoChip(context, Icons.flag, '${_numMines - minesFlagged}'),
-                _buildInfoChip(context, Icons.timer, '$timerSeconds s'),
-                if (!gameOver)
-                  CustomButton(
-                    text: 'Cash Out',
-                    onPressed: _cashOut,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildInfoChip(context, Icons.flag, '${_numMines - minesFlagged}'),
+                      _buildInfoChip(context, Icons.timer, '$timerSeconds s'),
+                      if (!gameOver)
+                        CustomButton(
+                          text: 'Cash Out',
+                          onPressed: _cashOut,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300), // Subtle animation duration
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(opacity: animation, child: child); // Fade transition
+                    },
+                    child: GridView.builder(
+                      key: ValueKey('minesweeper_board_$_rows\_$_cols'), // Key to trigger animation on size change
+                      padding: const EdgeInsets.all(4.0),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _cols,
+                        childAspectRatio: 1.0,
+                        crossAxisSpacing: 4.0, // Keep for thin dark lines
+                        mainAxisSpacing: 4.0, // Keep for thin dark lines
+                      ),
+                      itemCount: _rows * _cols,
+                      itemBuilder: (context, index) {
+                        int r = index ~/ _cols;
+                        int c = index % _cols;
+                        MinesweeperCell cell = board[r][c];
+
+                        Color baseColor = Colors.grey[300]!; // Lighter base for unrevealed
+                        Color revealedColor = Colors.grey[200]!; // Color for revealed cells
+                        Widget? cellContent;
+                        Color textColor = Colors.black;
+
+                        List<BoxShadow> shadows;
+                        BorderRadius borderRadius = BorderRadius.circular(8.0); // Slightly rounded edges
+
+                        if (cell.isRevealed) {
+                          if (cell.hasMine) {
+                            baseColor = Colors.redAccent;
+                            cellContent = Lottie.asset(
+                              'assets/lottie/bomb.json',
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.contain,
+                            );
+                          } else if (cell.adjacentMines > 0) {
+                            baseColor = revealedColor;
+                            textColor = _getAdjacentMineColor(cell.adjacentMines);
+                            cellContent = Text(
+                              '${cell.adjacentMines}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: textColor,
+                              ),
+                            );
+                          } else {
+                            baseColor = revealedColor;
+                          }
+                          // For revealed cells, make them look "pressed in" or flat
+                          shadows = [
+                            BoxShadow(
+                              color: Colors.grey.shade500,
+                              offset: const Offset(1, 1),
+                              blurRadius: 3,
+                              spreadRadius: 0.5,
+                            ),
+                            const BoxShadow(
+                              color: Colors.white,
+                              offset: Offset(-1, -1),
+                              blurRadius: 3,
+                              spreadRadius: 0.5,
+                            ),
+                          ];
+                        } else if (cell.isFlagged) {
+                          baseColor = Colors.orange[200]!;
+                          cellContent = const Icon(Icons.flag, size: 24, color: Colors.red);
+                          // For flagged cells, keep a slightly raised look
+                          shadows = [
+                            BoxShadow(
+                              color: Colors.grey.shade600,
+                              offset: const Offset(2, 2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                            const BoxShadow(
+                              color: Colors.white,
+                              offset: Offset(-2, -2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ];
+                        } else {
+                          // For unrevealed cells, create a 3D effect with soft outer shadows and highlights
+                          shadows = [
+                            BoxShadow(
+                              color: Colors.grey.shade500, // Darker shadow for depth
+                              offset: const Offset(3, 3),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                            const BoxShadow(
+                              color: Colors.white, // Lighter shadow for highlight
+                              offset: Offset(-3, -3),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ];
+                        }
+
+                        return GestureDetector(
+                          onTap: () => _revealCell(r, c),
+                          onLongPress: () => _toggleFlag(r, c),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            decoration: BoxDecoration(
+                              color: baseColor,
+                              borderRadius: borderRadius,
+                              boxShadow: shadows,
+                            ),
+                            alignment: Alignment.center,
+                            child: cellContent,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                if (_adService.bannerAd != null)
+                  SizedBox(
+                    width: _adService.bannerAd!.size.width.toDouble(),
+                    height: _adService.bannerAd!.size.height.toDouble(),
+                    child: AdWidget(ad: _adService.bannerAd!),
                   ),
               ],
             ),
-          ),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.all(4.0),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _cols,
-                childAspectRatio: 1.0,
-                crossAxisSpacing: 4.0,
-                mainAxisSpacing: 4.0,
-              ),
-              itemCount: _rows * _cols,
-              itemBuilder: (context, index) {
-                int r = index ~/ _cols;
-                int c = index % _cols;
-                MinesweeperCell cell = board[r][c];
-
-                Color cellColor = Colors.grey[400]!; // Default unrevealed color
-                Widget? cellContent;
-                Color textColor = Colors.black;
-
-                if (cell.isRevealed) {
-                  if (cell.hasMine) {
-                    cellColor = Colors.redAccent;
-                    cellContent = const Icon(Icons.local_fire_department, size: 24, color: Colors.white);
-                  } else if (cell.adjacentMines > 0) {
-                    cellColor = Colors.grey[200]!;
-                    textColor = _getAdjacentMineColor(cell.adjacentMines);
-                    cellContent = Text(
-                      '${cell.adjacentMines}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: textColor,
-                      ),
-                    );
-                  } else {
-                    cellColor = Colors.grey[200]!;
-                  }
-                } else if (cell.isFlagged) {
-                  cellColor = Colors.orange[200]!;
-                  cellContent = const Icon(Icons.flag, size: 24, color: Colors.red);
-                }
-
-                return GestureDetector(
-                  onTap: () => _revealCell(r, c),
-                  onLongPress: () => _toggleFlag(r, c),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    decoration: BoxDecoration(
-                      color: cellColor,
-                      borderRadius: BorderRadius.circular(6.0),
-                      boxShadow: cell.isRevealed
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: Colors.grey.shade600,
-                                offset: const Offset(1, 1),
-                                blurRadius: 2,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
-                    ),
-                    alignment: Alignment.center,
-                    child: cellContent,
-                  ),
-                );
-              },
-            ),
-          ),
-          if (_adService.bannerAd != null)
-            SizedBox(
-              width: _adService.bannerAd!.size.width.toDouble(),
-              height: _adService.bannerAd!.size.height.toDouble(),
-              child: AdWidget(ad: _adService.bannerAd!),
-            ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Color _getAdjacentMineColor(int count) {

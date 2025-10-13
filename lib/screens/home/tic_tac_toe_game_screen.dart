@@ -8,7 +8,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for AdWidge
 import 'dart:math';
 import '../../widgets/animated_tap.dart'; // Import AnimatedTap
 import 'package:confetti/confetti.dart';
-import 'package:group_radio_button/group_radio_button.dart' as grp;
+import 'package:lottie/lottie.dart'; // Import Lottie package
 
 enum Player { x, o, none }
 enum GameMode { easy, medium, hard }
@@ -47,6 +47,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
   void initState() {
     super.initState();
     _adService.loadInterstitialAd();
+    _adService.loadRewardedInterstitialAd(); // Load rewarded interstitial ad
     _adService.loadBannerAd(); // Load banner ad
     _animationController = AnimationController(
       vsync: this,
@@ -66,13 +67,13 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     )..repeat(reverse: true);
 
     _gradientColor1 = ColorTween(
-      begin: Colors.blueGrey.shade50, // Lighter gradient start
-      end: Colors.blueGrey.shade200, // Lighter gradient end
+      begin: const Color(0xFFE0F7FA), // Light Cyan
+      end: const Color(0xFFB2EBF2), // Darker Cyan
     ).animate(_backgroundAnimationController);
 
     _gradientColor2 = ColorTween(
-      begin: Colors.blueGrey.shade200, // Lighter gradient start
-      end: Colors.blueGrey.shade50, // Lighter gradient end
+      begin: const Color(0xFFB2EBF2), // Darker Cyan
+      end: const Color(0xFFE0F7FA), // Light Cyan
     ).animate(_backgroundAnimationController);
 
     _lineAnimationController = AnimationController(
@@ -330,8 +331,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
       } else if (_checkDraw(board)) {
         gameResult = GameResult.draw;
         _isGameOver = true;
-        _confettiController.play();
-        _showGameResultDialog();
+        _showGameResultDialog(); // Lottie animation will handle visual feedback
       }
     }
   }
@@ -379,20 +379,16 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
 
   void _showGameResultDialog() {
     int rewardCoins = _getRewardCoins();
-    if (rewardCoins > 0) {
-      _updateUserCoins(rewardCoins);
+    if (gameResult == GameResult.win) {
+      // For win, show dialog first, then handle ad/coins based on user choice
+      _showResultDialogContent(rewardCoins);
+    } else {
+      // For lose/draw, update coins (if any) and then show dialog
+      if (rewardCoins > 0) {
+        _updateUserCoins(rewardCoins);
+      }
+      _showResultDialogContent(rewardCoins);
     }
-
-    _adService.showInterstitialAd(
-      onAdDismissed: () {
-        _adService.loadInterstitialAd(); // Preload next ad
-        _showResultDialogContent(rewardCoins);
-      },
-      onAdFailedToShow: () {
-        _adService.loadInterstitialAd(); // Preload next ad
-        _showResultDialogContent(rewardCoins);
-      },
-    );
   }
 
   void _showResultDialogContent(int rewardCoins) {
@@ -433,7 +429,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha((0.15 * 255).round()),
                   blurRadius: 15,
                   offset: const Offset(0, -5),
                 ),
@@ -447,27 +443,13 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                 children: [
                   ScaleTransition(
                     scale: _dialogScaleAnimation,
-                    child: CircleAvatar(
-                      backgroundColor: (gameResult == GameResult.win
-                              ? Colors.amber
-                              : gameResult == GameResult.lose
-                                  ? Colors.red
-                                  : Colors.blueGrey)
-                          .withOpacity(0.2),
-                      radius: 50, // Larger icon
-                      child: Icon(
-                        gameResult == GameResult.win
-                            ? Icons.emoji_events
-                            : gameResult == GameResult.lose
-                                ? Icons.sentiment_dissatisfied
-                                : Icons.handshake,
-                        color: gameResult == GameResult.win
-                            ? Colors.amber
-                            : gameResult == GameResult.lose
-                                ? Colors.red
-                                : Colors.blueGrey,
-                        size: 60,
-                      ),
+                    child: Lottie.asset(
+                      gameResult == GameResult.win
+                          ? 'assets/lottie/win animation.json'
+                          : 'assets/lottie/lose and draw.json',
+                      width: 150, // Adjust size as needed
+                      height: 150, // Adjust size as needed
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 25), // Increased spacing
@@ -486,41 +468,102 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
                   ),
                   const SizedBox(height: 40), // Increased spacing
-                  SizedBox(
-                    width: double.infinity, // Full width button
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _resetGame();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor, // Use primary color for button
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18), // Larger padding
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12), // Rounded button
-                        ),
-                      ),
-                      child: const Text('Play Again'),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  if (gameResult != GameResult.win && gameResult != GameResult.draw)
+                  if (gameResult == GameResult.win) ...[
                     SizedBox(
-                      width: double.infinity, // Full width button
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _adService.showRewardedInterstitialAd(
+                            onAdDismissed: () {
+                              _adService.loadRewardedInterstitialAd();
+                              _updateUserCoins(rewardCoins);
+                              _resetGame();
+                            },
+                            onAdFailedToShow: () {
+                              _adService.loadRewardedInterstitialAd();
+                              _updateUserCoins(rewardCoins);
+                              _resetGame();
+                            },
+                            onRewardEarned: (int rewardAmount) {
+                              // The reward is already handled by _updateUserCoins after ad dismissal
+                            },
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Claim Coins'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
                       child: TextButton(
                         onPressed: () {
                           Navigator.of(context).pop();
-                          _showRewardedAdForCoins();
+                          _showRewardedAdForCoins(rewardCoins * 2);
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: Colors.blueGrey,
-                          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold), // Larger text
+                          foregroundColor: Theme.of(context).primaryColor,
+                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        child: const Text('Watch Ad for +X Coins'),
+                        child: Text('Watch Ad for ${rewardCoins * 2} Coins'),
                       ),
                     ),
+                  ] else ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _resetGame();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Play Again'),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    if (gameResult == GameResult.draw)
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _showRewardedAdForCoins(rewardCoins * 2);
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                            textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          child: Text('Watch Ad for ${rewardCoins * 2} Coins'),
+                        ),
+                      ),
+                  ],
                 ],
               ),
             ),
@@ -530,7 +573,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     );
   }
 
-  void _showRewardedAdForCoins() {
+  void _showRewardedAdForCoins(int coinsToReward) {
     setState(() {
       _isLoadingAd = true;
     });
@@ -541,7 +584,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
             _isLoadingAd = false;
           });
         }
-        await _updateUserCoins(rewardAmount); // Reward amount from AdService
+        await _updateUserCoins(coinsToReward); // Use the passed coinsToReward
         _resetGame();
       },
       onAdFailedToLoad: () {
@@ -575,20 +618,20 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
           onPressed: _resetGame,
-          backgroundColor: Colors.blueGrey.shade400, // Updated FAB color
-          child: const Icon(Icons.refresh, color: Colors.white), // Icon color for contrast
+          backgroundColor: Theme.of(context).primaryColor, // Use primary color for FAB
+          child: const Icon(Icons.refresh, color: Colors.white),
         ),
         appBar: AppBar(
           title: const Text('Tic Tac Toe'),
           centerTitle: true,
           backgroundColor: Colors.transparent,
-          foregroundColor: Colors.blueGrey.shade800, // Updated AppBar foreground color
+          foregroundColor: Theme.of(context).primaryColorDark, // Use theme's primary dark color
           elevation: 0,
           actions: [
             IconButton(
               icon: const Icon(Icons.settings),
-              onPressed: _showDifficultySettingsDialog, // Call new method
-              color: Colors.blueGrey.shade800, // Icon color
+              onPressed: _showDifficultySettingsDialog,
+              color: Theme.of(context).primaryColorDark,
             ),
           ],
         ),
@@ -626,84 +669,83 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
               Column(
                 children: [
                   Padding(
-                  padding: const EdgeInsets.all(20.0), // Increased padding
-                  child: Column(
-                    children: [
-                      // Current Player Indicator
-                      _buildPlayerIndicator(context),
-                      // Removed Difficulty Selector from here
-                    ],
-                  ),
-                ),
-                Center( // Wrap the board in a Center widget
-                  child: Container(
-                    margin: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurple.shade50,
-                      borderRadius: BorderRadius.circular(15),
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      children: [
+                        _buildPlayerIndicator(context),
+                      ],
                     ),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // Removed 'spacing' as it's no longer used.
-                        return AspectRatio( // Ensure the board is square
-                          aspectRatio: 1,
-                          child: Stack(
-                            children: [
-                              GridView.count( // Changed to GridView.count as requested
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 2.0, // Small spacing for cell borders
-                                mainAxisSpacing: 2.0, // Small spacing for cell borders
-                                shrinkWrap: true, // Occupy only necessary space
-                                physics: const NeverScrollableScrollPhysics(), // Disable scrolling
-                                children: List.generate(9, (index) {
-                                  // Pass constraints to _buildGameCell for responsive symbol sizing
-                                  return _buildGameCell(index, constraints);
-                                }),
-                              ),
-                              // Winning line painter remains, but will draw over the new cell design
-                              if (_winningLine != null)
-                                CustomPaint(
-                                  size: Size(
-                                      constraints.maxWidth, constraints.maxHeight),
-                                  painter: WinningLinePainter(
-                                    winningLine: _winningLine!,
-                                    animation: _lineAnimationController,
-                                  ),
-                                ),
-                              // The duplicate CustomPaint was removed as it was redundant
-                            ],
+                  ),
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor, // Use theme card color for board background
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha((0.15 * 255).round()),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return AspectRatio(
+                            aspectRatio: 1,
+                            child: Stack(
+                              children: [
+                                GridView.count(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 8.0, // Increased spacing
+                                  mainAxisSpacing: 8.0, // Increased spacing
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  children: List.generate(9, (index) {
+                                    return _buildGameCell(index, constraints);
+                                  }),
+                                ),
+                                if (_winningLine != null)
+                                  CustomPaint(
+                                    size: Size(
+                                        constraints.maxWidth, constraints.maxHeight),
+                                    painter: WinningLinePainter(
+                                      winningLine: _winningLine!,
+                                      animation: _lineAnimationController,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-                // Computer thinking indicator
-                AnimatedOpacity(
-                  opacity: _isComputerThinking ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
-                    child: Text(
-                      'Computer is thinking...',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.deepPurple.shade900),
+                  AnimatedOpacity(
+                    opacity: _isComputerThinking ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 10.0),
+                      child: Text(
+                        'Computer is thinking...',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColorDark),
+                      ),
                     ),
                   ),
-                ),
-                // Banner Ad Placeholder
-                if (_adService.bannerAd != null)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 10), // Add some margin
-                    width: _adService.bannerAd!.size.width.toDouble(),
-                    height: _adService.bannerAd!.size.height.toDouble(),
-                    child: AdWidget(ad: _adService.bannerAd!),
-                  ),
+                  if (_adService.bannerAd != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      width: _adService.bannerAd!.size.width.toDouble(),
+                      height: _adService.bannerAd!.size.height.toDouble(),
+                      child: AdWidget(ad: _adService.bannerAd!),
+                    ),
                 ],
               ),
               if (_isLoadingAd)
                 Positioned.fill(
                   child: Container(
-                    color: Color.fromARGB((255 * 0.6).round(), 0, 0, 0), // Darker overlay
+                    color: Colors.black.withAlpha((255 * 0.6).round()), // Darker overlay
                     child: const Center(
                       child: CircularProgressIndicator(color: Colors.white),
                     ),
@@ -717,59 +759,112 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
   }
 
   void _showDifficultySettingsDialog() {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      isScrollControlled: true,
       builder: (BuildContext context) {
         return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return SafeArea(
-              child: Container(
-                padding: const EdgeInsets.all(20.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Select Difficulty',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColorDark,
+                    ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: GameMode.values.map((mode) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedMode = mode;
+                        });
+                        Navigator.of(context).pop();
+                        _resetGame();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: selectedMode == mode
+                              ? Theme.of(context).primaryColor.withAlpha((0.8 * 255).round())
+                              : Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: selectedMode == mode
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.shade300,
+                            width: 2,
+                          ),
+                          boxShadow: selectedMode == mode
+                              ? [
+                                  BoxShadow(
+                                    color: Theme.of(context)
+                                        .primaryColor
+                                        .withAlpha((0.3 * 255).round()),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha((0.05 * 255).round()),
+                                    blurRadius: 5,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              selectedMode == mode
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: selectedMode == mode
+                                  ? Colors.white
+                                  : Theme.of(context).primaryColor,
+                            ),
+                            const SizedBox(width: 15),
+                            Text(
+                              mode.toString().split('.').last.toUpperCase(),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: selectedMode == mode
+                                        ? Colors.white
+                                        : Theme.of(context).primaryColorDark,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Theme.of(context).primaryColorDark),
                   ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Select Difficulty',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    grp.RadioGroup<GameMode>.builder(
-                      direction: Axis.vertical,
-                      groupValue: selectedMode,
-                      onChanged: (GameMode? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            selectedMode = newValue;
-                            _resetGame();
-                          });
-                          Navigator.of(context).pop(); // Close the dialog
-                        }
-                      },
-                      items: GameMode.values,
-                      itemBuilder: (item) => grp.RadioButtonBuilder(
-                        item.toString().split('.').last,
-                        textPosition: grp.RadioButtonTextPosition.right,
-                      ),
-                      activeColor: Theme.of(context).primaryColor,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              ),
+              ],
             );
           },
         );
@@ -779,35 +874,63 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
 
   Widget _buildPlayerIndicator(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
       decoration: BoxDecoration(
-        color: Colors.blueGrey.shade100, // Updated indicator background color
-        borderRadius: BorderRadius.circular(15),
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((0.1 * 255).round()),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Current Player: ',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
-            ),
-            ScaleTransition(
-              scale: _animation,
-              child: CircleAvatar(
-                backgroundColor: currentPlayer == Player.x ? Colors.blue.shade800 : Colors.red.shade800,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Current Player: ',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(context).primaryColorDark,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          ScaleTransition(
+            scale: _animation,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: currentPlayer == Player.x
+                    ? Colors.blue.shade700
+                    : Colors.red.shade700,
+                boxShadow: [
+                  BoxShadow(
+                    color: (currentPlayer == Player.x
+                            ? Colors.blue.shade700
+                            : Colors.red.shade700)
+                        .withAlpha((0.4 * 255).round()),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
                 child: Text(
                   currentPlayer == Player.x ? 'X' : 'O',
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    fontFamily: 'Poppins',
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -817,27 +940,51 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
         (index == _winningLine![0] ||
             index == _winningLine![1] ||
             index == (_winningLine![0] + _winningLine![1]) ~/ 2 ||
-            (_winningLine![0] % 3 == _winningLine![1] % 3 && index % 3 == _winningLine![0] % 3 && (index > _winningLine![0] && index < _winningLine![1] || index < _winningLine![0] && index > _winningLine![1])) ||
-            (_winningLine![0] ~/ 3 == _winningLine![1] ~/ 3 && index ~/ 3 == _winningLine![0] ~/ 3 && (index > _winningLine![0] && index < _winningLine![1] || index < _winningLine![0] && index > _winningLine![1]))
-        );
+            (_winningLine![0] % 3 == _winningLine![1] % 3 &&
+                index % 3 == _winningLine![0] % 3 &&
+                (index > _winningLine![0] && index < _winningLine![1] ||
+                    index < _winningLine![0] && index > _winningLine![1])) ||
+            (_winningLine![0] ~/ 3 == _winningLine![1] ~/ 3 &&
+                index ~/ 3 == _winningLine![0] ~/ 3 &&
+                (index > _winningLine![0] && index < _winningLine![1] ||
+                    index < _winningLine![0] && index > _winningLine![1])));
 
-    // Calculate cell size for responsive font sizing
-    final cellSize = (constraints.maxWidth - 4.0) / 3; // 4.0 for 2x crossAxisSpacing
-    final responsiveFontSize = cellSize * 0.6; // Adjust multiplier as needed
+    final cellSize = (constraints.maxWidth - 4.0) / 3;
+    final responsiveFontSize = cellSize * 0.6;
 
     return AnimatedTap(
       onTap: () => _onTap(index),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: Colors.deepPurple.shade100, // New cell background color
-          borderRadius: BorderRadius.circular(10.0), // Slightly rounded corners
-          border: Border.all(color: Colors.deepPurple.shade400, width: 2.0), // Cell borders
+          color: isWinningCell
+              ? Colors.yellow.shade100
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(15.0),
+          border: Border.all(
+            color: isWinningCell
+                ? Colors.yellow.shade700
+                : Colors.grey.shade300,
+            width: 2.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isWinningCell
+                  ? Colors.yellow.shade700.withAlpha((0.4 * 255).round())
+                  : Colors.black.withAlpha((0.08 * 255).round()),
+              blurRadius: isWinningCell ? 12 : 6,
+              offset: isWinningCell
+                  ? const Offset(0, 6)
+                  : const Offset(0, 3),
+            ),
+          ],
         ),
         child: Center(
           child: AnimatedSymbol(
             player: board[index],
             isWinningCell: isWinningCell,
-            fontSize: responsiveFontSize, // Pass responsive font size
+            fontSize: responsiveFontSize,
           ),
         ),
       ),
@@ -972,7 +1119,7 @@ class _AnimatedSymbolState extends State<AnimatedSymbol>
   }
 }
 
-// GridPainter class is removed as it's no longer used.
+// GridPainter class is removed as it's no longer needed.
 
 class WinningLinePainter extends CustomPainter {
   final List<int> winningLine;
