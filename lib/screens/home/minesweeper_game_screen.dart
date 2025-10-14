@@ -36,9 +36,19 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
   // UserService will be obtained from Provider
 
   // Custom difficulty settings
-  int _selectedRows = 5; // Set to lowest available
-  int _selectedCols = 5; // Set to lowest available
-  int _selectedMines = 3; // Set to lowest available
+  int _selectedRows = 9; // Default to Easy
+  int _selectedCols = 9; // Default to Easy
+  int _selectedMines = 10; // Default to Easy
+
+  // Difficulty presets
+  final Map<String, Map<String, int>> _difficultyPresets = {
+    'Easy': {'rows': 9, 'cols': 9, 'mines': 10},
+    'Medium': {'rows': 16, 'cols': 16, 'mines': 40},
+    'Hard': {'rows': 20, 'cols': 20, 'mines': 80},
+  };
+
+  // Current selected difficulty preset
+  String _currentDifficultyPreset = 'Easy';
 
   @override
   void initState() {
@@ -231,12 +241,28 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
+        String tempSelectedPreset = _currentDifficultyPreset;
         int tempRows = _selectedRows;
         int tempCols = _selectedCols;
         int tempMines = _selectedMines;
 
+        // Define available board sizes for custom mode
+        final List<int> availableBoardSizes = [5, 9, 16, 20];
+
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
+            // Helper to update custom mine count based on new board size
+            void updateMinesForBoardSize(int newRows, int newCols) {
+              int maxMines = min(99, (newRows * newCols) - 1); // Max 99 mines or (rows*cols - 1)
+              if (tempMines > maxMines) {
+                tempMines = maxMines;
+              }
+              // Ensure a minimum of 1 mine
+              if (tempMines < 1) {
+                tempMines = 1;
+              }
+            }
+
             return SafeArea(
               child: Container(
                 padding: const EdgeInsets.all(20.0),
@@ -251,62 +277,165 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Custom Difficulty',
+                      'Difficulty Settings',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Text('Board Size:'),
-                        const SizedBox(width: 10),
-                        DropdownButton<int>(
-                          value: tempRows, // Assuming rows and cols are always equal for board size
-                          items: const [
-                            DropdownMenuItem(value: 3, child: Text('3x3')),
-                            DropdownMenuItem(value: 4, child: Text('4x4')),
-                            DropdownMenuItem(value: 5, child: Text('5x5')),
-                            DropdownMenuItem(value: 6, child: Text('6x6')),
-                          ],
-                          onChanged: (int? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                tempRows = newValue;
-                                tempCols = newValue;
-                                // Adjust mines if current selection is too high for new board size
-                                if (tempMines > (newValue * newValue) ~/ 3) {
-                                  tempMines = (newValue * newValue) ~/ 3;
-                                }
-                                if (tempMines > 9) { // Ensure mines don't exceed 9
-                                  tempMines = 9;
-                                }
-                              });
-                            }
+
+                    // Difficulty Presets
+                    Text(
+                      'Select Preset:',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: _difficultyPresets.keys.map((presetName) {
+                        bool isSelected = tempSelectedPreset == presetName;
+                        return CustomButton(
+                          text: presetName,
+                          onPressed: () {
+                            setState(() {
+                              tempSelectedPreset = presetName;
+                              tempRows = _difficultyPresets[presetName]!['rows']!;
+                              tempCols = _difficultyPresets[presetName]!['cols']!;
+                              tempMines = _difficultyPresets[presetName]!['mines']!;
+                            });
                           },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        const Text('Mines:'),
-                        Expanded(
-                          child: Slider(
-                            value: tempMines.toDouble(),
-                            min: 1, // Minimum 1 mine
-                            max: min(9, (tempRows * tempCols) - 1).toDouble(), // Max 9 mines or (rows*cols - 1)
-                            divisions: min(9, (tempRows * tempCols) - 1) - 1, // Divisions based on max mines
-                            label: tempMines.toInt().toString(),
-                            onChanged: (double value) {
-                              setState(() {
-                                tempMines = value.toInt();
-                              });
-                            },
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          startColor: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+                          endColor: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()) : Theme.of(context).cardColor,
+                          textStyle: TextStyle(
+                            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                        Text(tempMines.toInt().toString()),
-                      ],
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Theme.of(context).primaryColor.withAlpha((255 * 0.4).round()),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [
+                                  BoxShadow(
+                                    color: Colors.grey.shade500,
+                                    offset: const Offset(3, 3),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                  const BoxShadow(
+                                    color: Colors.white,
+                                    offset: Offset(-3, -3),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Custom Difficulty Section
+                    Text(
+                      'Or Customize:',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Board Size Selection
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Board Size:',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: availableBoardSizes.map((size) {
+                        bool isSelected = tempRows == size;
+                        return CustomButton(
+                          text: '${size}x$size',
+                          onPressed: () {
+                            setState(() {
+                              tempSelectedPreset = 'Custom'; // Mark as custom if board size is changed
+                              tempRows = size;
+                              tempCols = size;
+                              updateMinesForBoardSize(tempRows, tempCols);
+                            });
+                          },
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          startColor: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
+                          endColor: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()) : Theme.of(context).cardColor,
+                          textStyle: TextStyle(
+                            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Theme.of(context).primaryColor.withAlpha((255 * 0.4).round()),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [
+                                  BoxShadow(
+                                    color: Colors.grey.shade500,
+                                    offset: const Offset(3, 3),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                  const BoxShadow(
+                                    color: Colors.white,
+                                    offset: Offset(-3, -3),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 20),
+
+                    // Mines Slider
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Mines: ${tempMines.toInt()}',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: Theme.of(context).primaryColor,
+                        inactiveTrackColor: Theme.of(context).primaryColor.withAlpha((255 * 0.3).round()),
+                        thumbColor: Theme.of(context).primaryColorDark,
+                        overlayColor: Theme.of(context).primaryColor.withAlpha((255 * 0.2).round()),
+                        valueIndicatorColor: Theme.of(context).primaryColor,
+                        valueIndicatorTextStyle: const TextStyle(color: Colors.white),
+                      ),
+                      child: Slider(
+                        value: tempMines.toDouble(),
+                        min: 1,
+                        max: min(99, (tempRows * tempCols) - 1).toDouble(),
+                        divisions: (min(99, (tempRows * tempCols) - 1) - 1).clamp(1, 98).toInt(), // Ensure at least 1 division if max > min
+                        label: tempMines.toInt().toString(),
+                        onChanged: (double value) {
+                          setState(() {
+                            tempSelectedPreset = 'Custom'; // Mark as custom if mines are changed
+                            tempMines = value.toInt();
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Action Buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -315,19 +444,27 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
+                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                          startColor: Colors.grey.shade400,
+                          endColor: Colors.grey.shade600,
+                          textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         CustomButton(
                           text: 'Apply',
                           onPressed: () {
-                            Navigator.of(context).pop(); // Dismiss the bottom sheet first
-                            // Update the main state to apply new settings
+                            Navigator.of(context).pop();
                             setState(() {
                               _selectedRows = tempRows;
                               _selectedCols = tempCols;
                               _selectedMines = tempMines;
+                              _currentDifficultyPreset = tempSelectedPreset;
                             });
                             _initializeGame(_selectedRows, _selectedCols, _selectedMines);
                           },
+                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                          startColor: Theme.of(context).primaryColor,
+                          endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()),
+                          textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -452,7 +589,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha((255 * 0.15).round()),
                   blurRadius: 15,
                   offset: const Offset(0, -5),
                 ),
@@ -540,7 +677,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                           _initializeGame(_selectedRows, _selectedCols, _selectedMines);
                         },
                         startColor: Colors.blueAccent,
-                        endColor: Colors.blueAccent.withOpacity(0.7),
+                        endColor: Colors.blueAccent.withAlpha((255 * 0.7).round()),
                         textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -557,8 +694,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         _showInterstitialAd();
                       },
                       startColor: Theme.of(context).primaryColor,
-                      endColor: Theme.of(context).primaryColor.withOpacity(0.7),
-                      textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()),
+                      textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -630,16 +767,16 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         MinesweeperCell cell = board[r][c];
 
                         Color baseColor = Colors.grey[300]!; // Lighter base for unrevealed
-                        Color revealedColor = Colors.grey[200]!; // Color for revealed cells
+                        // Removed unused variable: Color revealedColor = Colors.grey[200]!;
                         Widget? cellContent;
                         Color textColor = Colors.black;
 
                         List<BoxShadow> shadows;
-                        BorderRadius borderRadius = BorderRadius.circular(8.0); // Slightly rounded edges
+                        BorderRadius borderRadius = BorderRadius.circular(10.0); // Slightly more rounded edges
 
                         if (cell.isRevealed) {
                           if (cell.hasMine) {
-                            baseColor = Colors.redAccent;
+                            baseColor = Colors.redAccent.shade100; // Lighter red for revealed mine
                             cellContent = Lottie.asset(
                               'assets/lottie/bomb.json',
                               width: 40,
@@ -647,7 +784,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                               fit: BoxFit.contain,
                             );
                           } else if (cell.adjacentMines > 0) {
-                            baseColor = revealedColor;
+                            baseColor = Theme.of(context).cardColor; // Use card color for revealed
                             textColor = _getAdjacentMineColor(cell.adjacentMines);
                             cellContent = Text(
                               '${cell.adjacentMines}',
@@ -658,54 +795,55 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                               ),
                             );
                           } else {
-                            baseColor = revealedColor;
+                            baseColor = Theme.of(context).cardColor; // Use card color for revealed empty
                           }
                           // For revealed cells, make them look "pressed in" or flat
                           shadows = [
                             BoxShadow(
-                              color: Colors.grey.shade500,
+                              color: Colors.grey.shade400,
                               offset: const Offset(1, 1),
-                              blurRadius: 3,
+                              blurRadius: 2,
                               spreadRadius: 0.5,
                             ),
                             const BoxShadow(
                               color: Colors.white,
                               offset: Offset(-1, -1),
-                              blurRadius: 3,
+                              blurRadius: 2,
                               spreadRadius: 0.5,
                             ),
                           ];
                         } else if (cell.isFlagged) {
-                          baseColor = Colors.orange[200]!;
-                          cellContent = const Icon(Icons.flag, size: 24, color: Colors.red);
+                          baseColor = Theme.of(context).cardColor; // Use card color for flagged
+                          cellContent = Icon(Icons.flag, size: 24, color: Theme.of(context).primaryColor); // Use primary color for flag
                           // For flagged cells, keep a slightly raised look
                           shadows = [
                             BoxShadow(
-                              color: Colors.grey.shade600,
-                              offset: const Offset(2, 2),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                            const BoxShadow(
-                              color: Colors.white,
-                              offset: Offset(-2, -2),
-                              blurRadius: 4,
-                              spreadRadius: 1,
-                            ),
-                          ];
-                        } else {
-                          // For unrevealed cells, create a 3D effect with soft outer shadows and highlights
-                          shadows = [
-                            BoxShadow(
-                              color: Colors.grey.shade500, // Darker shadow for depth
+                              color: Colors.grey.shade500,
                               offset: const Offset(3, 3),
                               blurRadius: 6,
                               spreadRadius: 1,
                             ),
                             const BoxShadow(
-                              color: Colors.white, // Lighter shadow for highlight
+                              color: Colors.white,
                               offset: Offset(-3, -3),
                               blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ];
+                        } else {
+                          // For unrevealed cells, create a 3D effect with soft outer shadows and highlights
+                          baseColor = Theme.of(context).cardColor; // Use card color for unrevealed
+                          shadows = [
+                            BoxShadow(
+                              color: Colors.grey.shade500, // Darker shadow for depth
+                              offset: const Offset(4, 4),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                            const BoxShadow(
+                              color: Colors.white, // Lighter shadow for highlight
+                              offset: Offset(-4, -4),
+                              blurRadius: 8,
                               spreadRadius: 1,
                             ),
                           ];
@@ -765,7 +903,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).round()),
+            color: Colors.black.withAlpha((255 * 0.1).round()),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

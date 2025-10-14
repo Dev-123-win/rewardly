@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:async'; // Import for StreamController
 import 'dart:math';
 
+import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart'; // Import flutter_fortune_wheel
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import 'package:confetti/confetti.dart';
@@ -43,17 +45,12 @@ class SpinWheelGameScreen extends StatefulWidget {
 class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     with TickerProviderStateMixin {
   final AdService _adService = AdService();
-  late AnimationController _wheelController;
-  late Animation<double> _wheelAnimation;
-  late AnimationController _glowController;
-  late Animation<double> _glowAnimation;
-  late AnimationController _particleController;
-  late Animation<double> _particleAnimation;
   late ConfettiController _confettiController;
   late AnimationController _coinPulseController;
   late Animation<double> _coinPulseAnimation;
 
-  double _currentRotation = 0.0;
+  final StreamController<int> _selected = StreamController<int>();
+  int _fortuneWheelSelected = 0;
   bool _isSpinning = false;
 
   // Define the rewards for the wheel
@@ -74,27 +71,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     _adService.loadRewardedAd(); // Preload rewarded ad
     _initializeSpinData(); // Initialize spin data from UserDataProvider
 
-    _wheelController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    );
-    _wheelAnimation = CurvedAnimation(
-      parent: _wheelController,
-      curve: Curves.easeOutExpo,
-    );
-
-    _glowController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
-    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_glowController);
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat();
-    _particleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_particleController);
-
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
     _coinPulseController = AnimationController(
@@ -108,12 +84,10 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
   @override
   void dispose() {
-    _wheelController.dispose();
-    _glowController.dispose();
-    _particleController.dispose();
     _confettiController.dispose();
     _coinPulseController.dispose();
     _adService.dispose();
+    _selected.close(); // Close the stream controller
     super.dispose();
   }
 
@@ -128,7 +102,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
     if (_isSpinning || (currentFreeSpins == 0 && currentAdSpins == 0)) {
-      if (!mounted) return; // Check mounted before using context
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No spins left! Watch an ad or wait for free spins.')),
       );
@@ -148,53 +122,16 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     }
 
     final random = Random();
-    final double randomAngle = random.nextDouble() * (2 * pi); // Random angle for a full rotation
-    final double targetAngle = (2 * pi * 5) + randomAngle; // Spin 5 full rotations + random angle
+    _fortuneWheelSelected = random.nextInt(_rewards.length);
+    _selected.add(_fortuneWheelSelected);
 
-    _wheelController.reset();
-    _wheelAnimation = Tween<double>(
-      begin: _currentRotation,
-      end: targetAngle,
-    ).animate(
-      CurvedAnimation(
-        parent: _wheelController,
-        curve: Curves.easeOutExpo,
-      ),
-    );
+    // Wait for the wheel to stop spinning
+    await Future.delayed(const Duration(seconds: 5)); // FortuneWheel's default duration is 5 seconds
 
-    _wheelController.forward().whenComplete(() {
-      setState(() {
-        _isSpinning = false;
-        _currentRotation = targetAngle % (2 * pi); // Keep rotation within 0-2pi
-
-        // Determine the winning segment
-        final double segmentAngle = (2 * pi) / _rewards.length;
-        // The pointer is at the top, which corresponds to an angle of 3*pi/2 (270 degrees) in Flutter's canvas (0 is right, clockwise positive).
-        // We need to find which segment is under this pointer.
-        // The wheel rotates clockwise, so we need to adjust the current rotation relative to the pointer.
-        // We want to find the segment that is "under" the pointer.
-        // The segments are drawn starting from angle 0 (right) and going clockwise.
-        // If the wheel has rotated by _currentRotation, then the segment that was originally at angle `(3*pi/2 - _currentRotation)`
-        // (modulo 2*pi) is now under the pointer.
-        double pointerAngle = (3 * pi / 2); // Pointer is at the top (270 degrees)
-        double adjustedRotation = (_currentRotation + pointerAngle) % (2 * pi);
-
-        // Calculate the index. The segments are ordered clockwise starting from the right.
-        // We need to reverse the order for the visual representation to match the logical index.
-        // The first segment (index 0) is drawn from 0 to segmentAngle.
-        // If the pointer is at the top, it's pointing at the segment whose start angle is just before 3*pi/2.
-        // The segments are drawn starting from index 0 at the right, then 1, 2, etc., clockwise.
-        // To get the correct index, we need to consider the angle from the "top" position.
-        // The angle from the top (3*pi/2) to the start of the first segment (0) is pi/2.
-        // So, we need to shift the angle by pi/2 to align the "top" with the start of the first segment.
-        double normalizedWinningAngle = (adjustedRotation + pi / 2) % (2 * pi);
-        int winningIndex = (_rewards.length - 1) - (normalizedWinningAngle / segmentAngle).floor();
-        winningIndex = winningIndex % _rewards.length; // Ensure index is within bounds
-
-        final WheelReward wonReward = _rewards[winningIndex];
-
-        _showWinDialog(wonReward);
-      });
+    setState(() {
+      _isSpinning = false;
+      final WheelReward wonReward = _rewards[_fortuneWheelSelected];
+      _showWinDialog(wonReward);
     });
   }
 
@@ -206,7 +143,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
       _confettiController.play();
       _coinPulseController.forward(from: 0).whenComplete(() => _coinPulseController.reverse());
     }
-    if (!mounted) return; // Check mounted before using context
+    if (!mounted) return;
 
     String title;
     String content;
@@ -225,15 +162,15 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     showModalBottomSheet(
       context: context,
       isDismissible: false,
-      isScrollControlled: true, // Allow the bottom sheet to be full height
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return FractionallySizedBox(
-          heightFactor: 0.7, // Make it cover 70% of the screen height
+          heightFactor: 0.7,
           child: Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor, // Use theme card color
+              color: Theme.of(context).cardColor,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(25), // Slightly larger radius
+                topLeft: Radius.circular(25),
                 topRight: Radius.circular(25),
               ),
               boxShadow: [
@@ -245,26 +182,26 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(30.0), // Increased padding
+              padding: const EdgeInsets.all(30.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
-                mainAxisSize: MainAxisSize.max, // Take max available height
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
                 children: [
                   ScaleTransition(
                     scale: _coinPulseAnimation,
                     child: Lottie.asset(
                       lottieAsset,
-                      width: 150, // Adjust size as needed
-                      height: 150, // Adjust size as needed
+                      width: 150,
+                      height: 150,
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 25), // Increased spacing
+                  const SizedBox(height: 25),
                   ScaleTransition(
                     scale: _coinPulseAnimation,
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark), // Enhanced text style
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -272,23 +209,22 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                   Text(
                     content,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
                   ),
-                  const SizedBox(height: 40), // Increased spacing
+                  const SizedBox(height: 40),
                   SizedBox(
-                    width: double.infinity, // Full width button
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
-                        // Optionally reset game state or just allow another spin
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor, // Use primary color for button
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18), // Larger padding
+                        padding: const EdgeInsets.symmetric(vertical: 18),
                         textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12), // Rounded button
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: const Text('Spin Again'),
@@ -307,12 +243,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
     if (coins > 0 && userDataProvider.userData?.id != null && userDataProvider.shardedUserService != null) {
       await userDataProvider.updateUserCoins(coins);
-      if (!mounted) return; // Check mounted before using context
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('You earned $coins coins!')),
       );
     } else {
-      if (!mounted) return; // Check mounted before using context
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to update coins. Please try again.')),
       );
@@ -333,12 +269,12 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           // Check if user has earned less than 10 ad spins today
           if (userDataProvider.adSpinsEarnedToday < 10) {
             await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
-            if (!mounted) return; // Check mounted before using context
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('You earned 2 spins!')),
             );
           } else {
-            if (!mounted) return; // Check mounted before using context
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
             );
@@ -350,7 +286,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           setState(() {
             _isSpinning = false;
           });
-          if (!mounted) return; // Check mounted before using context
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
           );
@@ -361,7 +297,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           setState(() {
             _isSpinning = false;
           });
-          if (!mounted) return; // Check mounted before using context
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
           );
@@ -375,7 +311,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Spin the Wheel'),
+          title: const Text('Spin and Win'),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -392,16 +328,16 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
         ),
         body: Stack(
           children: [
-            // Particle Background
-            AnimatedBuilder(
-              animation: _particleAnimation,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: ParticleBackgroundPainter(animation: _particleAnimation),
-                  child: Container(),
-                );
-              },
-            ),
+            // Particle Background (keeping for visual effect if desired)
+            // AnimatedBuilder(
+            //   animation: _particleAnimation,
+            //   builder: (context, child) {
+            //     return CustomPaint(
+            //       painter: ParticleBackgroundPainter(animation: _particleAnimation),
+            //       child: Container(),
+            //     );
+            //   },
+            // ),
             Align(
               alignment: Alignment.topCenter,
               child: ConfettiWidget(
@@ -419,113 +355,112 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
             ),
             Column(
               children: [
-                // Spin Counter
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Consumer<UserDataProvider>(
-                    builder: (context, userDataProvider, child) {
-                      final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                      final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
-                      final adsWatchedToday = userDataProvider.adSpinsEarnedToday; // Get ads watched today
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildInfoChip(context, Icons.refresh, 'Free Spins: $freeSpins'),
-                          _buildInfoChip(context, Icons.videocam, 'Ad Spins: $adSpins ($adsWatchedToday/10 ads)'), // Display ads watched
-                        ],
-                      );
-                    },
-                  ),
+                const SizedBox(height: 20), // Spacing from app bar
+                // Available Spins Display
+                Consumer<UserDataProvider>(
+                  builder: (context, userDataProvider, child) {
+                    final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                    final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                    final totalSpins = freeSpins + adSpins;
+                    return Text(
+                      'Available Spins: $totalSpins',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                    );
+                  },
                 ),
+                const SizedBox(height: 20),
                 Expanded(
-                  child: Center(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Spin Wheel
-                        AnimatedBuilder(
-                          animation: _wheelAnimation,
-                          builder: (context, child) {
-                            return Transform.rotate(
-                              angle: _wheelAnimation.value,
-                              child: CustomPaint(
-                                size: const Size(300, 300),
-                                painter: SpinWheelPainter(rewards: _rewards, glowAnimation: _glowAnimation),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: FortuneWheel(
+                      selected: _selected.stream,
+                      items: [
+                        for (var reward in _rewards)
+                          FortuneItem(
+                            style: FortuneItemStyle(
+                              color: reward.color,
+                              borderColor: Colors.white,
+                              borderWidth: 3,
+                              textAlign: TextAlign.center,
+                            ),
+                            child: Text(
+                              reward.text,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 24,
                               ),
-                            );
-                          },
-                        ),
-                      // Wheel Pointer
-                      CustomPaint(
-                        size: const Size(300, 300),
-                        painter: WheelPointerPainter(),
-                      ),
-                      // Central "SPIN" text
-                      GestureDetector(
-                        onTap: _isSpinning ? null : _spinWheel,
-                        child: Container(
-                          width: 100, // Size of the tappable area
-                          height: 100,
-                          alignment: Alignment.center,
-                          child: Text(
-                            'SPIN',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 5.0,
-                                  color: Colors.black.withOpacity(0.5),
-                                  offset: const Offset(2, 2),
-                                ),
-                              ],
                             ),
                           ),
+                      ],
+                      onAnimationEnd: () {
+                        // This callback is triggered when the wheel animation ends.
+                        // The win dialog is already handled in _spinWheel after a delay.
+                      },
+                      indicators: <FortuneIndicator>[
+                        FortuneIndicator(
+                          alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
+                          child: TrianglePointer(
+                            color: Colors.red,
+                            width: 40,
+                            height: 40,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Action Buttons
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSpinning ? null : _spinWheel,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isSpinning
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Spin'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isSpinning ? null : _watchAdToSpin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isSpinning
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Ad Watching Button'),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              // Action Buttons
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: _isSpinning ? null : _spinWheel,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.deepOrange,
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      child: _isSpinning
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Spin for Free'),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _isSpinning ? null : _watchAdToSpin,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.purple,
-                        foregroundColor: Colors.white,
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      child: _isSpinning
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Watch Ad to Spin (2 Spins)'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _buildInfoChip(BuildContext context, IconData icon, String text, [Animation<double>? animation]) {
@@ -536,7 +471,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(25.0),
-          // Removed boxShadow for no elevation
         ),
         child: Row(
           children: [
@@ -556,130 +490,43 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
   }
 }
 
-// Custom Painters (to be implemented in Phase 2)
-class SpinWheelPainter extends CustomPainter {
-  final List<WheelReward> rewards;
-  final Animation<double> glowAnimation;
+class TrianglePointer extends StatelessWidget {
+  final Color color;
+  final double width;
+  final double height;
 
-  SpinWheelPainter({required this.rewards, required this.glowAnimation}) : super(repaint: glowAnimation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final segmentAngle = (2 * pi) / rewards.length;
-
-    for (int i = 0; i < rewards.length; i++) {
-      final startAngle = i * segmentAngle;
-
-      final paint = Paint()..color = rewards[i].color;
-      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, segmentAngle, true, paint);
-
-      // Draw text
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: rewards[i].text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20, // Slightly smaller font size
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-
-      // Position text radially, closer to the center
-      final textRadius = radius * 0.6; // Adjust text position
-      final textAngle = startAngle + segmentAngle / 2;
-      final textX = center.dx + textRadius * cos(textAngle);
-      final textY = center.dy + textRadius * sin(textAngle);
-
-      canvas.save();
-      canvas.translate(textX, textY);
-      canvas.rotate(textAngle + pi / 2); // Rotate text to align with segment
-      canvas.translate(-textPainter.width / 2, -textPainter.height / 2);
-      textPainter.paint(canvas, Offset.zero);
-      canvas.restore();
-    }
-
-    // Draw outer border
-    final outerBorderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10.0; // Thicker border
-    canvas.drawCircle(center, radius, outerBorderPaint);
-
-    // Draw inner black circle
-    final innerCirclePaint = Paint()..color = Colors.black;
-    final innerRadius = radius * 0.4; // Adjust size of inner circle
-    canvas.drawCircle(center, innerRadius, innerCirclePaint);
-
-    // Draw inner white border for the black circle
-    final innerBorderPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0;
-    canvas.drawCircle(center, innerRadius, innerBorderPaint);
-  }
+  const TrianglePointer({
+    Key? key,
+    required this.color,
+    required this.width,
+    required this.height,
+  }) : super(key: key);
 
   @override
-  bool shouldRepaint(covariant SpinWheelPainter oldDelegate) {
-    return oldDelegate.rewards != rewards || oldDelegate.glowAnimation != glowAnimation;
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _TrianglePainter(color),
+    );
   }
 }
 
-class ParticleBackgroundPainter extends CustomPainter {
-  final Animation<double> animation;
+class _TrianglePainter extends CustomPainter {
+  final Color color;
 
-  ParticleBackgroundPainter({required this.animation}) : super(repaint: animation);
+  _TrianglePainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final random = Random(0); // Use a fixed seed for consistent particles
-    final particleCount = 50;
-    final particlePaint = Paint()..color = Colors.white.withAlpha((0.3 * 255).round());
-
-    for (int i = 0; i < particleCount; i++) {
-      final x = random.nextDouble() * size.width;
-      final y = (random.nextDouble() * size.height + animation.value * size.height) % size.height;
-      final radius = random.nextDouble() * 3 + 1;
-      canvas.drawCircle(Offset(x, y), radius, particlePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant ParticleBackgroundPainter oldDelegate) {
-    return oldDelegate.animation != animation;
-  }
-}
-
-class ConfettiPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    // This painter is not directly used for confetti, as confetti_widget handles it.
-    // It's a placeholder if custom confetti drawing was needed.
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class WheelPointerPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.red; // Changed color to red
+    final paint = Paint()..color = color;
     final path = Path();
-
-    // Triangle pointing downwards at the top of the wheel
-    path.moveTo(size.width / 2, 0); // Top center
-    path.lineTo(size.width / 2 - 20, 40); // Bottom-left point
-    path.lineTo(size.width / 2 + 20, 40); // Bottom-right point
+    path.moveTo(size.width / 2, 0);
+    path.lineTo(0, size.height);
+    path.lineTo(size.width, size.height);
     path.close();
-
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_TrianglePainter oldDelegate) => false;
 }

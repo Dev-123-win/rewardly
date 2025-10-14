@@ -11,7 +11,8 @@ class CustomButton extends StatefulWidget {
   final double borderRadius;
   final TextStyle? textStyle;
   final EdgeInsetsGeometry? padding;
-  final IconData? icon; // Add icon parameter
+  final IconData? icon;
+  final List<BoxShadow>? boxShadow; // Add boxShadow parameter
 
   const CustomButton({
     super.key,
@@ -24,7 +25,8 @@ class CustomButton extends StatefulWidget {
     this.borderRadius = 10.0,
     this.textStyle,
     this.padding,
-    this.icon, // Initialize icon
+    this.icon,
+    this.boxShadow, // Initialize boxShadow
   });
 
   @override
@@ -41,18 +43,20 @@ class _CustomButtonState extends State<CustomButton> {
         height: widget.height ?? 50.0,
         padding: widget.padding,
         decoration: BoxDecoration(
-          gradient: const LinearGradient( // Use a specific gradient for the button
-            colors: [
-              Color(0xFF6200EE), // Deep Purple
-              Color(0xFFBB86FC), // Light Purple
-            ],
+          gradient: LinearGradient( // Use a specific gradient for the button
+            colors: widget.startColor != null && widget.endColor != null
+                ? [widget.startColor!, widget.endColor!]
+                : [
+                    const Color(0xFF6200EE), // Deep Purple
+                    const Color(0xFFBB86FC), // Light Purple
+                  ],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          boxShadow: [
+          boxShadow: widget.boxShadow ?? [ // Use provided boxShadow or default
             BoxShadow(
-              color: const Color(0xFF6200EE).withAlpha((255 * 0.3).round()), // Shadow matching the button color
+              color: (widget.startColor ?? const Color(0xFF6200EE)).withAlpha((255 * 0.3).round()), // Shadow matching the button color
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

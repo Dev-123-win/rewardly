@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:lottie/lottie.dart'; // Import lottie package
 import '../../auth_service.dart';
 import '../../widgets/custom_button.dart';
 import 'forgot_password.dart';
@@ -189,25 +189,54 @@ class AuthScreenLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.white, // Use white background for loading
-        body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/AppLogo.png', height: 120),
-            const SizedBox(height: 30),
-            Text(
-              'Loading Rewardly...',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFFFFFF), Color(0xFFF0F2F5)], // Subtle gradient from white to light grey
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 40),
-            LoadingAnimationWidget.horizontalRotatingDots(
-              color: const Color(0xFF6200EE), // Deep purple for animation
-              size: 50,
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/AppLogo.png', height: 180), // Further increased logo size
+                  const SizedBox(height: 50), // Increased spacing
+                  Text(
+                    'Loading Rewardly...',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith( // Changed to headlineMedium
+                          color: Colors.black87,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2, // Added letter spacing
+                        ),
+                  ),
+                  const SizedBox(height: 10), // Spacing between main text and tagline
+                  Text(
+                    'Please wait a moment while we prepare your experience.', // Added a tagline
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400, // Lighter font weight for tagline
+                        ),
+                  ),
+                  const SizedBox(height: 40), // Spacing before animation
+                  Lottie.asset(
+                    'assets/lottie/sand glass loading animation.json',
+                    width: 250, // Further adjusted size
+                    height: 250, // Further adjusted size
+                    fit: BoxFit.contain,
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }
