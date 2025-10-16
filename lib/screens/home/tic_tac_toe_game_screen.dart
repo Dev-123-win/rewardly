@@ -25,7 +25,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     with TickerProviderStateMixin {
   final AdService _adService = AdService();
   late AnimationController _animationController;
-  late Animation<double> _animation;
   late AnimationController _backgroundAnimationController;
   late Animation<Color?> _gradientColor1;
   late Animation<Color?> _gradientColor2;
@@ -53,13 +52,13 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _animation = Tween<double>(begin: 1, end: 1.2).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-    _animationController.repeat(reverse: true);
+    // _animation = Tween<double>(begin: 1, end: 1.2).animate(
+    //   CurvedAnimation(
+    //     parent: _animationController,
+    //     curve: Curves.easeInOut,
+    //   ),
+    // );
+    // _animationController.repeat(reverse: true);
 
     _backgroundAnimationController = AnimationController(
       vsync: this,
@@ -429,7 +428,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha((0.15 * 255).round()),
+                  color: Colors.black.withAlpha((255 * 0.15).round()),
                   blurRadius: 15,
                   offset: const Offset(0, -5),
                 ),
@@ -477,16 +476,15 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                           _adService.showRewardedInterstitialAd(
                             onAdDismissed: () {
                               _adService.loadRewardedInterstitialAd();
-                              _updateUserCoins(rewardCoins);
                               _resetGame();
                             },
                             onAdFailedToShow: () {
                               _adService.loadRewardedInterstitialAd();
-                              _updateUserCoins(rewardCoins);
+                              // Do not give coins if ad failed to show
                               _resetGame();
                             },
                             onRewardEarned: (int rewardAmount) {
-                              // The reward is already handled by _updateUserCoins after ad dismissal
+                              _updateUserCoins(rewardCoins); // Give coins only if reward is earned
                             },
                           );
                         },
@@ -616,11 +614,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        floatingActionButton: FloatingActionButton(
-          onPressed: _resetGame,
-          backgroundColor: Theme.of(context).primaryColor, // Use primary color for FAB
-          child: const Icon(Icons.refresh, color: Colors.white),
-        ),
         appBar: AppBar(
           title: const Text('Tic Tac Toe'),
           centerTitle: true,
@@ -670,82 +663,113 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        _buildPlayerIndicator(context),
-                      ],
-                    ),
+                    child: _buildPlayerIndicator(context),
                   ),
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor, // Use theme card color for board background
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha((0.15 * 255).round()),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha((255 * 0.15).round()),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          return AspectRatio(
-                            aspectRatio: 1,
-                            child: Stack(
-                              children: [
-                                GridView.count(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 8.0, // Increased spacing
-                                  mainAxisSpacing: 8.0, // Increased spacing
-                                  shrinkWrap: true,
-                                  physics: const NeverScrollableScrollPhysics(),
-                                  children: List.generate(9, (index) {
-                                    return _buildGameCell(index, constraints);
-                                  }),
+                          padding: const EdgeInsets.all(20), // Add padding inside the card
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Center(
+                                child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return AspectRatio(
+                                      aspectRatio: 1,
+                                      child: Stack(
+                                        children: [
+                                          GridView.count(
+                                            crossAxisCount: 3,
+                                            crossAxisSpacing: 8.0,
+                                            mainAxisSpacing: 8.0,
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            children: List.generate(9, (index) {
+                                              return _buildGameCell(index, constraints);
+                                            }),
+                                          ),
+                                          if (_winningLine != null)
+                                            CustomPaint(
+                                              size: Size(
+                                                  constraints.maxWidth, constraints.maxHeight),
+                                              painter: WinningLinePainter(
+                                                winningLine: _winningLine!,
+                                                animation: _lineAnimationController,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                                if (_winningLine != null)
-                                  CustomPaint(
-                                    size: Size(
-                                        constraints.maxWidth, constraints.maxHeight),
-                                    painter: WinningLinePainter(
-                                      winningLine: _winningLine!,
-                                      animation: _lineAnimationController,
-                                    ),
+                              ),
+                              AnimatedOpacity(
+                                opacity: _isComputerThinking ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 10.0, top: 20.0), // Added top padding
+                                  child: Text(
+                                    'Computer is thinking...',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColorDark),
                                   ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  AnimatedOpacity(
-                    opacity: _isComputerThinking ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 10.0),
-                      child: Text(
-                        'Computer is thinking...',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColorDark),
+                                ),
+                              ),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: _resetGame,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Theme.of(context).primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 18),
+                                    textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 5,
+                                    shadowColor: Theme.of(context).primaryColor.withOpacity(0.4),
+                                  ),
+                                  child: const Text('START NEW GAME'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
                   if (_adService.bannerAd != null)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      width: _adService.bannerAd!.size.width.toDouble(),
-                      height: _adService.bannerAd!.size.height.toDouble(),
-                      child: AdWidget(ad: _adService.bannerAd!),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      child: SizedBox(
+                        width: _adService.bannerAd!.size.width.toDouble(),
+                        height: _adService.bannerAd!.size.height.toDouble(),
+                        child: AdWidget(ad: _adService.bannerAd!),
+                      ),
                     ),
                 ],
               ),
               if (_isLoadingAd)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withAlpha((255 * 0.6).round()), // Darker overlay
+                    color: Colors.black.withOpacity(0.6), // Darker overlay
                     child: const Center(
                       child: CircularProgressIndicator(color: Colors.white),
                     ),
@@ -797,7 +821,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                             vertical: 15, horizontal: 20),
                         decoration: BoxDecoration(
                           color: selectedMode == mode
-                              ? Theme.of(context).primaryColor.withAlpha((0.8 * 255).round())
+                              ? Theme.of(context).primaryColor.withOpacity(0.8)
                               : Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
@@ -811,14 +835,14 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                   BoxShadow(
                                     color: Theme.of(context)
                                         .primaryColor
-                                        .withAlpha((0.3 * 255).round()),
+                                        .withOpacity(0.3),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withAlpha((0.05 * 255).round()),
+                                    color: Colors.black.withOpacity(0.05),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),
@@ -879,11 +903,16 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.1).round()),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.1).round()),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
         ],
       ),
       child: Row(
@@ -896,36 +925,33 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                   fontWeight: FontWeight.w600,
                 ),
           ),
-          ScaleTransition(
-            scale: _animation,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: currentPlayer == Player.x
-                    ? Colors.blue.shade700
-                    : Colors.red.shade700,
-                boxShadow: [
-                  BoxShadow(
-                    color: (currentPlayer == Player.x
-                            ? Colors.blue.shade700
-                            : Colors.red.shade700)
-                        .withAlpha((0.4 * 255).round()),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  currentPlayer == Player.x ? 'X' : 'O',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                  ),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: currentPlayer == Player.x
+                  ? Colors.blue.shade700
+                  : Colors.red.shade700,
+              boxShadow: [
+                BoxShadow(
+                  color: (currentPlayer == Player.x
+                          ? Colors.blue.shade700
+                          : Colors.red.shade700)
+                      .withAlpha((255 * 0.4).round()),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                currentPlayer == Player.x ? 'X' : 'O',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
                 ),
               ),
             ),
@@ -965,18 +991,18 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
           border: Border.all(
             color: isWinningCell
                 ? Colors.yellow.shade700
-                : Colors.grey.shade300,
-            width: 2.5,
+                : Colors.grey.shade200, // Lighter border color
+            width: 2.0, // Slightly thinner border
           ),
           boxShadow: [
             BoxShadow(
               color: isWinningCell
-                  ? Colors.yellow.shade700.withAlpha((0.4 * 255).round())
-                  : Colors.black.withAlpha((0.08 * 255).round()),
-              blurRadius: isWinningCell ? 12 : 6,
+                  ? Colors.yellow.shade400.withAlpha((255 * 0.4).round()) // Softer yellow shadow
+                  : Colors.black.withAlpha((255 * 0.05).round()), // Softer general shadow
+              blurRadius: isWinningCell ? 15 : 8, // Adjusted blur for winning/normal
               offset: isWinningCell
-                  ? const Offset(0, 6)
-                  : const Offset(0, 3),
+                  ? const Offset(0, 8) // Adjusted offset for winning
+                  : const Offset(0, 4), // Adjusted offset for normal
             ),
           ],
         ),
@@ -1098,10 +1124,10 @@ class _AnimatedSymbolState extends State<AnimatedSymbol>
                     ? Colors.blue.shade800
                     : Colors.red.shade800,
                 shadows: [
-                  const Shadow(
-                    offset: Offset(2.0, 2.0),
+                  Shadow(
+                    offset: const Offset(2.0, 2.0),
                     blurRadius: 3.0,
-                    color: Color.fromARGB(51, 0, 0, 0),
+                    color: const Color.fromARGB(51, 0, 0, 0),
                   ),
                   if (widget.isWinningCell)
                     Shadow(

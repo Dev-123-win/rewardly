@@ -175,7 +175,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withAlpha((255 * 0.15).round()),
                   blurRadius: 15,
                   offset: const Offset(0, -5),
                 ),
@@ -311,7 +311,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Spin and Win'),
+          title: const Text('Lucky Spin'),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -326,138 +326,169 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
             ),
           ],
         ),
-        body: Stack(
-          children: [
-            // Particle Background (keeping for visual effect if desired)
-            // AnimatedBuilder(
-            //   animation: _particleAnimation,
-            //   builder: (context, child) {
-            //     return CustomPaint(
-            //       painter: ParticleBackgroundPainter(animation: _particleAnimation),
-            //       child: Container(),
-            //     );
-            //   },
-            // ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: ConfettiWidget(
-                confettiController: _confettiController,
-                blastDirectionality: BlastDirectionality.explosive,
-                shouldLoop: false,
-                colors: const [
-                  Colors.green,
-                  Colors.blue,
-                  Colors.pink,
-                  Colors.orange,
-                  Colors.purple
-                ],
-              ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFFE0F7FA), // Light Cyan
+                Color(0xFFBBDEFB), // Light Blue
+              ],
             ),
-            Column(
-              children: [
-                const SizedBox(height: 20), // Spacing from app bar
-                // Available Spins Display
-                Consumer<UserDataProvider>(
-                  builder: (context, userDataProvider, child) {
-                    final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                    final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
-                    final totalSpins = freeSpins + adSpins;
-                    return Text(
-                      'Available Spins: $totalSpins',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                    );
-                  },
+          ),
+          child: Stack(
+            children: [
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false,
+                  colors: const [
+                    Colors.green,
+                    Colors.blue,
+                    Colors.pink,
+                    Colors.orange,
+                    Colors.purple
+                  ],
                 ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: FortuneWheel(
-                      selected: _selected.stream,
-                      items: [
-                        for (var reward in _rewards)
-                          FortuneItem(
-                            style: FortuneItemStyle(
-                              color: reward.color,
-                              borderColor: Colors.white,
-                              borderWidth: 3,
-                              textAlign: TextAlign.center,
+              ),
+              Column(
+                children: [
+                  const SizedBox(height: 20), // Spacing from app bar
+                  // Available Spins Display
+                  Consumer<UserDataProvider>(
+                    builder: (context, userDataProvider, child) {
+                      final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                      final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                      final totalSpins = freeSpins + adSpins;
+                      return Text(
+                        'Available Spins: $totalSpins',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                              offset: const Offset(0, 5),
                             ),
-                            child: Text(
-                              reward.text,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                          ],
+                        ),
+                        child: FortuneWheel(
+                          selected: _selected.stream,
+                          items: [
+                            for (var reward in _rewards)
+                              FortuneItem(
+                                style: FortuneItemStyle(
+                                  color: reward.color,
+                                  borderColor: Colors.white,
+                                  borderWidth: 3,
+                                  textAlign: TextAlign.center,
+                                ),
+                                child: Text(
+                                  reward.text,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
+                          ],
+                          onAnimationEnd: () {
+                            // This callback is triggered when the wheel animation ends.
+                            // The win dialog is already handled in _spinWheel after a delay.
+                          },
+                          indicators: <FortuneIndicator>[
+                            FortuneIndicator(
+                              alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.red.withOpacity(0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: TrianglePointer(
+                                  color: Colors.red,
+                                  width: 60, // Adjusted width
+                                  height: 40, // Adjusted height
+                                ),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Action Buttons
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isSpinning ? null : _spinWheel,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 8, // Added shadow
+                              shadowColor: Colors.black.withAlpha((255 * 0.3).round()), // Added shadow color
+                            ),
+                            child: _isSpinning
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('Spin to Win!'),
                           ),
-                      ],
-                      onAnimationEnd: () {
-                        // This callback is triggered when the wheel animation ends.
-                        // The win dialog is already handled in _spinWheel after a delay.
-                      },
-                      indicators: <FortuneIndicator>[
-                        FortuneIndicator(
-                          alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
-                          child: TrianglePointer(
-                            color: Colors.red,
-                            width: 40,
-                            height: 40,
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isSpinning ? null : _watchAdToSpin,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 8, // Added shadow
+                              shadowColor: Colors.black.withAlpha((255 * 0.3).round()), // Added shadow color
+                            ),
+                            child: _isSpinning
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('Watch Ad for Spin!'),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                // Action Buttons
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSpinning ? null : _spinWheel,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isSpinning
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Spin'),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _isSpinning ? null : _watchAdToSpin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: _isSpinning
-                              ? const CircularProgressIndicator(color: Colors.white)
-                              : const Text('Ad Watching Button'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -496,11 +527,11 @@ class TrianglePointer extends StatelessWidget {
   final double height;
 
   const TrianglePointer({
-    Key? key,
+    super.key,
     required this.color,
     required this.width,
     required this.height,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -518,11 +549,24 @@ class _TrianglePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color;
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withAlpha((255 * 0.8).round()), // Lighter shade at the top
+        color, // Original color at the bottom
+        color.withAlpha((255 * 0.9).round()), // Slightly darker at the very bottom
+      ],
+      stops: const [0.0, 0.7, 1.0],
+    );
+
+    final paint = Paint()
+      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
     final path = Path();
-    path.moveTo(size.width / 2, 0);
-    path.lineTo(0, size.height);
-    path.lineTo(size.width, size.height);
+    path.moveTo(size.width / 2, 0); // Apex at the top
+    path.lineTo(0, size.height); // Bottom-left corner of the base
+    path.lineTo(size.width, size.height); // Bottom-right corner of the base
     path.close();
     canvas.drawPath(path, paint);
   }

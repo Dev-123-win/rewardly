@@ -131,11 +131,11 @@ class _HomeState extends State<Home> {
                 color: Theme.of(context).primaryColor, // Use primary color for header background
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
                 boxShadow: [
-                  BoxShadow(
-                    color: Color.fromARGB(26, 0, 0, 0),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
                 ],
               ),
               child: SizedBox(
@@ -399,11 +399,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(25.0), // More rounded corners
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1), // Subtle shadow
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1), // Subtle shadow
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
             ],
           ),
           child: Column(
@@ -448,11 +448,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
             ],
           ),
           child: Column(
@@ -519,11 +519,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
             ],
           ),
           child: Row(
@@ -597,11 +597,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(20.0), // More rounded corners
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1), // Subtle shadow
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1), // Subtle shadow
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
             ],
           ),
           child: Column(

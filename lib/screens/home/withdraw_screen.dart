@@ -130,7 +130,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                             shadows: [
                               Shadow(
                                 blurRadius: 5.0,
-                                color: Colors.black.withOpacity(0.25),
+                                color: Colors.black.withAlpha((255 * 0.25).round()),
                                 offset: const Offset(2.0, 2.0),
                               ),
                             ],

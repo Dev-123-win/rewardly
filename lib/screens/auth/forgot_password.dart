@@ -90,7 +90,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               if (_formKey.currentState!.validate()) {
                                 setState(() => loading = true);
                                 AuthResult authResult = await _auth.sendPasswordResetEmail(email);
-                                if (!mounted) return;
+
+                                if (!mounted) return; // Check mounted immediately after the async call
 
                                 setState(() {
                                   loading = false;
@@ -101,7 +102,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                   }
                                 });
 
-                                if (!mounted) return; // Check mounted again before using context
+                                if (!mounted) return; // Another check after setState, before using context again
                                 final scaffoldMessenger = ScaffoldMessenger.of(context);
                                 final theme = Theme.of(context);
 
@@ -110,7 +111,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                     content: Text('Password reset link sent to $email', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                     backgroundColor: const Color(0xFF6200EE),
                                   ));
-                                  if (!mounted) return; // Check mounted again before using context
+                                  if (!mounted) return;
                                   Navigator.pop(context);
                                 } else {
                                   scaffoldMessenger.showSnackBar(SnackBar(

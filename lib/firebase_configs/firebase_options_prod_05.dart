@@ -53,9 +53,9 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCHXczYhynQ_atbe7SQK5DgUwdBc7p2lo8', // TODO: Replace with actual API Key for rewardly-3
-    appId: '1:701097217785:android:2db181338814cc7d74dc28', // TODO: Replace with actual App ID for rewardly-3
-    messagingSenderId: '701097217785', // TODO: Replace with actual Messaging Sender ID for rewardly-3
+    apiKey: 'AIzaSyCHXczYhynQ_atbe7SQK5DgUwdBc7p2lo8', 
+    appId: '1:701097217785:android:2db181338814cc7d74dc28', 
+    messagingSenderId: '701097217785', 
     projectId: 'rewardly-3',
     storageBucket: 'rewardly-3.firebasestorage.app',
   );
