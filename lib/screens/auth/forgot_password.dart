@@ -89,9 +89,17 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
                                 setState(() => loading = true);
+
+                                // Capture BuildContext-dependent objects before the async gap
+                                final currentContext = context;
+                                final scaffoldMessenger = ScaffoldMessenger.of(currentContext);
+                                final theme = Theme.of(currentContext);
+
                                 AuthResult authResult = await _auth.sendPasswordResetEmail(email);
 
-                                if (!mounted) return; // Check mounted immediately after the async call
+                                if (!currentContext.mounted) {
+                                  return; // Exit if widget is unmounted after async operation
+                                }
 
                                 setState(() {
                                   loading = false;
@@ -102,17 +110,14 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                                   }
                                 });
 
-                                if (!mounted) return; // Another check after setState, before using context again
-                                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                                final theme = Theme.of(context);
-
                                 if (authResult.success) {
                                   scaffoldMessenger.showSnackBar(SnackBar(
                                     content: Text('Password reset link sent to $email', style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),
                                     backgroundColor: const Color(0xFF6200EE),
                                   ));
-                                  if (!mounted) return;
-                                  Navigator.pop(context);
+                                  if (currentContext.mounted) {
+                                    Navigator.pop(currentContext);
+                                  }
                                 } else {
                                   scaffoldMessenger.showSnackBar(SnackBar(
                                       content: Text(error, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white)),

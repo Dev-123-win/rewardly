@@ -585,17 +585,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
         await _updateUserCoins(coinsToReward); // Use the passed coinsToReward
         _resetGame();
       },
-      onAdFailedToLoad: () {
-        if(mounted) {
-          setState(() {
-            _isLoadingAd = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
-          );
-        }
-        _resetGame();
-      },
       onAdFailedToShow: () {
         if(mounted) {
           setState(() {
@@ -938,7 +927,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                   color: (currentPlayer == Player.x
                           ? Colors.blue.shade700
                           : Colors.red.shade700)
-                      .withAlpha((255 * 0.4).round()),
+                      .withOpacity(0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -997,8 +986,8 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
           boxShadow: [
             BoxShadow(
               color: isWinningCell
-                  ? Colors.yellow.shade400.withAlpha((255 * 0.4).round()) // Softer yellow shadow
-                  : Colors.black.withAlpha((255 * 0.05).round()), // Softer general shadow
+                  ? Colors.yellow.shade400.withOpacity(0.4) // Softer yellow shadow
+                  : Colors.black.withOpacity(0.05), // Softer general shadow
               blurRadius: isWinningCell ? 15 : 8, // Adjusted blur for winning/normal
               offset: isWinningCell
                   ? const Offset(0, 8) // Adjusted offset for winning

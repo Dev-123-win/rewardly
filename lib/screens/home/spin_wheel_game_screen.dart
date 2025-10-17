@@ -281,17 +281,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           }
         }
       },
-      onAdFailedToLoad: () {
-        if (mounted) {
-          setState(() {
-            _isSpinning = false;
-          });
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
-          );
-        }
-      },
       onAdFailedToShow: () {
         if (mounted) {
           setState(() {
@@ -315,16 +304,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Consumer<UserDataProvider>(
-                builder: (context, userDataProvider, child) {
-                  return _buildInfoChip(context, Icons.monetization_on, 'Coins: ${userDataProvider.userData?.get('coins') ?? 0}', _coinPulseAnimation);
-                },
-              ),
-            ),
-          ],
         ),
         body: Container(
           decoration: const BoxDecoration(
@@ -365,7 +344,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                       final totalSpins = freeSpins + adSpins;
                       return Text(
                         'Available Spins: $totalSpins',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       );
                     },
                   ),
@@ -378,7 +361,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withAlpha((255 * 0.2).round()),
                               blurRadius: 10,
                               spreadRadius: 2,
                               offset: const Offset(0, 5),
@@ -387,6 +370,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                         ),
                         child: FortuneWheel(
                           selected: _selected.stream,
+                          animateFirst: false, // Prevent automatic spin on screen open
+                          physics: NoPanPhysics(), // Disable manual rotation
                           items: [
                             for (var reward in _rewards)
                               FortuneItem(
@@ -413,22 +398,10 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                           indicators: <FortuneIndicator>[
                             FortuneIndicator(
                               alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.red.withOpacity(0.5),
-                                      blurRadius: 8,
-                                      spreadRadius: 2,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: TrianglePointer(
-                                  color: Colors.red,
-                                  width: 60, // Adjusted width
-                                  height: 40, // Adjusted height
-                                ),
+                              child: TrianglePointer(
+                                color: Colors.red,
+                                width: 60, // Adjusted width
+                                height: 40, // Adjusted height
                               ),
                             ),
                           ],
@@ -443,43 +416,38 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                       children: [
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
+                          child: _GradientButton(
                             onPressed: _isSpinning ? null : _spinWheel,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).primaryColor,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 8, // Added shadow
-                              shadowColor: Colors.black.withAlpha((255 * 0.3).round()), // Added shadow color
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFF8C00), Color(0xFFFF4500)], // Orange to OrangeRed
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
                             ),
                             child: _isSpinning
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('Spin to Win!'),
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : const Text('Spin to Win!'),
                           ),
                         ),
                         const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
-                          child: ElevatedButton(
+                          child: _GradientButton(
                             onPressed: _isSpinning ? null : _watchAdToSpin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 18),
-                              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 8, // Added shadow
-                              shadowColor: Colors.black.withAlpha((255 * 0.3).round()), // Added shadow color
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)], // BlueViolet to Indigo
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
                             ),
                             child: _isSpinning
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('Watch Ad for Spin!'),
+                                ? const CircularProgressIndicator(color: Colors.white)
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Text('Watch Ad for Spin!'),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.play_arrow, size: 24),
+                                    ],
+                                  ),
                           ),
                         ),
                       ],
@@ -494,31 +462,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     );
   }
 
-  Widget _buildInfoChip(BuildContext context, IconData icon, String text, [Animation<double>? animation]) {
-    return ScaleTransition(
-      scale: animation ?? const AlwaysStoppedAnimation(1.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(25.0),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 8),
-            Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class TrianglePointer extends StatelessWidget {
@@ -564,13 +507,62 @@ class _TrianglePainter extends CustomPainter {
       ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
 
     final path = Path();
-    path.moveTo(size.width / 2, 0); // Apex at the top
-    path.lineTo(0, size.height); // Bottom-left corner of the base
-    path.lineTo(size.width, size.height); // Bottom-right corner of the base
+    path.moveTo(0, 0); // Top-left corner of the base
+    path.lineTo(size.width, 0); // Top-right corner of the base
+    path.lineTo(size.width / 2, size.height); // Apex at the bottom
     path.close();
     canvas.drawPath(path, paint);
   }
 
   @override
   bool shouldRepaint(_TrianglePainter oldDelegate) => false;
+}
+
+class _GradientButton extends StatelessWidget {
+  final Widget child;
+  final Gradient gradient;
+  final VoidCallback? onPressed;
+
+  const _GradientButton({
+    required this.child,
+    required this.gradient,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.3).round()),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18),
+            child: Center(
+              child: DefaultTextStyle(
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

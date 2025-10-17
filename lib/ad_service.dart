@@ -8,6 +8,20 @@ class AdService {
   static final AdService _instance = AdService._();
   factory AdService() => _instance;
 
+  bool _isInitialized = false;
+
+  // Initialize Google Mobile Ads SDK
+  Future<void> initialize() async {
+    if (!_isInitialized) {
+      LoggerService.info('Initializing Google Mobile Ads SDK...');
+      await MobileAds.instance.initialize();
+      _isInitialized = true;
+      LoggerService.info('Google Mobile Ads SDK initialized.');
+    } else {
+      LoggerService.debug('Google Mobile Ads SDK already initialized.');
+    }
+  }
+
   // Rewarded Ad
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;
@@ -65,7 +79,6 @@ class AdService {
   // Show Rewarded Ad
   void showRewardedAd({
     required Function onRewardEarned,
-    required Function onAdFailedToLoad, // This callback is for when the ad fails to load (pre-show)
     required Function onAdFailedToShow, // This callback is for when the ad fails to show
   }) {
     if (_rewardedAd == null) {

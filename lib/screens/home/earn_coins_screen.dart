@@ -121,15 +121,6 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
           _countdownTimer?.cancel(); // All ads watched
         }
       },
-      onAdFailedToLoad: () {
-        if (!mounted) return;
-        setState(() {
-          _isAdLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to load rewarded ad. Try again.')),
-        );
-      },
       onAdFailedToShow: () {
         LoggerService.error('EarnCoinsScreen: _watchAd - Ad failed to show.');
         if (!mounted) return;

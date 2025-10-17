@@ -951,7 +951,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = Colors.white.withOpacity(0.05) // Very subtle white lines
+      ..color = Colors.white.withAlpha((255 * 0.05).round()) // Very subtle white lines
       ..strokeWidth = 0.5;
 
     // Draw horizontal lines

@@ -132,7 +132,7 @@ class _HomeState extends State<Home> {
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
                 boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withAlpha((255 * 0.1).round()),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -400,7 +400,7 @@ class _HomeState extends State<Home> {
             borderRadius: BorderRadius.circular(25.0), // More rounded corners
             boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1), // Subtle shadow
+              color: Colors.black.withAlpha((255 * 0.1).round()), // Subtle shadow
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -449,7 +449,7 @@ class _HomeState extends State<Home> {
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha((255 * 0.1).round()),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -520,7 +520,7 @@ class _HomeState extends State<Home> {
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha((255 * 0.1).round()),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -598,7 +598,7 @@ class _HomeState extends State<Home> {
             borderRadius: BorderRadius.circular(20.0), // More rounded corners
             boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1), // Subtle shadow
+              color: Colors.black.withAlpha((255 * 0.1).round()), // Subtle shadow
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
