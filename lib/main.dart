@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for SystemChrome
 import 'package:provider/provider.dart';
 import 'auth_service.dart';
 import 'firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
@@ -28,6 +29,12 @@ final AuthService _authService = AuthService();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Set system UI overlay style for a white status bar
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.white, // Set status bar color to white
+    statusBarIconBrightness: Brightness.dark, // Use dark icons for better visibility on white
+    statusBarBrightness: Brightness.light, // For iOS
+  ));
   // Initialize all sharded Firebase projects
   await FirebaseProjectConfigService.initializeAllFirebaseProjects();
 
@@ -75,6 +82,16 @@ class MyApp extends StatelessWidget {
           seedColor: const Color(0xFF8A2BE2), // Use purple as the seed color
           brightness: Brightness.light,
         ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white, // Set AppBar background to white
+          foregroundColor: Colors.black, // Set AppBar text/icon color to black for contrast
+          elevation: 0, // Remove shadow
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.white, // Set BottomNavigationBar background to white
+          selectedItemColor: Color(0xFF8A2BE2), // Use primary color for selected item
+          unselectedItemColor: Colors.grey, // Use grey for unselected items
+        ),
         fontFamily: 'Lato', // Default font for body text
         textTheme: const TextTheme(
           displayLarge: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
@@ -96,6 +113,16 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF8A2BE2), // Use purple as the seed color
           brightness: Brightness.dark,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white, // Set AppBar background to white for dark theme too
+          foregroundColor: Colors.black, // Set AppBar text/icon color to black for contrast
+          elevation: 0, // Remove shadow
+        ),
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.white, // Set BottomNavigationBar background to white for dark theme too
+          selectedItemColor: Color(0xFF8A2BE2), // Use primary color for selected item
+          unselectedItemColor: Colors.grey, // Use grey for unselected items
         ),
         fontFamily: 'Lato',
         textTheme: const TextTheme(

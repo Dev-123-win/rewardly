@@ -47,6 +47,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     super.initState();
     _adService.loadInterstitialAd();
     _adService.loadRewardedInterstitialAd(); // Load rewarded interstitial ad
+    _adService.loadRewardedAd(); // Load rewarded ad
     _adService.loadBannerAd(); // Load banner ad
     _animationController = AnimationController(
       vsync: this,

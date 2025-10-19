@@ -1,146 +1,103 @@
-import 'dart:ui'; // For BackdropFilter
 import 'package:flutter/material.dart';
-import '../logger_service.dart'; // Import LoggerService
+import 'package:lottie/lottie.dart'; // Import Lottie package
 
-class ExitConfirmationOverlay extends StatefulWidget {
+class ExitConfirmationOverlay extends StatelessWidget {
   final VoidCallback onCancel;
+  final VoidCallback onExit; // New: Callback for exiting the app
 
-  const ExitConfirmationOverlay({super.key, required this.onCancel});
-
-  @override
-  State<ExitConfirmationOverlay> createState() => _ExitConfirmationOverlayState();
-}
-
-class _ExitConfirmationOverlayState extends State<ExitConfirmationOverlay> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<Offset> _offsetAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _offsetAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 1.0), // Start from bottom
-      end: Offset.zero, // Move to center
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const ExitConfirmationOverlay({
+    super.key,
+    required this.onCancel,
+    required this.onExit, // New: Make onExit required
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Blurred background
-        GestureDetector(
-          onTap: widget.onCancel, // Dismiss on tapping outside
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(
-              color: Colors.black.withAlpha(77), // Dark overlay
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7, // Match the height from Wrapper
+      decoration: BoxDecoration(
+        color: Colors.white, // White background as per image
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.15).round()),
+            blurRadius: 15,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Lottie.asset(
+              'assets/lottie/ufo exit animation.json', // UFO Lottie animation
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 25),
+            Text(
+              'Exit the game?',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87, // Dark text for contrast on white
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 15),
+            Text(
+              'Are you sure want to exit the game!',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
               width: double.infinity,
-              height: double.infinity,
-            ),
-          ),
-        ),
-        // Animated exit confirmation dialog
-        Center( // Centralize the dialog
-          child: SlideTransition(
-            position: _offsetAnimation,
-            child: Container(
-              margin: const EdgeInsets.all(20.0),
-              padding: const EdgeInsets.all(25.0),
-              decoration: BoxDecoration(
-                color: Colors.white, // White background
-                borderRadius: BorderRadius.circular(20.0),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.deepPurple.shade50,
-                    Colors.white,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+              child: ElevatedButton(
+                onPressed: onExit, // Use the new onExit callback
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8A2BE2), // Purple color from image
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(51),
-                    blurRadius: 15,
-                    spreadRadius: 5,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.exit_to_app, // Prominent exit icon
-                    size: 60,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Are you sure you want to exit?', // Clearer main message
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Press back again to confirm.', // Secondary instruction
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: widget.onCancel,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Theme.of(context).primaryColor,
-                            side: BorderSide(color: Theme.of(context).primaryColor),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          child: const Text('Stay'),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            LoggerService.info('Exit confirmed by user.');
-                            Navigator.of(context).pop(); // Dismiss overlay, allow Wrapper to handle next back press
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          child: const Text('Exit'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                child: const Text('Exit'),
               ),
             ),
-          ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: onCancel, // Use the onCancel callback
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700, // Grey color from image
+                  backgroundColor: Colors.grey.shade200, // Light grey background for cancel
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

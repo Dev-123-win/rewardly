@@ -128,7 +128,7 @@ class _HomeState extends State<Home> {
             Container(
               padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor, // Use primary color for header background
+                color: Colors.white, // Use white color for header background
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
                 boxShadow: [
                     BoxShadow(
@@ -150,13 +150,13 @@ class _HomeState extends State<Home> {
                           children: [
                             CircleAvatar(
                               backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                              child: Icon(Icons.person, color: Colors.white),
+                              child: Icon(Icons.person, color: Theme.of(context).primaryColor),
                             ),
                             const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Hello, ${authResult?.uid?.split('@')[0] ?? 'User'}!', // Using uid as a fallback for display
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
                               overflow: TextOverflow.ellipsis, // Handle long names
                             ),
                           ),
@@ -164,7 +164,7 @@ class _HomeState extends State<Home> {
                         ),
                       ),
                         IconButton(
-                          icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
+                          icon: Icon(Icons.notifications_none, color: Theme.of(context).primaryColor, size: 28),
                           onPressed: () {
                             // TODO: Implement notification logic
                             LoggerService.info('Notifications icon tapped');

@@ -18,6 +18,7 @@ enum RewardTier {
   gold,
   platinum,
   lose, // Added lose tier
+  ad, // Added ad tier for watching ads
 }
 
 // Class to define a single wheel reward segment
@@ -59,10 +60,15 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     WheelReward(text: '100', coins: 100, color: Colors.amber.shade700, tier: RewardTier.silver),
     WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
     WheelReward(text: '200', coins: 200, color: Colors.amber.shade700, tier: RewardTier.gold),
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
+    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum), // 1st 500
     WheelReward(text: '150', coins: 150, color: Colors.amber.shade700, tier: RewardTier.bronze),
+    WheelReward(text: 'Watch Ad', coins: 0, color: Colors.purple.shade700, tier: RewardTier.ad), // Ad segment
+    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum), // 2nd 500
     WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
-    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum),
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
+    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
   ];
 
   @override
@@ -115,12 +121,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
     HapticFeedback.lightImpact();
 
-    if (currentFreeSpins > 0) {
-      await userDataProvider.decrementFreeSpinWheelSpins();
-    } else if (currentAdSpins > 0) {
-      await userDataProvider.decrementAdSpinWheelSpins();
-    }
-
     final random = Random();
     _fortuneWheelSelected = random.nextInt(_rewards.length);
     _selected.add(_fortuneWheelSelected);
@@ -131,8 +131,27 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     setState(() {
       _isSpinning = false;
       final WheelReward wonReward = _rewards[_fortuneWheelSelected];
-      _showWinDialog(wonReward);
+      _handleSpinResult(wonReward); // Call new handler
     });
+  }
+
+  Future<void> _handleSpinResult(WheelReward reward) async {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+    final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+
+    if (reward.tier == RewardTier.ad) {
+      // If it's an ad reward, show ad dialog and don't decrement spin yet
+      _showAdRewardDialog(reward);
+    } else {
+      // For coin rewards, decrement spin and show win dialog
+      if (currentFreeSpins > 0) {
+        await userDataProvider.decrementFreeSpinWheelSpins();
+      } else if (currentAdSpins > 0) {
+        await userDataProvider.decrementAdSpinWheelSpins();
+      }
+      _showWinDialog(reward);
+    }
   }
 
   void _showWinDialog(WheelReward reward) {
@@ -228,6 +247,119 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                         ),
                       ),
                       child: const Text('Spin Again'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAdRewardDialog(WheelReward reward) {
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          heightFactor: 0.7,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(25),
+                topRight: Radius.circular(25),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha((255 * 0.15).round()),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(30.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Lottie.asset(
+                    'assets/lottie/game loading.json', // Placeholder Lottie for ad
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 25),
+                  Text(
+                    'Watch an Ad!',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    'Watch a short ad to get another spin!',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(context).pop(); // Dismiss dialog immediately
+                        setState(() {
+                          _isSpinning = true; // Indicate ad loading
+                        });
+                        _adService.showRewardedAd(
+                          onRewardEarned: (int rewardAmount) async {
+                            if (mounted) {
+                              setState(() {
+                                _isSpinning = false;
+                              });
+                              // No spin decrement needed, user gets to spin again
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Ad watched! Spin again!')),
+                              );
+                            }
+                          },
+                          onAdFailedToShow: () async {
+                            if (mounted) {
+                              setState(() {
+                                _isSpinning = false;
+                              });
+                              // Ad failed, decrement spin
+                              final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+                              final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                              final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+
+                              if (currentFreeSpins > 0) {
+                                await userDataProvider.decrementFreeSpinWheelSpins();
+                              } else if (currentAdSpins > 0) {
+                                await userDataProvider.decrementAdSpinWheelSpins();
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
+                              );
+                            }
+                          },
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Watch Ad'),
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for SystemNavigator
 import 'package:provider/provider.dart';
 import 'dart:async'; // Import for StreamSubscription
 import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity_plus
@@ -70,27 +71,57 @@ class _WrapperState extends State<Wrapper> {
       return;
     }
     if (_showExitConfirmation) {
-      setState(() {
-        _showExitConfirmation = false;
-      });
+      // If the confirmation is already showing, and back is pressed again,
+      // it means the user wants to exit.
+      SystemNavigator.pop(); // Exit the app
       return;
     }
 
     if (_lastPressedAt == null || DateTime.now().difference(_lastPressedAt!) > const Duration(seconds: 2)) {
       _lastPressedAt = DateTime.now();
-      setState(() {
-        _showExitConfirmation = true;
-      });
+      _showExitConfirmationDialog(); // Show the custom dialog
       return;
     }
-    Navigator.of(context).pop();
+    SystemNavigator.pop(); // Exit the app on double back press
+  }
+
+  void _showExitConfirmationDialog() {
+    setState(() {
+      _showExitConfirmation = true;
+    });
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent, // Make background transparent to show custom shape
+      builder: (BuildContext context) {
+        return ExitConfirmationOverlay(
+          onCancel: _cancelExit,
+          onExit: _exitApp,
+        );
+      },
+    ).whenComplete(() {
+      // Reset state if the bottom sheet is dismissed by other means (e.g., swipe down if allowed)
+      if (mounted) {
+        setState(() {
+          _showExitConfirmation = false;
+          _lastPressedAt = null;
+        });
+      }
+    });
   }
 
   void _cancelExit() {
+    Navigator.of(context).pop(); // Dismiss the bottom sheet
     setState(() {
       _showExitConfirmation = false;
       _lastPressedAt = null;
     });
+  }
+
+  void _exitApp() {
+    Navigator.of(context).pop(); // Dismiss the bottom sheet first
+    SystemNavigator.pop(); // Exit the app
   }
 
   @override
@@ -123,8 +154,8 @@ class _WrapperState extends State<Wrapper> {
       child: Stack(
         children: [
           content,
-          if (_showExitConfirmation)
-            ExitConfirmationOverlay(onCancel: _cancelExit),
+          // The ExitConfirmationOverlay is now shown via showModalBottomSheet,
+          // so it's no longer directly in the Stack here.
         ],
       ),
     );
