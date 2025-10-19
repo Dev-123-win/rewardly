@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'package:provider/provider.dart';
 import '../../providers/user_data_provider.dart';
 import '../../auth_service.dart'; // Keep import for signOut
@@ -35,7 +36,7 @@ class ProfileScreen extends StatelessWidget {
               radius: 60,
               backgroundColor: Colors.grey.shade200,
               // Always show a default icon, as fetching profile pictures from Firebase is not desired.
-              child: Icon(Icons.person, size: 60, color: Colors.grey.shade600),
+              child: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: 60, color: Colors.grey.shade600), // Replaced Icon with HugeIcon
             ),
             const SizedBox(height: 15),
             Text(
@@ -115,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
     ));
   }
 
-  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required IconData icon}) {
+  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required dynamic icon}) { // Changed type to dynamic
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
@@ -132,7 +133,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           Row(
             children: [
-              Icon(icon, color: Colors.amber, size: 20),
+              HugeIcon(icon: icon, color: Colors.amber, size: 20), // Replaced Icon with HugeIcon
               const SizedBox(width: 5),
               Text(
                 value,
@@ -161,7 +162,7 @@ class ProfileScreen extends StatelessWidget {
                 color: isLogout ? Colors.red : Colors.black87,
               ),
             ),
-            trailing: isLogout ? null : const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey),
+            trailing: isLogout ? null : HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, size: 18, color: Colors.grey), // Replaced Icon with HugeIcon
             onTap: onTap,
           ),
         ),

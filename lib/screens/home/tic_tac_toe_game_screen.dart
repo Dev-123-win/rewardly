@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'package:provider/provider.dart';
 
 import '../../ad_service.dart';
@@ -612,7 +613,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
           elevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.settings),
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01), // Replaced Icon with HugeIcon
               onPressed: _showDifficultySettingsDialog,
               color: Theme.of(context).primaryColorDark,
             ),
@@ -840,10 +841,10 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              selectedMode == mode
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
+                            HugeIcon( // Replaced Icon with HugeIcon
+                              icon: selectedMode == mode
+                                  ? HugeIcons.strokeRoundedCheckmarkCircle01
+                                  : HugeIcons.strokeRoundedCircle,
                               color: selectedMode == mode
                                   ? Colors.white
                                   : Theme.of(context).primaryColor,

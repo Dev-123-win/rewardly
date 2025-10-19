@@ -6,6 +6,7 @@ import '../../providers/user_data_provider.dart';
 import '../../shared/shimmer_loading.dart';
 import 'referral_rules_widget.dart'; // Import the new widget
 import 'referral_history_screen.dart'; // Import the referral history screen
+import 'package:hugeicons/hugeicons.dart';
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -130,7 +131,7 @@ class ReferralScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 10),
-                    Icon(Icons.copy, color: Colors.deepPurple.shade400),
+                    HugeIcon(icon: HugeIcons.strokeRoundedCopy01, color: Colors.deepPurple.shade400, size: 24),
                   ],
                 ),
               ),
@@ -140,7 +141,7 @@ class ReferralScreen extends StatelessWidget {
               onPressed: () {
                 Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode'); // FIX: Using Share.share
               },
-              icon: const Icon(Icons.share, color: Colors.white),
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: 24),
               label: Text(
                 'Share with Friends',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
@@ -190,10 +191,10 @@ class ReferralScreen extends StatelessWidget {
                     ),
                     Column(
                       children: [
-                        Image.asset(
-                          'assets/ring.png', // Using ring.png as a placeholder for the clock icon
-                          height: 60,
-                          width: 60,
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedTime01,
+                          size: 60,
+                          color: Colors.deepPurple.shade400,
                         ),
                         const SizedBox(height: 5),
                         Text(

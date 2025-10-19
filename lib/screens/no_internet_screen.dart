@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class NoInternetScreen extends StatelessWidget {
   final VoidCallback onRetry;
@@ -15,8 +16,8 @@ class NoInternetScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(
-                Icons.signal_wifi_off,
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedWifi01, // Assuming this is the correct HugeIcon equivalent
                 size: 100,
                 color: Colors.grey[600],
               ),
@@ -35,7 +36,7 @@ class NoInternetScreen extends StatelessWidget {
               const SizedBox(height: 30),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
+                icon: const HugeIcon(icon: HugeIcons.strokeRoundedRefresh), // Assuming this is the correct HugeIcon equivalent
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).primaryColor,

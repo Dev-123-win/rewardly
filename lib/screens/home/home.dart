@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'package:provider/provider.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
@@ -47,20 +48,20 @@ class _HomeState extends State<Home> {
 
   List<BottomNavigationBarItem> _buildNavBarItems() {
     List<BottomNavigationBarItem> items = [
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.redeem),
+      BottomNavigationBarItem(
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedGift),
         label: 'Redeem',
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person_add),
+      BottomNavigationBarItem(
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedUserAdd01),
         label: 'Invite',
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.home),
+      BottomNavigationBarItem(
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedHome01),
         label: 'Home',
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person),
+      BottomNavigationBarItem(
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedUser),
         label: 'Profile',
       ),
     ];
@@ -150,7 +151,7 @@ class _HomeState extends State<Home> {
                           children: [
                             CircleAvatar(
                               backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                              child: Icon(Icons.person, color: Theme.of(context).primaryColor),
+                              child: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Theme.of(context).primaryColor), // Replaced Icon with HugeIcon
                             ),
                             const SizedBox(width: 10),
                           Expanded(
@@ -164,7 +165,7 @@ class _HomeState extends State<Home> {
                         ),
                       ),
                         IconButton(
-                          icon: Icon(Icons.notifications_none, color: Theme.of(context).primaryColor, size: 28),
+                          icon: HugeIcon(icon: HugeIcons.strokeRoundedSchoolBell01, color: Theme.of(context).primaryColor, size: 28), // Replaced Icon with HugeIcon
                           onPressed: () {
                             // TODO: Implement notification logic
                             LoggerService.info('Notifications icon tapped');
@@ -211,7 +212,7 @@ class _HomeState extends State<Home> {
                                   ),
                                 ],
                               ),
-                              Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor, size: 40),
+                              HugeIcon(icon: HugeIcons.strokeRoundedWallet01, color: Theme.of(context).primaryColor, size: 40), // Replaced Icon with HugeIcon
                             ],
                           ),
                         ),
@@ -239,7 +240,7 @@ class _HomeState extends State<Home> {
                 children: [
                   _buildQuickActionCard(
                     context,
-                    icon: Icons.videocam,
+                    icon: HugeIcons.strokeRoundedVideoCameraAi, // Replaced Icon with HugeIcon
                     label: 'Watch Ads',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
@@ -250,7 +251,7 @@ class _HomeState extends State<Home> {
                   const SizedBox(width: 15),
                   _buildQuickActionCard(
                     context,
-                    icon: Icons.person_add,
+                    icon: HugeIcons.strokeRoundedUserAdd01, // Replaced Icon with HugeIcon
                     label: 'Invite Friends',
                     onTap: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
@@ -261,7 +262,7 @@ class _HomeState extends State<Home> {
                   const SizedBox(width: 15),
                   _buildQuickActionCard(
                     context,
-                    icon: Icons.redeem,
+                    icon: HugeIcons.strokeRoundedGift, // Replaced Icon with HugeIcon
                     label: 'Redeem Coins',
                     onTap: () {
                       setState(() {
@@ -377,7 +378,7 @@ class _HomeState extends State<Home> {
 
   Widget _buildQuickActionCard(
     BuildContext context, {
-    required IconData icon,
+    required dynamic icon, // Changed type to dynamic
     required String label,
     required VoidCallback onTap,
     required Color startColor,
@@ -409,7 +410,7 @@ class _HomeState extends State<Home> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 30, color: Colors.white), // White icons for contrast
+              HugeIcon(icon: icon, size: 30, color: Colors.white), // Replaced Icon with HugeIcon
               const SizedBox(height: 8),
               Text(
                 label,

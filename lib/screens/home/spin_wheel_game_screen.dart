@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'package:provider/provider.dart';
 import 'dart:async'; // Import for StreamController
 import 'dart:math';
@@ -574,10 +575,10 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                                 ? const CircularProgressIndicator(color: Colors.white)
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
+                                    children: [
                                       Text('Watch Ad for Spin!'),
                                       SizedBox(width: 8),
-                                      Icon(Icons.play_arrow, size: 24),
+                                      HugeIcon(icon: HugeIcons.strokeRoundedPlay, size: 24), // Replaced Icon with HugeIcon
                                     ],
                                   ),
                           ),

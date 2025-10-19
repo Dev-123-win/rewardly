@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import '../../auth_service.dart'; // Use AuthService
 import '../../widgets/custom_button.dart';
 import '../../models/auth_result.dart'; // Import AuthResult
@@ -52,7 +53,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                         labelText: 'Email',
                         labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                         floatingLabelBehavior: FloatingLabelBehavior.always,
-                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                        prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey), // Replaced Icon with HugeIcon
                         hintText: 'Enter your email',
                         hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                         filled: true,
@@ -134,7 +135,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.arrow_back, color: Colors.grey.shade600, size: 20),
+                          HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.grey.shade600, size: 20), // Replaced Icon with HugeIcon
                           const SizedBox(width: 8),
                           Text(
                             'Back to Sign In',

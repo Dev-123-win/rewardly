@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'animated_tap.dart'; // Import AnimatedTap
 
 class CustomButton extends StatefulWidget {
@@ -11,7 +12,7 @@ class CustomButton extends StatefulWidget {
   final double borderRadius;
   final TextStyle? textStyle;
   final EdgeInsetsGeometry? padding;
-  final IconData? icon;
+  final dynamic hugeIcon; // Change type to dynamic to accept HugeIconData
   final List<BoxShadow>? boxShadow; // Add boxShadow parameter
 
   const CustomButton({
@@ -25,7 +26,7 @@ class CustomButton extends StatefulWidget {
     this.borderRadius = 10.0,
     this.textStyle,
     this.padding,
-    this.icon,
+    this.hugeIcon, // Use hugeIcon
     this.boxShadow, // Initialize boxShadow
   });
 
@@ -66,13 +67,13 @@ class _CustomButtonState extends State<CustomButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null)
-                Icon(
-                  widget.icon,
+              if (widget.hugeIcon != null) // Use hugeIcon
+                HugeIcon( // Use HugeIcon widget
+                  icon: widget.hugeIcon!,
                   color: Colors.white,
                   size: 20,
                 ),
-              if (widget.icon != null) const SizedBox(width: 8),
+              if (widget.hugeIcon != null) const SizedBox(width: 8), // Use hugeIcon
               Text(
                 widget.text,
                 style: widget.textStyle ??

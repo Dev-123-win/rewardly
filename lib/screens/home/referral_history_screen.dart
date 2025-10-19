@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class ReferralHistoryScreen extends StatelessWidget {
   const ReferralHistoryScreen({super.key});
@@ -29,14 +30,14 @@ class ReferralHistoryScreen extends StatelessWidget {
               const SizedBox(height: 20),
               _buildStatisticCard(
                 context,
-                icon: Icons.access_time, // Placeholder for clock icon
+                icon: HugeIcons.strokeRoundedTime01,
                 value: '0',
                 description: 'Lifetime referral coins',
               ),
               const SizedBox(height: 15),
               _buildStatisticCard(
                 context,
-                icon: Icons.people, // Placeholder for people icon
+                icon: HugeIcons.strokeRoundedUser,
                 value: '0',
                 description: 'Users referred',
               ),
@@ -49,12 +50,10 @@ class ReferralHistoryScreen extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    // Placeholder for the image of the clipboard
-                    Image.asset(
-                      'assets/coin.png', // Using coin.png as a placeholder
-                      height: 100,
-                      width: 100,
-                      color: Colors.grey.shade400, // Tint the image to look like the original
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedClipboard,
+                      size: 100,
+                      color: Colors.grey.shade400,
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -77,11 +76,11 @@ class ReferralHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatisticCard(BuildContext context, {required IconData icon, required String value, required String description}) {
+  Widget _buildStatisticCard(BuildContext context, {required dynamic icon, required String value, required String description}) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.shade50.withOpacity(0.5),
+        color: Colors.deepPurple.shade50.withAlpha(128),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -93,7 +92,7 @@ class ReferralHistoryScreen extends StatelessWidget {
               color: Colors.deepPurple.shade100,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: Colors.deepPurple.shade400, size: 30),
+            child: HugeIcon(icon: icon, color: Colors.deepPurple.shade400, size: 30),
           ),
           const SizedBox(width: 15),
           Column(

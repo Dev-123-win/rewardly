@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 //import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart'; // Import lottie package
 import '../../auth_service.dart';
@@ -60,7 +61,7 @@ class _SignInState extends State<SignIn> {
                               labelText: 'Email Address',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey), // Outline icon
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey), // Replaced Icon with HugeIcon
                               hintText: 'Enter your email',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -94,7 +95,7 @@ class _SignInState extends State<SignIn> {
                               labelText: 'Password',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey), // Outline icon
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedLock, color: Colors.grey), // Replaced Icon with HugeIcon
                               hintText: 'Enter your password',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -143,7 +144,7 @@ class _SignInState extends State<SignIn> {
                           CustomButton(
                             text: 'Login to Your Account',
                             width: double.infinity,
-                            icon: Icons.arrow_forward, // Add arrow icon
+                            hugeIcon: HugeIcons.strokeRoundedArrowRight01, // Replaced icon with hugeIcon
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
                                 setState(() => loading = true);

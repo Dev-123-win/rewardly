@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'dart:async';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
@@ -290,13 +291,13 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     Function()? onPressed;
     Color cardColor = kSurfaceColor;
     List<BoxShadow> boxShadow = kNeumorphicShadows;
-    IconData icon = Icons.menu_book;
+    dynamic icon = HugeIcons.strokeRoundedBook01; // Changed to HugeIcon
     Color iconColor = kAccentColor;
     String statusText = 'Start Reading';
 
     if (_isReading) {
       statusText = 'Reading... ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}';
-      icon = Icons.timer;
+      icon = HugeIcons.strokeRoundedTime01; // Changed to HugeIcon
       iconColor = kPrimaryColor;
       onPressed = null; // Disable button while reading
     } else {
@@ -319,7 +320,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
         ),
         child: Row(
           children: [
-            Icon(icon, color: iconColor, size: 30),
+            HugeIcon(icon: icon, color: iconColor, size: 30), // Replaced Icon with HugeIcon
             const SizedBox(width: kDefaultPadding),
             Expanded(
               child: Column(
@@ -352,7 +353,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
             if (!_isReading)
               ScaleTransition(
                 scale: _cardScaleAnimation,
-                child: Icon(Icons.arrow_forward_ios, color: kAccentColor),
+                child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor), // Replaced Icon with HugeIcon
               ),
           ],
         ),

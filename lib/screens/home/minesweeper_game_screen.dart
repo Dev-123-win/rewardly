@@ -1,6 +1,7 @@
 import 'dart:async'; // Import for Timer
 import 'dart:math'; // Import for Random
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'package:provider/provider.dart'; // Import for Provider
 import '../../widgets/custom_button.dart';
 import '../../ad_service.dart'; // Import AdService
@@ -805,7 +806,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 28),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -823,11 +824,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.settings, color: Colors.white, size: 28),
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
                 onPressed: _showDifficultySettingsDialog,
               ),
               IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.white, size: 28),
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedRefresh, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
                 onPressed: () => _initializeGame(_selectedRows, _selectedCols, _selectedMines),
               ),
             ],
@@ -899,7 +900,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
             ),
             child: Row(
               children: [
-                const Icon(Icons.timer, size: 24, color: Colors.lightBlueAccent), // Blue timer icon
+                HugeIcon(icon: HugeIcons.strokeRoundedTime01, size: 24, color: Colors.lightBlueAccent), // Replaced Icon with HugeIcon
                 const SizedBox(width: 8),
                 Text(
                   '$timerSeconds s',

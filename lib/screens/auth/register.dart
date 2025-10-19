@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import '../../auth_service.dart';
 import 'sign_in.dart';
 import '../../widgets/custom_button.dart';
@@ -62,7 +63,7 @@ class _RegisterState extends State<Register> {
                               labelText: 'Email Address',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey),
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey), // Replaced Icon with HugeIcon
                               hintText: 'Enter your email',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -96,7 +97,7 @@ class _RegisterState extends State<Register> {
                               labelText: 'Password',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedLocker01, color: Colors.grey), // Replaced Icon with HugeIcon
                               hintText: 'Create a strong password',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -131,7 +132,7 @@ class _RegisterState extends State<Register> {
                               labelText: 'Referral Code (Optional)',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: const Icon(Icons.people_outline, color: Colors.grey), // People outline icon
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Colors.grey), // Replaced Icon with HugeIcon
                               hintText: 'Enter referral code if you have one',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -161,7 +162,7 @@ class _RegisterState extends State<Register> {
                           const SizedBox(height: 10.0),
                           Row(
                             children: [
-                              const Icon(Icons.info_outline, color: Colors.orange, size: 18), // Info icon
+                              HugeIcon(icon: HugeIcons.strokeRoundedInformationCircle, color: Colors.orange, size: 18), // Replaced Icon with HugeIcon
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -230,7 +231,7 @@ class _RegisterState extends State<Register> {
                           CustomButton(
                             text: 'Create Account',
                             width: double.infinity,
-                            icon: Icons.person_add_alt_1, // Add person add icon
+                            hugeIcon: HugeIcons.strokeRoundedUserAdd01, // Replaced icon with hugeIcon
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
                                 if (!_agreedToTerms) {
