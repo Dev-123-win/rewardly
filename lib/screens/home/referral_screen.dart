@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart'; // Added share_plus import
 import '../../providers/user_data_provider.dart';
 import '../../shared/shimmer_loading.dart';
+import 'referral_rules_widget.dart'; // Import the new widget
+import 'referral_history_screen.dart'; // Import the referral history screen
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -150,6 +152,59 @@ class ReferralScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 elevation: 5,
+              ),
+            ),
+            const ReferralRulesWidget(), // Add the new referral rules widget
+            const SizedBox(height: 40),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ReferralHistoryScreen()),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Here is your\nReferral earning',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Multiply Your Rewards\nWith Referrals! Refer, E...',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        Image.asset(
+                          'assets/ring.png', // Using ring.png as a placeholder for the clock icon
+                          height: 60,
+                          width: 60,
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Click Here\nTo See You...',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
