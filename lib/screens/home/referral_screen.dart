@@ -46,8 +46,19 @@ class ReferralScreenLoading extends StatelessWidget {
   }
 }
 
-class ReferralScreen extends StatelessWidget {
+class ReferralScreen extends StatefulWidget {
   const ReferralScreen({super.key});
+
+  @override
+  State<ReferralScreen> createState() => _ReferralScreenState();
+}
+
+class _ReferralScreenState extends State<ReferralScreen> {
+  @override
+  void dispose() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

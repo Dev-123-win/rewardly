@@ -105,6 +105,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
     _lineAnimationController.dispose();
     _confettiController.dispose();
     _dialogAnimationController.dispose();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
     super.dispose();
   }
 

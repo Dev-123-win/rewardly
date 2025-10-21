@@ -169,7 +169,7 @@ class _HomeState extends State<Home> {
                                   SizedBox(width: isSmallScreen ? 8 : 10),
                                   Expanded(
                                     child: Text(
-                                      'Hello, ${authResult?.uid?.split('@')[0] ?? 'User'}!',
+                                      'Hello, User!',
                                       style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 22),
                                       overflow: TextOverflow.ellipsis,
                                     ),

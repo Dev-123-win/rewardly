@@ -27,6 +27,12 @@ class _RegisterState extends State<Register> {
   bool _agreedToTerms = false;
 
   @override
+  void dispose() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return loading
         ? const AuthScreenLoading()
@@ -75,7 +81,7 @@ class _RegisterState extends State<Register> {
                                     labelText: 'Email Address',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 24.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 20.0),
                                     hintText: 'Enter your email',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -109,7 +115,7 @@ class _RegisterState extends State<Register> {
                                     labelText: 'Password',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 24.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 20.0),
                                     hintText: 'Create a strong password',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -144,7 +150,7 @@ class _RegisterState extends State<Register> {
                                     labelText: 'Referral Code (Optional)',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Colors.grey, size: 24.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Colors.grey, size: 20.0),
                                     hintText: 'Enter referral code if you have one',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,

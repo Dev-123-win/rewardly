@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'dart:async';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart'; // Added for in-app webview
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart';
@@ -39,6 +39,9 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
   DateTime? _backgroundTime;
   bool _isAdLoading = false;
   bool _isReading = false;
+  bool _showWebView = false; // New state to control webview visibility
+  late WebViewController _webViewController; // Controller for the webview
+  bool _isLoadingWebView = true; // To show loading indicator for webview
 
   // Animation controllers for neumorphic effects and subtle animations
   late AnimationController _cardAnimationController;
@@ -72,6 +75,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     WidgetsBinding.instance.removeObserver(this);
     _cardAnimationController.dispose();
     _adService.dispose();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
     super.dispose();
   }
 
@@ -109,6 +113,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       _currentReadTask = _availableReadTasks[Random().nextInt(_availableReadTasks.length)];
       _secondsRemaining = _currentReadTask!.durationMinutes * 60;
       _isReading = false;
+      _showWebView = false; // Ensure webview is hidden when a new task is generated
       LoggerService.debug('New read task generated: ${_currentReadTask!.title} for ${_currentReadTask!.durationMinutes} minutes.');
     });
   }
@@ -133,16 +138,58 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     });
   }
 
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not launch $url')),
-      );
-      LoggerService.error('Could not launch $url');
-    } else {
-      LoggerService.debug('Launched URL: $url');
-    }
+  void _launchUrlInApp(String url) {
+    setState(() {
+      _showWebView = true;
+      _isLoadingWebView = true;
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000))
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onProgress: (int progress) {
+              if (mounted) {
+                setState(() {
+                  _isLoadingWebView = progress < 100;
+                });
+              }
+            },
+            onPageStarted: (String url) {
+              LoggerService.debug('WebView page started loading: $url');
+              if (mounted) {
+                setState(() {
+                  _isLoadingWebView = true;
+                });
+              }
+            },
+            onPageFinished: (String url) {
+              LoggerService.debug('WebView page finished loading: $url');
+              if (mounted) {
+                setState(() {
+                  _isLoadingWebView = false;
+                });
+              }
+            },
+            onWebResourceError: (WebResourceError error) {
+              LoggerService.error('WebView resource error: ${error.description}');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error loading page: ${error.description}')),
+                );
+                setState(() {
+                  _isLoadingWebView = false;
+                });
+              }
+            },
+            onNavigationRequest: (NavigationRequest request) {
+              LoggerService.debug('WebView navigating to: ${request.url}');
+              return NavigationDecision.navigate;
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(url));
+    });
+    LoggerService.debug('Launched URL in app webview: $url');
   }
 
   void _showClaimCoinsModal() {
@@ -259,30 +306,53 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       child: Scaffold(
         backgroundColor: kBackgroundColor,
         appBar: AppBar(
-          title: const Text('Read & Earn'),
+          title: Text(_showWebView ? _currentReadTask?.title ?? 'Web View' : 'Read & Earn'),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
           foregroundColor: kTextColor,
-        ),
-        body: Stack(
-          children: [
-            Center(
-              child: _currentReadTask == null
-                  ? const CircularProgressIndicator(color: kPrimaryColor)
-                  : _buildReadCard(context),
-            ),
-            if (_isAdLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withAlpha((255 * 0.6).round()),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: kPrimaryColor),
+          leading: _showWebView
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      _showWebView = false;
+                    });
+                  },
+                )
+              : null,
+          actions: _showWebView && _isLoadingWebView
+              ? [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                      color: kPrimaryColor,
+                      strokeWidth: 2,
+                    ),
                   ),
-                ),
-              ),
-          ],
+                ]
+              : null,
         ),
+        body: _showWebView
+            ? WebViewWidget(controller: _webViewController)
+            : Stack(
+                children: [
+                  Center(
+                    child: _currentReadTask == null
+                        ? const CircularProgressIndicator(color: kPrimaryColor)
+                        : _buildReadCard(context),
+                  ),
+                  if (_isAdLoading)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withAlpha((255 * 0.6).round()),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: kPrimaryColor),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }
@@ -303,8 +373,8 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       iconColor = kPrimaryColor;
       onPressed = null; // Disable button while reading
     } else {
-      onPressed = () async {
-        await _launchUrl(_currentReadTask!.url);
+      onPressed = () {
+        _launchUrlInApp(_currentReadTask!.url);
         _startCountdownTimer();
       };
     }

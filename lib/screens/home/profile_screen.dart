@@ -53,6 +53,32 @@ class ProfileScreen extends StatelessWidget {
                           fontSize: isLargeScreen ? 24 : 18,
                         ),
                   ),
+                  SizedBox(height: isLargeScreen ? 10 : 8),
+                  Card(
+                    elevation: 0.0,
+                    color: Colors.grey.shade100,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+                    margin: EdgeInsets.symmetric(horizontal: 20),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                      child: Row(
+                        children: [
+                          HugeIcon(icon: HugeIcons.strokeRoundedId, color: Theme.of(context).primaryColor, size: isLargeScreen ? 24 : 20),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              authResult?.uid ?? 'UID not available',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.black87,
+                                fontSize: isLargeScreen ? 16 : 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   SizedBox(height: verticalSpacing),
                   Align(
                     alignment: Alignment.centerLeft,
@@ -72,7 +98,7 @@ class ProfileScreen extends StatelessWidget {
                     context,
                     title: 'Coins',
                     value: '${userDataMap['coins'] ?? 0}',
-                    icon: Icons.monetization_on,
+                    icon: HugeIcons.strokeRoundedBitcoinBag, // Changed to HugeIcons.strokeRoundedBitcoinBag
                   ),
                   SizedBox(height: verticalSpacing),
                   Align(
@@ -133,7 +159,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required dynamic icon}) { // Changed type to dynamic
+  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required List<List<dynamic>> icon}) { // Changed type to List<List<dynamic>>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),

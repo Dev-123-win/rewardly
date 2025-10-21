@@ -50,13 +50,14 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
     _countdownTimer?.cancel();
     _cardAnimationController.dispose();
     _adService.dispose();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
     super.dispose();
   }
 
   Future<void> _initializeAdProgress() async {
     LoggerService.debug('EarnCoinsScreen: _initializeAdProgress called.');
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    await userDataProvider.resetDailyAdWatchCount(); // Reset if new day
+    await userDataProvider.resetSpinWheelAndAdDailyCounts(); // Reset if new day
 
     setState(() {
       _adsWatchedToday = userDataProvider.userData?.get('adsWatchedToday') ?? 0;
@@ -108,7 +109,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
         
         final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
         await userDataProvider.updateUserCoins(_coinsPerAd); // Award fixed coins
-        await userDataProvider.updateAdsWatchedToday(); // Increment ad count in Firestore
+        await userDataProvider.incrementSpinWheelAdsWatchedToday(); // Increment ad count in Firestore
 
         if (!mounted) return; // Add mounted check
         ScaffoldMessenger.of(context).showSnackBar(

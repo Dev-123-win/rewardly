@@ -19,6 +19,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   bool loading = false;
 
   @override
+  void dispose() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(

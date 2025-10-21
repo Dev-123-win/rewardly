@@ -25,6 +25,12 @@ class _SignInState extends State<SignIn> {
   String error = '';
 
   @override
+  void dispose() {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return loading
         ? const AuthScreenLoading()
@@ -73,7 +79,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Email Address',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 24.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 20.0),
                                     hintText: 'Enter your email',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -107,7 +113,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Password',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 24.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 20.0),
                                     hintText: 'Enter your password',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,

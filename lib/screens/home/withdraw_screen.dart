@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import for DocumentSnapshot and Timestamp
+import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
 import '../../withdrawal_service.dart'; // Import WithdrawalService
@@ -43,6 +44,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     _ifscCodeController.dispose();
     _accountHolderNameController.dispose();
     _upiIdController.dispose();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
     super.dispose();
   }
 
@@ -205,7 +207,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       _buildMethodCard(
                         context,
                         method: WithdrawalMethod.bank,
-                        icon: Icons.account_balance,
+                        icon: HugeIcons.strokeRoundedBank,
                         label: 'Withdraw to Bank',
                         isSelected: _selectedMethod == WithdrawalMethod.bank,
                         onTap: () {
@@ -222,7 +224,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       _buildMethodCard(
                         context,
                         method: WithdrawalMethod.upi,
-                        icon: Icons.payment,
+                        icon: HugeIcons.strokeRoundedCreditCard,
                         label: 'Withdraw to UPI',
                         isSelected: _selectedMethod == WithdrawalMethod.upi,
                         onTap: () {
@@ -252,7 +254,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           onPressed: () => _processWithdrawal(currentCoins),
-                          icon: Icon(Icons.send, color: Colors.white, size: isSmallScreen ? 20 : 24),
+                          icon: HugeIcon(icon: HugeIcons.strokeRoundedMailSend01, color: Colors.white, size: isSmallScreen ? 20 : 24),
                           label: Text(
                             'Initiate Withdrawal',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: buttonTextFontSize),
@@ -277,7 +279,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                         // TODO: Implement auto-withdrawal setup logic
                         _showSnackBar('Auto-Withdrawal setup coming soon!');
                       },
-                      icon: Icon(Icons.auto_mode, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
+                      icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings05, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
                       label: Text(
                         'Set Up Auto-Withdrawal',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.underline, fontSize: buttonTextFontSize),
@@ -332,23 +334,23 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             final String status = request['status'] ?? 'unknown';
 
             Color statusColor;
-            IconData statusIcon;
+            List<List<dynamic>> statusIcon;
             switch (status) {
               case 'pending':
                 statusColor = Colors.orange;
-                statusIcon = Icons.hourglass_empty;
+                statusIcon = HugeIcons.strokeRoundedTime04;
                 break;
               case 'success':
                 statusColor = Colors.green;
-                statusIcon = Icons.check_circle;
+                statusIcon = HugeIcons.strokeRoundedCheckmarkCircle01;
                 break;
               case 'failed':
                 statusColor = Colors.red;
-                statusIcon = Icons.cancel;
+                statusIcon = HugeIcons.strokeRoundedInformationCircle; // Fallback for "failed" status
                 break;
               default:
                 statusColor = Colors.grey;
-                statusIcon = Icons.help_outline;
+                statusIcon = HugeIcons.strokeRoundedInformationCircle;
             }
 
             return Card(
@@ -359,7 +361,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
                 child: Row(
                   children: [
-                    Icon(statusIcon, color: statusColor, size: isSmallScreen ? 24 : 30),
+                    HugeIcon(icon: statusIcon, color: statusColor, size: isSmallScreen ? 24 : 30),
                     SizedBox(width: isSmallScreen ? 10 : 15),
                     Expanded(
                       child: Column(
@@ -416,7 +418,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             labelText: 'Bank Account Number',
             hintText: 'e.g., 1234567890',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: Icon(Icons.account_balance_wallet, size: isSmallScreen ? 20 : 24),
+            prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedWallet03, size: isSmallScreen ? 20 : 24, color: Colors.grey),
             labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
             hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
@@ -430,7 +432,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             labelText: 'IFSC Code',
             hintText: 'e.g., HDFC0001234',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: Icon(Icons.code, size: isSmallScreen ? 20 : 24),
+            prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedCode, size: isSmallScreen ? 20 : 24, color: Colors.grey),
             labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
             hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
@@ -443,7 +445,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             labelText: 'Account Holder Name',
             hintText: 'e.g., John Doe',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: Icon(Icons.person, size: isSmallScreen ? 20 : 24),
+            prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: isSmallScreen ? 20 : 24, color: Colors.grey),
             labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
             hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
@@ -470,7 +472,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             labelText: 'UPI ID',
             hintText: 'e.g., yourname@bank',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: Icon(Icons.qr_code, size: isSmallScreen ? 20 : 24),
+            prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedQrCode, size: isSmallScreen ? 20 : 24, color: Colors.grey),
             labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
             hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
@@ -601,7 +603,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   Widget _buildMethodCard(
     BuildContext context, {
     required WithdrawalMethod method,
-    required IconData icon,
+    required List<List<dynamic>> icon,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
@@ -630,8 +632,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0), // Adjusted padding
             child: Row(
               children: [
-                Icon(
-                  icon,
+                HugeIcon(
+                  icon: icon,
                   size: iconSize, // Adjusted icon size
                   color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
                 ),
@@ -646,7 +648,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                 ),
                 const Spacer(), // Pushes content to the left and right
                 if (isSelected)
-                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
+                  HugeIcon(icon: HugeIcons.strokeRoundedCheckmarkCircle01, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
               ],
             ),
           ),

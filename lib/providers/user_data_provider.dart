@@ -16,8 +16,10 @@ class UserDataProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   UserService? get shardedUserService => _shardedUserService; // Expose the sharded UserService
 
-  int _adSpinsEarnedTodayInApp = 0; // In-app only field
+  int _adSpinsEarnedTodayInApp = 0; // In-app only field for spins granted
   int get adSpinsEarnedToday => _adSpinsEarnedTodayInApp;
+
+  int get adsWatchedToday => (_userData?.data() as Map<String, dynamic>?)?['adsWatchedToday'] as int? ?? 0;
 
   Map<String, dynamic>? get preferredBankDetails => (_userData?.data() as Map<String, dynamic>?)?['preferredBankDetails'] as Map<String, dynamic>?;
   Map<String, dynamic>? get preferredUpiDetails => (_userData?.data() as Map<String, dynamic>?)?['preferredUpiDetails'] as Map<String, dynamic>?;
@@ -164,21 +166,9 @@ class UserDataProvider with ChangeNotifier {
     }
   }
 
-  Future<void> resetSpinWheelDailyCounts() async {
-    if (_userData?.id != null && _shardedUserService != null) {
-      await _shardedUserService!.resetSpinWheelDailyCounts(_userData!.id);
-    } else {
-      LoggerService.warning('UserDataProvider: Attempted to reset daily spin counts without a valid user ID or sharded UserService.');
-    }
-    _adSpinsEarnedTodayInApp = 0; // Reset in-app count as well
-    notifyListeners();
-    LoggerService.info('UserDataProvider: In-app ad spins reset to $_adSpinsEarnedTodayInApp.');
-  }
-
-  // Reset daily ad watch count if the date has changed
-  Future<void> resetDailyAdWatchCount() async {
+  Future<void> resetSpinWheelAndAdDailyCounts() async {
     if (_userData?.id == null || _shardedUserService == null) {
-      LoggerService.warning('UserDataProvider: Cannot reset daily ad watch count without a valid user ID or sharded UserService.');
+      LoggerService.warning('UserDataProvider: Cannot reset daily spin and ad counts without a valid user ID or sharded UserService.');
       return;
     }
 
@@ -186,26 +176,40 @@ class UserDataProvider with ChangeNotifier {
     final Map<String, dynamic>? data = _userData!.data() as Map<String, dynamic>?;
 
     if (data == null) {
-      LoggerService.warning('UserDataProvider: User data is null for $uid. Cannot reset daily ad watch count.');
+      LoggerService.warning('UserDataProvider: User data is null for $uid. Cannot reset daily spin and ad counts.');
       return;
     }
 
+    final String lastSpinDate = data['lastSpinDate'] as String? ?? '';
     final String lastAdWatchDate = data['lastAdWatchDate'] as String? ?? '';
     final today = DateTime.now().toIso8601String().substring(0, 10);
 
-    if (lastAdWatchDate != today) {
-      await _shardedUserService!.updateUserData(uid, {
-        'adsWatchedToday': 0,
-        'lastAdWatchDate': today,
-      });
-      LoggerService.info('UserDataProvider: Daily ad watch count reset for user $uid.');
-    } else {
-      LoggerService.debug('UserDataProvider: Daily ad watch count not reset for user $uid, still same day.');
+    Map<String, dynamic> updates = {};
+
+    if (lastSpinDate != today) {
+      updates['spinWheelFreeSpinsToday'] = 5; // Assuming 5 free spins daily
+      updates['spinWheelAdSpinsToday'] = 0;
+      updates['lastSpinDate'] = today;
+      LoggerService.info('UserDataProvider: Daily free spins reset for user $uid.');
     }
+
+    if (lastAdWatchDate != today) {
+      updates['adsWatchedToday'] = 0;
+      updates['lastAdWatchDate'] = today;
+      LoggerService.info('UserDataProvider: Daily ad watch count reset for user $uid.');
+    }
+
+    if (updates.isNotEmpty) {
+      await _shardedUserService!.updateUserData(uid, updates);
+    }
+
+    _adSpinsEarnedTodayInApp = 0; // Reset in-app count as well
+    notifyListeners();
+    LoggerService.info('UserDataProvider: In-app ad spins reset to $_adSpinsEarnedTodayInApp.');
   }
 
   // Update ads watched today (increment and update date)
-  Future<void> updateAdsWatchedToday() async {
+  Future<void> incrementSpinWheelAdsWatchedToday() async {
     if (_userData?.id == null || _shardedUserService == null) {
       LoggerService.warning('UserDataProvider: Cannot update ads watched today without a valid user ID or sharded UserService.');
       return;

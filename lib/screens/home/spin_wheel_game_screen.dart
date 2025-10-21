@@ -57,19 +57,14 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
 
   // Define the rewards for the wheel
   final List<WheelReward> _rewards = [
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
-    WheelReward(text: '100', coins: 100, color: Colors.amber.shade700, tier: RewardTier.silver),
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
-    WheelReward(text: '200', coins: 200, color: Colors.amber.shade700, tier: RewardTier.gold),
-    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum), // 1st 500
-    WheelReward(text: '150', coins: 150, color: Colors.amber.shade700, tier: RewardTier.bronze),
-    WheelReward(text: 'Watch Ad', coins: 0, color: Colors.purple.shade700, tier: RewardTier.ad), // Ad segment
-    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum), // 2nd 500
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose),
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
-    WheelReward(text: '0', coins: 0, color: Colors.blue.shade700, tier: RewardTier.lose), // Added to dilute 500 chance
+    WheelReward(text: '50', coins: 50, color: Colors.green.shade700, tier: RewardTier.bronze),
+    WheelReward(text: '0', coins: 0, color: Colors.red.shade700, tier: RewardTier.lose),
+    WheelReward(text: '100', coins: 100, color: Colors.blue.shade700, tier: RewardTier.silver),
+    WheelReward(text: '0', coins: 0, color: Colors.red.shade700, tier: RewardTier.lose),
+    WheelReward(text: '200', coins: 200, color: Colors.purple.shade700, tier: RewardTier.gold),
+    WheelReward(text: '0', coins: 0, color: Colors.red.shade700, tier: RewardTier.lose),
+    WheelReward(text: '500', coins: 500, color: Colors.amber.shade700, tier: RewardTier.platinum),
+    WheelReward(text: '0', coins: 0, color: Colors.red.shade700, tier: RewardTier.lose),
   ];
 
   @override
@@ -95,12 +90,13 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     _coinPulseController.dispose();
     _adService.dispose();
     _selected.close(); // Close the stream controller
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // Dismiss any active snackbar
     super.dispose();
   }
 
   Future<void> _initializeSpinData() async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    await userDataProvider.resetSpinWheelDailyCounts(); // Reset daily counts if date changed
+    await userDataProvider.resetSpinWheelAndAdDailyCounts(); // Reset daily counts if date changed
   }
 
   void _spinWheel(
@@ -161,32 +157,20 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
     final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
-    if (reward.tier == RewardTier.ad) {
-      // If it's an ad reward, show ad dialog and don't decrement spin yet
-      _showAdRewardDialog(
-        reward,
-        dialogLottieSize,
-        dialogTitleFontSize,
-        dialogContentFontSize,
-        dialogButtonPadding,
-        dialogButtonTextFontSize,
-      );
-    } else {
-      // For coin rewards, decrement spin and show win dialog
-      if (currentFreeSpins > 0) {
-        await userDataProvider.decrementFreeSpinWheelSpins();
-      } else if (currentAdSpins > 0) {
-        await userDataProvider.decrementAdSpinWheelSpins();
-      }
-      _showWinDialog(
-        reward,
-        dialogLottieSize,
-        dialogTitleFontSize,
-        dialogContentFontSize,
-        dialogButtonPadding,
-        dialogButtonTextFontSize,
-      );
+    // For coin rewards, decrement spin and show win dialog
+    if (currentFreeSpins > 0) {
+      await userDataProvider.decrementFreeSpinWheelSpins();
+    } else if (currentAdSpins > 0) {
+      await userDataProvider.decrementAdSpinWheelSpins();
     }
+    _showWinDialog(
+      reward,
+      dialogLottieSize,
+      dialogTitleFontSize,
+      dialogContentFontSize,
+      dialogButtonPadding,
+      dialogButtonTextFontSize,
+    );
   }
 
   void _showWinDialog(
@@ -300,125 +284,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     );
   }
 
-  void _showAdRewardDialog(
-    WheelReward reward,
-    double dialogLottieSize,
-    double dialogTitleFontSize,
-    double dialogContentFontSize,
-    EdgeInsetsGeometry dialogButtonPadding,
-    double dialogButtonTextFontSize,
-  ) {
-    if (!mounted) return;
-
-    showModalBottomSheet(
-      context: context,
-      isDismissible: false,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return FractionallySizedBox(
-          heightFactor: 0.7,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(25),
-                topRight: Radius.circular(25),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha((255 * 0.15).round()),
-                  blurRadius: 15,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(30.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Lottie.asset(
-                    'assets/lottie/game loading.json', // Placeholder Lottie for ad
-                    width: dialogLottieSize,
-                    height: dialogLottieSize,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 25),
-                  Text(
-                    'Watch an Ad!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark, fontSize: dialogTitleFontSize),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    'Watch a short ad to get another spin!',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700, fontSize: dialogContentFontSize),
-                  ),
-                  const SizedBox(height: 40),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.of(context).pop(); // Dismiss dialog immediately
-                        setState(() {
-                          _isSpinning = true; // Indicate ad loading
-                        });
-                        _adService.showRewardedAd(
-                          onRewardEarned: (int rewardAmount) async {
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // No spin decrement needed, user gets to spin again
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Ad watched! Spin again!')),
-                              );
-                            }
-                          },
-                          onAdFailedToShow: () async {
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // Ad failed, decrement spin
-                              final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-                              final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                              final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
-
-                              if (currentFreeSpins > 0) {
-                                await userDataProvider.decrementFreeSpinWheelSpins();
-                              } else if (currentAdSpins > 0) {
-                                await userDataProvider.decrementAdSpinWheelSpins();
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
-                              );
-                            }
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: dialogButtonPadding,
-                        textStyle: TextStyle(fontSize: dialogButtonTextFontSize, fontWeight: FontWeight.bold),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Watch Ad'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   Future<void> _updateUserCoins(int coins) async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
@@ -436,30 +301,40 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     }
   }
 
-  void _watchAdToSpin() {
+  void _watchAdToSpin(
+    double dialogLottieSize,
+    double dialogTitleFontSize,
+    double dialogContentFontSize,
+    EdgeInsetsGeometry dialogButtonPadding,
+    double dialogButtonTextFontSize,
+  ) async {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final currentAdWatchCount = userDataProvider.userData?.get('spinWheelAdsWatchedToday') ?? 0;
+
+    if (currentAdWatchCount >= 10) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
+      );
+      return;
+    }
+
     setState(() {
       _isSpinning = true; // Indicate ad loading
     });
+
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
         if (mounted) {
           setState(() {
             _isSpinning = false;
           });
-          final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-          // Check if user has earned less than 10 ad spins today
-          if (userDataProvider.adSpinsEarnedToday < 10) {
-            await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('You earned 2 spins!')),
-            );
-          } else {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
-            );
-          }
+          await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
+          await userDataProvider.incrementSpinWheelAdsWatchedToday(); // Increment ad watch count
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You earned 2 spins!')),
+          );
         }
       },
       onAdFailedToShow: () {
@@ -644,23 +519,40 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                             SizedBox(height: verticalSpacing * 0.5),
                             SizedBox(
                               width: double.infinity,
-                              child: _GradientButton(
-                                onPressed: _isSpinning ? null : _watchAdToSpin,
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)], // BlueViolet to Indigo
-                                  begin: Alignment.centerLeft,
-                                  end: Alignment.centerRight,
-                                ),
-                                child: _isSpinning
-                                    ? const CircularProgressIndicator(color: Colors.white)
-                                    : Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Text('Watch Ad for Spin!', style: TextStyle(fontSize: buttonTextFontSize)),
-                                          SizedBox(width: verticalSpacing * 0.5),
-                                          HugeIcon(icon: HugeIcons.strokeRoundedPlay, size: buttonIconSize),
-                                        ],
-                                      ),
+                              child: Consumer<UserDataProvider>(
+                                builder: (context, userDataProvider, child) {
+                                  final currentAdWatchCount = userDataProvider.userData?.get('spinWheelAdsWatchedToday') ?? 0;
+                                  final isAdButtonLocked = _isSpinning || currentAdWatchCount >= 10;
+
+                                  return _GradientButton(
+                                    onPressed: isAdButtonLocked
+                                        ? null
+                                        : () => _watchAdToSpin(
+                                              dialogLottieSize,
+                                              dialogTitleFontSize,
+                                              dialogContentFontSize,
+                                              dialogButtonPadding,
+                                              dialogButtonTextFontSize,
+                                            ),
+                                    gradient: LinearGradient(
+                                      colors: isAdButtonLocked
+                                          ? [Colors.grey.shade600, Colors.grey.shade800] // Greyed out if locked
+                                          : [Color(0xFF8A2BE2), Color(0xFF4B0082)], // BlueViolet to Indigo
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
+                                    child: _isSpinning
+                                        ? const CircularProgressIndicator(color: Colors.white)
+                                        : Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Text('Watch Ad for Spin!', style: TextStyle(fontSize: buttonTextFontSize)),
+                                              SizedBox(width: verticalSpacing * 0.5),
+                                              HugeIcon(icon: HugeIcons.strokeRoundedPlay, size: buttonIconSize),
+                                            ],
+                                          ),
+                                  );
+                                },
                               ),
                             ),
                           ],
