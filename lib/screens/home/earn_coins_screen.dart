@@ -146,40 +146,50 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
         elevation: 0,
         foregroundColor: kTextColor,
       ),
-      body: Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, child) {
-          _adsWatchedToday = userDataProvider.userData?.get('adsWatchedToday') ?? 0;
-          _currentAdIndex = _adsWatchedToday; // Ensure currentAdIndex is always in sync
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final isSmallScreen = screenWidth < 600;
+          final horizontalPadding = isSmallScreen ? kDefaultPadding : constraints.maxWidth * 0.1;
+          final verticalPadding = isSmallScreen ? kDefaultPadding : kDefaultPadding * 2;
 
-          return Stack(
-            children: [
-              ListView.builder(
-                padding: const EdgeInsets.all(kDefaultPadding),
-                itemCount: _dailyAdLimit,
-                itemBuilder: (context, index) {
-                  final bool isUnlocked = index == _currentAdIndex && _adsWatchedToday < _dailyAdLimit;
-                  final bool isWatched = index < _adsWatchedToday;
-                  final bool isLocked = index > _currentAdIndex || _adsWatchedToday >= _dailyAdLimit;
+          return Consumer<UserDataProvider>(
+            builder: (context, userDataProvider, child) {
+              _adsWatchedToday = userDataProvider.userData?.get('adsWatchedToday') ?? 0;
+              _currentAdIndex = _adsWatchedToday; // Ensure currentAdIndex is always in sync
 
-                  return _buildAdCard(
-                    context,
-                    index + 1,
-                    isUnlocked: isUnlocked,
-                    isWatched: isWatched,
-                    isLocked: isLocked,
-                  );
-                },
-              ),
-              if (_isAdLoading)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withAlpha((255 * 0.6).round()), // Fix deprecated withOpacity
-                    child: const Center(
-                      child: CircularProgressIndicator(color: kPrimaryColor),
-                    ),
+              return Stack(
+                children: [
+                  ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+                    itemCount: _dailyAdLimit,
+                    itemBuilder: (context, index) {
+                      final bool isUnlocked = index == _currentAdIndex && _adsWatchedToday < _dailyAdLimit;
+                      final bool isWatched = index < _adsWatchedToday;
+                      final bool isLocked = index > _currentAdIndex || _adsWatchedToday >= _dailyAdLimit;
+
+                      return _buildAdCard(
+                        context,
+                        index + 1,
+                        isUnlocked: isUnlocked,
+                        isWatched: isWatched,
+                        isLocked: isLocked,
+                        isSmallScreen: isSmallScreen, // Pass isSmallScreen to the card builder
+                      );
+                    },
                   ),
-                ),
-            ],
+                  if (_isAdLoading)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withAlpha((255 * 0.6).round()),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: kPrimaryColor),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -192,6 +202,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
     required bool isUnlocked,
     required bool isWatched,
     required bool isLocked,
+    required bool isSmallScreen, // New parameter
   }) {
     Function()? onPressed;
     Color cardColor = kSurfaceColor;
@@ -199,9 +210,14 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
     IconData icon = Icons.lock;
     Color iconColor = kDisabledColor;
     String statusText = 'Locked';
+    double iconSize = isSmallScreen ? 24 : 30; // Responsive icon size
+    double titleFontSize = isSmallScreen ? 16 : 18; // Responsive title font size
+    double bodyFontSize = isSmallScreen ? 12 : 14; // Responsive body font size
+    EdgeInsets cardPadding = isSmallScreen ? const EdgeInsets.all(kDefaultPadding * 0.75) : const EdgeInsets.all(kDefaultPadding);
+
 
     if (isWatched) {
-      cardColor = kPrimaryColor.withAlpha((255 * 0.2).round()); // Fix deprecated withOpacity
+      cardColor = kPrimaryColor.withAlpha((255 * 0.2).round());
       boxShadow = kNeumorphicPressedShadows;
       icon = Icons.check_circle;
       iconColor = kPrimaryColor;
@@ -215,7 +231,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
       statusText = 'Watch Ad';
       onPressed = _secondsRemaining == 0 ? () => _watchAd(adNumber - 1) : null;
     } else if (isLocked) {
-      cardColor = kSurfaceColor.withAlpha((255 * 0.5).round()); // Fix deprecated withOpacity
+      cardColor = kSurfaceColor.withAlpha((255 * 0.5).round());
       boxShadow = kNeumorphicShadows;
       icon = Icons.lock;
       iconColor = kDisabledColor;
@@ -234,7 +250,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(vertical: kDefaultPadding / 2),
-        padding: const EdgeInsets.all(kDefaultPadding),
+        padding: cardPadding, // Use responsive padding
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(kDefaultBorderRadius),
@@ -242,7 +258,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
         ),
         child: Row(
           children: [
-            Icon(icon, color: iconColor, size: 30),
+            Icon(icon, color: iconColor, size: iconSize), // Use responsive icon size
             const SizedBox(width: kDefaultPadding),
             Expanded(
               child: Column(
@@ -253,6 +269,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: kTextColor,
                           fontWeight: FontWeight.bold,
+                          fontSize: titleFontSize, // Use responsive title font size
                         ),
                   ),
                   const SizedBox(height: 4),
@@ -260,6 +277,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
                     statusText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: iconColor,
+                          fontSize: bodyFontSize, // Use responsive body font size
                         ),
                   ),
                 ],
@@ -268,7 +286,7 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
             if (isUnlocked && _secondsRemaining == 0)
               ScaleTransition(
                 scale: _cardScaleAnimation,
-                child: Icon(Icons.arrow_forward_ios, color: kAccentColor),
+                child: Icon(Icons.arrow_forward_ios, color: kAccentColor, size: iconSize), // Use responsive icon size
               ),
           ],
         ),

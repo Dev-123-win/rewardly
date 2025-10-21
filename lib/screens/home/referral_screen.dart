@@ -68,149 +68,172 @@ class ReferralScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'We Share More.\nWe Earn More.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20), // Add some spacing after the title
-            Text(
-              'Invite your Friends, Win Rewards!',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.deepPurple,
-                fontFamily: 'Calinastiya', // Apply custom font
-                fontWeight: FontWeight.bold,
-                fontSize: 28, // Reduced font size
-              ),
-            ),
-            const SizedBox(height: 15),
-            Text(
-              'Refer and Win. Share with Friends, Unlock Exciting Rewards!',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54),
-            ),
-            const SizedBox(height: 30),
-            Image.asset(
-              'assets/referral.png', // Use the provided image
-              height: 200,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 30),
-            Text(
-              'Copy your referral code', // Rephrased text
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87),
-            ),
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: referralCode));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Referral code copied to clipboard!')),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(25.0),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      referralCode,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 10),
-                    HugeIcon(icon: HugeIcons.strokeRoundedCopy01, color: Colors.deepPurple.shade400, size: 24),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () {
-                Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode'); // FIX: Using Share.share
-              },
-              icon: const HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: 24),
-              label: Text(
-                'Share with Friends',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 5,
-              ),
-            ),
-            const ReferralRulesWidget(), // Add the new referral rules widget
-            const SizedBox(height: 40),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ReferralHistoryScreen()),
-                );
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.lightBlue.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+
+            final horizontalPadding = isSmallScreen ? 20.0 : screenWidth * 0.1;
+            final verticalSpacing = isSmallScreen ? 20.0 : 30.0;
+            final titleFontSize = isSmallScreen ? 24.0 : 32.0;
+            final subtitleFontSize = isSmallScreen ? 18.0 : 22.0;
+            final bodyFontSize = isSmallScreen ? 14.0 : 16.0;
+            final imageSize = isSmallScreen ? 150.0 : 200.0;
+            final referralCodeFontSize = isSmallScreen ? 20.0 : 24.0;
+            final copyIconSize = isSmallScreen ? 20.0 : 24.0;
+            final buttonPadding = isSmallScreen ? EdgeInsets.symmetric(horizontal: 20, vertical: 12) : EdgeInsets.symmetric(horizontal: 30, vertical: 15);
+            final buttonTextFontSize = isSmallScreen ? 16.0 : 18.0;
+            final referralCardPadding = isSmallScreen ? 15.0 : 20.0;
+            final referralCardIconSize = isSmallScreen ? 50.0 : 60.0;
+            final referralCardTitleFontSize = isSmallScreen ? 18.0 : 22.0;
+            final referralCardSubtitleFontSize = isSmallScreen ? 14.0 : 16.0;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalSpacing),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'We Share More.\nWe Earn More.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                  ),
+                  SizedBox(height: verticalSpacing * 0.75),
+                  Text(
+                    'Invite your Friends, Win Rewards!',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.deepPurple,
+                          fontFamily: 'Calinastiya',
+                          fontWeight: FontWeight.bold,
+                          fontSize: subtitleFontSize,
+                        ),
+                  ),
+                  SizedBox(height: verticalSpacing * 0.5),
+                  Text(
+                    'Refer and Win. Share with Friends, Unlock Exciting Rewards!',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54, fontSize: bodyFontSize),
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  Image.asset(
+                    'assets/referral.png',
+                    height: imageSize,
+                    fit: BoxFit.contain,
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  Text(
+                    'Copy your referral code',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontSize: subtitleFontSize),
+                  ),
+                  SizedBox(height: verticalSpacing * 0.5),
+                  GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: referralCode));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Referral code copied to clipboard!')),
+                      );
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 0 : horizontalPadding / 2),
+                      padding: EdgeInsets.symmetric(horizontal: referralCardPadding, vertical: referralCardPadding),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(25.0),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Here is your\nReferral earning',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                            referralCode,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontWeight: FontWeight.bold, fontSize: referralCodeFontSize),
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Multiply Your Rewards\nWith Referrals! Refer, E...',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                          SizedBox(width: isSmallScreen ? 8 : 10),
+                          HugeIcon(icon: HugeIcons.strokeRoundedCopy01, color: Colors.deepPurple.shade400, size: copyIconSize),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode');
+                    },
+                    icon: HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: copyIconSize),
+                    label: Text(
+                      'Share with Friends',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: buttonTextFontSize),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      padding: buttonPadding,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 5,
+                    ),
+                  ),
+                  const ReferralRulesWidget(),
+                  SizedBox(height: verticalSpacing),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ReferralHistoryScreen()),
+                      );
+                    },
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: isSmallScreen ? 0 : horizontalPadding / 2),
+                      padding: EdgeInsets.all(referralCardPadding),
+                      decoration: BoxDecoration(
+                        color: Colors.lightBlue.shade50,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Here is your\nReferral earning',
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: referralCardTitleFontSize),
+                                ),
+                                SizedBox(height: isSmallScreen ? 8 : 10),
+                                Text(
+                                  'Multiply Your Rewards\nWith Referrals! Refer, E...',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54, fontSize: referralCardSubtitleFontSize),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            children: [
+                              HugeIcon(
+                                icon: HugeIcons.strokeRoundedTime04,
+                                size: referralCardIconSize,
+                                color: Colors.deepPurple.shade400,
+                              ),
+                              SizedBox(height: isSmallScreen ? 3 : 5),
+                              Text(
+                                'Click Here\nTo See You...',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 12 : 14),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    Column(
-                      children: [
-                        HugeIcon(
-                          icon: HugeIcons.strokeRoundedTime01,
-                          size: 60,
-                          color: Colors.deepPurple.shade400,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Click Here\nTo See You...',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blue.shade700, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
-    ));
+    );
   }
 }

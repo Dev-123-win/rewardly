@@ -27,93 +27,110 @@ class ProfileScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            const SizedBox(height: 50),
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey.shade200,
-              // Always show a default icon, as fetching profile pictures from Firebase is not desired.
-              child: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: 60, color: Colors.grey.shade600), // Replaced Icon with HugeIcon
-            ),
-            const SizedBox(height: 15),
-            Text(
-              authResult?.uid?.split('@')[0] ?? 'No Email', // Use uid as fallback for display
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87),
-            ),
-            const SizedBox(height: 30),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text(
-                  'Account',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
-                ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            final isLargeScreen = screenWidth > 800; // Define what constitutes a "large screen"
+            final horizontalPadding = isLargeScreen ? constraints.maxWidth * 0.2 : 20.0;
+            final verticalSpacing = isLargeScreen ? 40.0 : 20.0;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  SizedBox(height: isLargeScreen ? 80 : 50),
+                  CircleAvatar(
+                    radius: isLargeScreen ? 80 : 60,
+                    backgroundColor: Colors.grey.shade200,
+                    child: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: isLargeScreen ? 80 : 60, color: Colors.grey.shade600),
+                  ),
+                  SizedBox(height: isLargeScreen ? 20 : 15),
+                  Text(
+                    authResult?.uid?.split('@')[0] ?? 'No Email',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.black87,
+                          fontSize: isLargeScreen ? 24 : 18,
+                        ),
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0), // Padding handled by parent SingleChildScrollView
+                      child: Text(
+                        'Account',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Colors.grey.shade700,
+                              fontSize: isLargeScreen ? 18 : 14,
+                            ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildAccountOption(
+                    context,
+                    title: 'Coins',
+                    value: '${userDataMap['coins'] ?? 0}',
+                    icon: Icons.monetization_on,
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0.0), // Padding handled by parent SingleChildScrollView
+                      child: Text(
+                        'Settings',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Colors.grey.shade700,
+                              fontSize: isLargeScreen ? 18 : 14,
+                            ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildSettingsOption(
+                    context,
+                    title: 'Notifications',
+                    onTap: () {
+                      // Navigate to notifications settings
+                    },
+                  ),
+                  _buildSettingsOption(
+                    context,
+                    title: 'Privacy',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                      );
+                    },
+                  ),
+                  _buildSettingsOption(
+                    context,
+                    title: 'Terms and Conditions',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
+                      );
+                    },
+                  ),
+                  _buildSettingsOption(
+                    context,
+                    title: 'Logout',
+                    onTap: () async {
+                      await AuthService().signOut();
+                    },
+                    isLogout: true,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            _buildAccountOption(
-              context,
-              title: 'Coins',
-              value: '${userDataMap['coins'] ?? 0}',
-              icon: Icons.monetization_on,
-            ),
-            // Assuming referralCode might be accessed elsewhere, though not explicitly in this snippet
-            // You would use userDataMap['referralCode'] ?? 'N/A' for it.
-            const SizedBox(height: 30),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text(
-                  'Settings',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.grey.shade700),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            _buildSettingsOption(
-              context,
-              title: 'Notifications',
-              onTap: () {
-                // Navigate to notifications settings
-              },
-            ),
-            _buildSettingsOption(
-              context,
-              title: 'Privacy',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
-                );
-              },
-            ),
-            _buildSettingsOption(
-              context,
-              title: 'Terms and Conditions',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TermsOfServiceScreen()),
-                );
-              },
-            ),
-            _buildSettingsOption(
-              context,
-              title: 'Logout',
-              onTap: () async {
-                await AuthService().signOut();
-              },
-              isLogout: true,
-            ),
-          ],
+            );
+          },
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildAccountOption(BuildContext context, {required String title, required String value, required dynamic icon}) { // Changed type to dynamic

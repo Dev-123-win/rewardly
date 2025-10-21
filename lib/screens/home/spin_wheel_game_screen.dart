@@ -103,7 +103,13 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     await userDataProvider.resetSpinWheelDailyCounts(); // Reset daily counts if date changed
   }
 
-  void _spinWheel() async {
+  void _spinWheel(
+    double dialogLottieSize,
+    double dialogTitleFontSize,
+    double dialogContentFontSize,
+    EdgeInsetsGeometry dialogButtonPadding,
+    double dialogButtonTextFontSize,
+  ) async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
     final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
     final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
@@ -132,18 +138,39 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     setState(() {
       _isSpinning = false;
       final WheelReward wonReward = _rewards[_fortuneWheelSelected];
-      _handleSpinResult(wonReward); // Call new handler
+      _handleSpinResult(
+        wonReward,
+        dialogLottieSize,
+        dialogTitleFontSize,
+        dialogContentFontSize,
+        dialogButtonPadding,
+        dialogButtonTextFontSize,
+      );
     });
   }
 
-  Future<void> _handleSpinResult(WheelReward reward) async {
+  Future<void> _handleSpinResult(
+    WheelReward reward,
+    double dialogLottieSize,
+    double dialogTitleFontSize,
+    double dialogContentFontSize,
+    EdgeInsetsGeometry dialogButtonPadding,
+    double dialogButtonTextFontSize,
+  ) async {
     final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
     final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
     final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
     if (reward.tier == RewardTier.ad) {
       // If it's an ad reward, show ad dialog and don't decrement spin yet
-      _showAdRewardDialog(reward);
+      _showAdRewardDialog(
+        reward,
+        dialogLottieSize,
+        dialogTitleFontSize,
+        dialogContentFontSize,
+        dialogButtonPadding,
+        dialogButtonTextFontSize,
+      );
     } else {
       // For coin rewards, decrement spin and show win dialog
       if (currentFreeSpins > 0) {
@@ -151,11 +178,25 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
       } else if (currentAdSpins > 0) {
         await userDataProvider.decrementAdSpinWheelSpins();
       }
-      _showWinDialog(reward);
+      _showWinDialog(
+        reward,
+        dialogLottieSize,
+        dialogTitleFontSize,
+        dialogContentFontSize,
+        dialogButtonPadding,
+        dialogButtonTextFontSize,
+      );
     }
   }
 
-  void _showWinDialog(WheelReward reward) {
+  void _showWinDialog(
+    WheelReward reward,
+    double dialogLottieSize,
+    double dialogTitleFontSize,
+    double dialogContentFontSize,
+    EdgeInsetsGeometry dialogButtonPadding,
+    double dialogButtonTextFontSize,
+  ) {
     if (!mounted) return;
 
     if (reward.coins > 0) {
@@ -211,8 +252,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                     scale: _coinPulseAnimation,
                     child: Lottie.asset(
                       lottieAsset,
-                      width: 150,
-                      height: 150,
+                      width: dialogLottieSize,
+                      height: dialogLottieSize,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -221,7 +262,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                     scale: _coinPulseAnimation,
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark, fontSize: dialogTitleFontSize),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -229,7 +270,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                   Text(
                     content,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700, fontSize: dialogContentFontSize),
                   ),
                   const SizedBox(height: 40),
                   SizedBox(
@@ -241,8 +282,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        padding: dialogButtonPadding,
+                        textStyle: TextStyle(fontSize: dialogButtonTextFontSize, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -259,7 +300,14 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     );
   }
 
-  void _showAdRewardDialog(WheelReward reward) {
+  void _showAdRewardDialog(
+    WheelReward reward,
+    double dialogLottieSize,
+    double dialogTitleFontSize,
+    double dialogContentFontSize,
+    EdgeInsetsGeometry dialogButtonPadding,
+    double dialogButtonTextFontSize,
+  ) {
     if (!mounted) return;
 
     showModalBottomSheet(
@@ -292,21 +340,21 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                 children: [
                   Lottie.asset(
                     'assets/lottie/game loading.json', // Placeholder Lottie for ad
-                    width: 150,
-                    height: 150,
+                    width: dialogLottieSize,
+                    height: dialogLottieSize,
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 25),
                   Text(
                     'Watch an Ad!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark, fontSize: dialogTitleFontSize),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 15),
                   Text(
                     'Watch a short ad to get another spin!',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700, fontSize: dialogContentFontSize),
                   ),
                   const SizedBox(height: 40),
                   SizedBox(
@@ -354,8 +402,8 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        padding: dialogButtonPadding,
+                        textStyle: TextStyle(fontSize: dialogButtonTextFontSize, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -438,158 +486,192 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFE0F7FA), // Light Cyan
-                Color(0xFFBBDEFB), // Light Blue
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  shouldLoop: false,
-                  colors: const [
-                    Colors.green,
-                    Colors.blue,
-                    Colors.pink,
-                    Colors.orange,
-                    Colors.purple
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+
+            final verticalSpacing = isSmallScreen ? 15.0 : 20.0;
+            final spinTextFontSize = isSmallScreen ? 20.0 : 24.0;
+            final wheelSize = isSmallScreen ? screenWidth * 0.8 : screenWidth * 0.6;
+            final buttonTextFontSize = isSmallScreen ? 18.0 : 20.0;
+            final buttonIconSize = isSmallScreen ? 20.0 : 24.0;
+            final fortuneItemFontSize = isSmallScreen ? 20.0 : 24.0;
+            final trianglePointerWidth = isSmallScreen ? 50.0 : 60.0;
+            final trianglePointerHeight = isSmallScreen ? 30.0 : 40.0;
+            final dialogLottieSize = isSmallScreen ? 120.0 : 150.0;
+            final dialogTitleFontSize = isSmallScreen ? 22.0 : 28.0;
+            final dialogContentFontSize = isSmallScreen ? 16.0 : 18.0;
+            final dialogButtonPadding = isSmallScreen ? const EdgeInsets.symmetric(vertical: 15) : const EdgeInsets.symmetric(vertical: 18);
+            final dialogButtonTextFontSize = isSmallScreen ? 18.0 : 20.0;
+
+
+            return Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFE0F7FA), // Light Cyan
+                    Color(0xFFBBDEFB), // Light Blue
                   ],
                 ),
               ),
-              Column(
+              child: Stack(
                 children: [
-                  const SizedBox(height: 20), // Spacing from app bar
-                  // Available Spins Display
-                  Consumer<UserDataProvider>(
-                    builder: (context, userDataProvider, child) {
-                      final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                      final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
-                      final totalSpins = freeSpins + adSpins;
-                      return Text(
-                        'Available Spins: $totalSpins',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      );
-                    },
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      shouldLoop: false,
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.center,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withAlpha((255 * 0.2).round()),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 5),
+                  Column(
+                    children: [
+                      SizedBox(height: verticalSpacing), // Spacing from app bar
+                      // Available Spins Display
+                      Consumer<UserDataProvider>(
+                        builder: (context, userDataProvider, child) {
+                          final freeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                          final adSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                          final totalSpins = freeSpins + adSpins;
+                          return Text(
+                            'Available Spins: $totalSpins',
+                            style: TextStyle(
+                              fontSize: spinTextFontSize,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
                             ),
-                          ],
-                        ),
-                        child: FortuneWheel(
-                          selected: _selected.stream,
-                          animateFirst: false, // Prevent automatic spin on screen open
-                          physics: NoPanPhysics(), // Disable manual rotation
-                          items: [
-                            for (var reward in _rewards)
-                              FortuneItem(
-                                style: FortuneItemStyle(
-                                  color: reward.color,
-                                  borderColor: Colors.white,
-                                  borderWidth: 3,
-                                  textAlign: TextAlign.center,
-                                ),
-                                child: Text(
-                                  reward.text,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 24,
+                          );
+                        },
+                      ),
+                      SizedBox(height: verticalSpacing),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: wheelSize,
+                            height: wheelSize,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha((255 * 0.2).round()),
+                                    blurRadius: 10,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 5),
                                   ),
-                                ),
+                                ],
                               ),
-                          ],
-                          onAnimationEnd: () {
-                            // This callback is triggered when the wheel animation ends.
-                            // The win dialog is already handled in _spinWheel after a delay.
-                          },
-                          indicators: <FortuneIndicator>[
-                            FortuneIndicator(
-                              alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
-                              child: TrianglePointer(
-                                color: Colors.red,
-                                width: 60, // Adjusted width
-                                height: 40, // Adjusted height
+                              child: FortuneWheel(
+                                selected: _selected.stream,
+                                animateFirst: false, // Prevent automatic spin on screen open
+                                physics: NoPanPhysics(), // Disable manual rotation
+                                items: [
+                                  for (var reward in _rewards)
+                                    FortuneItem(
+                                      style: FortuneItemStyle(
+                                        color: reward.color,
+                                        borderColor: Colors.white,
+                                        borderWidth: 3,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      child: Text(
+                                        reward.text,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: fortuneItemFontSize,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                                onAnimationEnd: () {
+                                  // This callback is triggered when the wheel animation ends.
+                                  // The win dialog is already handled in _spinWheel after a delay.
+                                },
+                                indicators: <FortuneIndicator>[
+                                  FortuneIndicator(
+                                    alignment: Alignment.topCenter, // Aligns the indicator to the top of the wheel
+                                    child: TrianglePointer(
+                                      color: Colors.red,
+                                      width: trianglePointerWidth,
+                                      height: trianglePointerHeight,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Action Buttons
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: _GradientButton(
+                                onPressed: _isSpinning
+                                    ? null
+                                    : () => _spinWheel(
+                                          dialogLottieSize,
+                                          dialogTitleFontSize,
+                                          dialogContentFontSize,
+                                          dialogButtonPadding,
+                                          dialogButtonTextFontSize,
+                                        ),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFFF8C00), Color(0xFFFF4500)], // Orange to OrangeRed
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                child: _isSpinning
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : Text('Spin to Win!', style: TextStyle(fontSize: buttonTextFontSize)),
+                              ),
+                            ),
+                            SizedBox(height: verticalSpacing * 0.5),
+                            SizedBox(
+                              width: double.infinity,
+                              child: _GradientButton(
+                                onPressed: _isSpinning ? null : _watchAdToSpin,
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)], // BlueViolet to Indigo
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                child: _isSpinning
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text('Watch Ad for Spin!', style: TextStyle(fontSize: buttonTextFontSize)),
+                                          SizedBox(width: verticalSpacing * 0.5),
+                                          HugeIcon(icon: HugeIcons.strokeRoundedPlay, size: buttonIconSize),
+                                        ],
+                                      ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ),
-                  // Action Buttons
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: _GradientButton(
-                            onPressed: _isSpinning ? null : _spinWheel,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFF8C00), Color(0xFFFF4500)], // Orange to OrangeRed
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            child: _isSpinning
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text('Spin to Win!'),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: _GradientButton(
-                            onPressed: _isSpinning ? null : _watchAdToSpin,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF8A2BE2), Color(0xFF4B0082)], // BlueViolet to Indigo
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            child: _isSpinning
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text('Watch Ad for Spin!'),
-                                      SizedBox(width: 8),
-                                      HugeIcon(icon: HugeIcons.strokeRoundedPlay, size: 24), // Replaced Icon with HugeIcon
-                                    ],
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

@@ -11,44 +11,54 @@ class AuthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: Card(
-        margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 30.0), // Adjusted margin for better fit
-        elevation: 16.0, // Even more pronounced shadow for depth
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30.0), // Even softer, more modern rounded corners
-        ),
-        // Removed direct color and shadowColor to use BoxDecoration for gradient
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).colorScheme.surface,
-                Theme.of(context).colorScheme.surfaceContainerHighest, // Use a subtle gradient
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(30.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.2).round()), // More prominent shadow for the card
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = MediaQuery.of(context).size.width;
+          final isSmallScreen = screenWidth < 600;
+          final horizontalMargin = isSmallScreen ? 20.0 : constraints.maxWidth * 0.2;
+          final verticalMargin = isSmallScreen ? 30.0 : 50.0;
+          final cardPadding = isSmallScreen ? 25.0 : 40.0;
+
+          return Center(
+            child: Card(
+              margin: EdgeInsets.symmetric(horizontal: horizontalMargin, vertical: verticalMargin),
+              elevation: 16.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.0),
               ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(35.0), // Increased padding for content
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                child,
-              ],
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(30.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha((255 * 0.2).round()),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(cardPadding),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      child,
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    ));
+    );
   }
 }

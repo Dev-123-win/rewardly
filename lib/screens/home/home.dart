@@ -115,282 +115,327 @@ class _HomeState extends State<Home> {
       return const HomeScreenLoading();
     }
 
-
     int coins = (userDataProvider.userData!.data() as Map<String, dynamic>?)?['coins'] ?? 0;
     double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
 
-    return SingleChildScrollView(
-      child: Container(
-        color: Colors.white, // White background for home content
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // Custom Header Section
-            Container(
-              padding: const EdgeInsets.only(top: 40.0, left: 20.0, right: 20.0, bottom: 20.0),
-              decoration: BoxDecoration(
-                color: Colors.white, // Use white color for header background
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
-                boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha((255 * 0.1).round()),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                ],
-              ),
-              child: SizedBox(
-                width: double.infinity, // Ensure the column takes full available width
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                      Expanded( // Wrap the inner Row with Expanded
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                              child: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Theme.of(context).primaryColor), // Replaced Icon with HugeIcon
-                            ),
-                            const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Hello, ${authResult?.uid?.split('@')[0] ?? 'User'}!', // Using uid as a fallback for display
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis, // Handle long names
-                            ),
-                          ),
-                          ],
-                        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 600;
+        final horizontalPadding = isSmallScreen ? 16.0 : 24.0;
+        final headerTopPadding = isSmallScreen ? 40.0 : 60.0;
+        final headerBottomPadding = isSmallScreen ? 20.0 : 30.0;
+        final sectionTitleFontSize = isSmallScreen ? 20.0 : 24.0;
+        final quickActionCardWidth = isSmallScreen ? 120.0 : 150.0;
+        final largeOfferCardHeight = isSmallScreen ? 180.0 : 220.0;
+        final superOfferCardHeight = isSmallScreen ? 100.0 : 120.0;
+        final gridCrossAxisCount = isSmallScreen ? 2 : 3;
+        final gridSpacing = isSmallScreen ? 15.0 : 20.0;
+
+        return SingleChildScrollView(
+          child: Container(
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                // Custom Header Section
+                Container(
+                  padding: EdgeInsets.only(top: headerTopPadding, left: horizontalPadding, right: horizontalPadding, bottom: headerBottomPadding),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha((255 * 0.1).round()),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
                       ),
-                        IconButton(
-                          icon: HugeIcon(icon: HugeIcons.strokeRoundedSchoolBell01, color: Theme.of(context).primaryColor, size: 28), // Replaced Icon with HugeIcon
-                          onPressed: () {
-                            // TODO: Implement notification logic
-                            LoggerService.info('Notifications icon tapped');
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    // Centralized Balance Card
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedIndex = 0; // Navigate to WithdrawScreen
-                        });
-                      },
-                      child: Card(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)), // Smoother corners
-                        elevation: 0.0, // No elevation
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                    ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Total Balance',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
+                                  CircleAvatar(
+                                    backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
+                                    child: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Theme.of(context).primaryColor, size: isSmallScreen ? 24 : 30),
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    '₹${totalBalanceINR.toStringAsFixed(2)}',
-                                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 36,
+                                  SizedBox(width: isSmallScreen ? 8 : 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Hello, ${authResult?.uid?.split('@')[0] ?? 'User'}!',
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 22),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    '($coins coins)',
-                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54),
                                   ),
                                 ],
                               ),
-                              HugeIcon(icon: HugeIcons.strokeRoundedWallet01, color: Theme.of(context).primaryColor, size: 40), // Replaced Icon with HugeIcon
-                            ],
+                            ),
+                            IconButton(
+                              icon: HugeIcon(icon: HugeIcons.strokeRoundedNotification01, color: Theme.of(context).primaryColor, size: isSmallScreen ? 24 : 28),
+                              onPressed: () {
+                                LoggerService.info('Notifications icon tapped');
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isSmallScreen ? 15 : 20),
+                        // Centralized Balance Card
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedIndex = 0;
+                            });
+                          },
+                          child: Card(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+                            elevation: 0.0,
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 20 : 25, horizontal: isSmallScreen ? 15 : 20),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Total Balance',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 16 : 18),
+                                      ),
+                                      SizedBox(height: isSmallScreen ? 3 : 5),
+                                      Text(
+                                        '₹${totalBalanceINR.toStringAsFixed(2)}',
+                                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                          color: Theme.of(context).primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: isSmallScreen ? 30 : 36,
+                                        ),
+                                      ),
+                                      Text(
+                                        '($coins coins)',
+                                        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
+                                      ),
+                                    ],
+                                  ),
+                                  HugeIcon(icon: HugeIcons.strokeRoundedWallet03, color: Theme.of(context).primaryColor, size: isSmallScreen ? 35 : 40),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Quick Actions Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Quick Actions',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-            ),
-            const SizedBox(height: 15),
-            SizedBox(
-              height: 100, // Height for horizontal quick action cards
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                children: [
-                  _buildQuickActionCard(
-                    context,
-                    icon: HugeIcons.strokeRoundedVideoCameraAi, // Replaced Icon with HugeIcon
-                    label: 'Watch Ads',
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                    },
-                    startColor: Colors.orange.shade400,
-                    endColor: Colors.orange.shade700,
+                SizedBox(height: isSmallScreen ? 15 : 20),
+                // Quick Actions Section
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Text(
+                    'Quick Actions',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: sectionTitleFontSize),
                   ),
-                  const SizedBox(width: 15),
-                  _buildQuickActionCard(
-                    context,
-                    icon: HugeIcons.strokeRoundedUserAdd01, // Replaced Icon with HugeIcon
-                    label: 'Invite Friends',
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
-                    },
-                    startColor: Colors.blue.shade400,
-                    endColor: Colors.blue.shade700,
-                  ),
-                  const SizedBox(width: 15),
-                  _buildQuickActionCard(
-                    context,
-                    icon: HugeIcons.strokeRoundedGift, // Replaced Icon with HugeIcon
-                    label: 'Redeem Coins',
-                    onTap: () {
-                      setState(() {
-                        _selectedIndex = 0; // Navigate to WithdrawScreen
-                      });
-                    },
-                    startColor: Colors.green.shade400,
-                    endColor: Colors.green.shade700,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            // Main Offer Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(
-                'Explore & Earn',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
-            ),
-            const SizedBox(height: 15),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  Row(
+                ),
+                SizedBox(height: isSmallScreen ? 10 : 15),
+                SizedBox(
+                  height: isSmallScreen ? 90 : 110,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                     children: [
-                      Expanded(
-                        child: _buildLargeOfferCard(
-                          context,
-                          title: 'Spin & Win',
-                          subtitle: 'Try your luck!',
-                          imagePath: 'assets/coin.png',
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
-                          },
-                          startColor: Colors.deepPurple.shade400,
-                          endColor: Colors.deepPurple.shade700,
-                        ),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedVideoCameraAi,
+                        label: 'Watch Ads',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                        },
+                        startColor: Colors.orange.shade400,
+                        endColor: Colors.orange.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: _buildLargeOfferCard(
-                          context,
-                          title: 'Watch & Earn',
-                          subtitle: 'Get coins by watching ads!',
-                          imagePath: 'assets/watch_ads.png',
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                          },
-                          startColor: Colors.purple.shade400,
-                          endColor: Colors.purple.shade700,
-                        ),
+                      SizedBox(width: isSmallScreen ? 10 : 15),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedUserAdd01,
+                        label: 'Invite Friends',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
+                        },
+                        startColor: Colors.blue.shade400,
+                        endColor: Colors.blue.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
+                      ),
+                      SizedBox(width: isSmallScreen ? 10 : 15),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedGift,
+                        label: 'Redeem Coins',
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = 0;
+                          });
+                        },
+                        startColor: Colors.green.shade400,
+                        endColor: Colors.green.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  _buildSuperOfferCard(
-                    context,
-                    title: 'Read & Earn',
-                    subtitle: 'Earn Upto 100k',
-                    imagePath: 'assets/coin.png', // Placeholder image
-                    onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
-                    },
-                    startColor: Colors.orange.shade400,
-                    endColor: Colors.orange.shade700,
-                    buttonText: 'Start Reading',
+                ),
+                SizedBox(height: isSmallScreen ? 20 : 30),
+                // Main Offer Grid
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Text(
+                    'Explore & Earn',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: sectionTitleFontSize),
                   ),
-                  const SizedBox(height: 15),
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
+                ),
+                SizedBox(height: isSmallScreen ? 10 : 15),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
                     children: [
-                      _buildOfferCard(
-                        context,
-                        title: 'Tic Tac Toe',
-                        subtitle: 'Play against NPC!',
-                        imagePath: 'assets/tic_tac_toe.png',
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
-                        },
-                        startColor: Colors.red.shade400,
-                        endColor: Colors.red.shade700,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildLargeOfferCard(
+                              context,
+                              title: 'Spin & Win',
+                              subtitle: 'Try your luck!',
+                              imagePath: 'assets/coin.png',
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
+                              },
+                              startColor: Colors.deepPurple.shade400,
+                              endColor: Colors.deepPurple.shade700,
+                              cardHeight: largeOfferCardHeight,
+                              imageSize: isSmallScreen ? 60 : 80,
+                              titleFontSize: isSmallScreen ? 16 : 18,
+                              subtitleFontSize: isSmallScreen ? 12 : 14,
+                            ),
+                          ),
+                          SizedBox(width: isSmallScreen ? 10 : 15),
+                          Expanded(
+                            child: _buildLargeOfferCard(
+                              context,
+                              title: 'Watch & Earn',
+                              subtitle: 'Get coins by watching ads!',
+                              imagePath: 'assets/watch_ads.png',
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                              },
+                              startColor: Colors.purple.shade400,
+                              endColor: Colors.purple.shade700,
+                              cardHeight: largeOfferCardHeight,
+                              imageSize: isSmallScreen ? 60 : 80,
+                              titleFontSize: isSmallScreen ? 16 : 18,
+                              subtitleFontSize: isSmallScreen ? 12 : 14,
+                            ),
+                          ),
+                        ],
                       ),
-                      _buildOfferCard(
+                      SizedBox(height: isSmallScreen ? 10 : 15),
+                      _buildSuperOfferCard(
                         context,
-                        title: 'Minesweeper',
-                        subtitle: 'Find the mines!',
-                        imagePath: 'assets/minesweeper.png',
+                        title: 'Read & Earn',
+                        subtitle: 'Earn Upto 100k',
+                        imagePath: 'assets/coin.png',
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
                         },
-                        startColor: Colors.teal.shade400,
-                        endColor: Colors.teal.shade700,
+                        startColor: Colors.orange.shade400,
+                        endColor: Colors.orange.shade700,
+                        buttonText: 'Start Reading',
+                        cardHeight: superOfferCardHeight,
+                        imageSize: isSmallScreen ? 40 : 50,
+                        titleFontSize: isSmallScreen ? 16 : 18,
+                        subtitleFontSize: isSmallScreen ? 12 : 14,
+                        buttonPadding: isSmallScreen ? EdgeInsets.symmetric(horizontal: 12, vertical: 6) : EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold) : Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
-                      // Add more offer cards here as needed
+                      SizedBox(height: isSmallScreen ? 10 : 15),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: gridCrossAxisCount,
+                        crossAxisSpacing: gridSpacing,
+                        mainAxisSpacing: gridSpacing,
+                        children: [
+                          _buildOfferCard(
+                            context,
+                            title: 'Tic Tac Toe',
+                            subtitle: 'Play against NPC!',
+                            imagePath: 'assets/tic_tac_toe.png',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                            },
+                            startColor: Colors.red.shade400,
+                            endColor: Colors.red.shade700,
+                            imageSize: isSmallScreen ? 50 : 60,
+                            titleFontSize: isSmallScreen ? 14 : 16,
+                            subtitleFontSize: isSmallScreen ? 10 : 12,
+                          ),
+                          _buildOfferCard(
+                            context,
+                            title: 'Minesweeper',
+                            subtitle: 'Find the mines!',
+                            imagePath: 'assets/minesweeper.png',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
+                            },
+                            startColor: Colors.teal.shade400,
+                            endColor: Colors.teal.shade700,
+                            imageSize: isSmallScreen ? 50 : 60,
+                            titleFontSize: isSmallScreen ? 14 : 16,
+                            subtitleFontSize: isSmallScreen ? 10 : 12,
+                          ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                SizedBox(height: isSmallScreen ? 15 : 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildQuickActionCard(
     BuildContext context, {
-    required dynamic icon, // Changed type to dynamic
+    required dynamic icon,
     required String label,
     required VoidCallback onTap,
     required Color startColor,
     required Color endColor,
+    required double cardWidth,
+    required double iconSize,
+    required double labelFontSize,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 0.0, // Remove default elevation
-        color: Colors.transparent, // Make card transparent to show container's decoration
+        elevation: 0.0,
+        color: Colors.transparent,
         child: Container(
-          width: 120, // Fixed width for quick action cards
+          width: cardWidth,
           padding: const EdgeInsets.all(10.0),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -398,24 +443,24 @@ class _HomeState extends State<Home> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(25.0), // More rounded corners
+            borderRadius: BorderRadius.circular(25.0),
             boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.1).round()), // Subtle shadow
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
+              BoxShadow(
+                color: Colors.black.withAlpha((255 * 0.1).round()),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              HugeIcon(icon: icon, size: 30, color: Colors.white), // Replaced Icon with HugeIcon
+              HugeIcon(icon: icon, size: iconSize, color: Colors.white),
               const SizedBox(height: 8),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600), // White text for contrast
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: labelFontSize),
               ),
             ],
           ),
@@ -432,6 +477,10 @@ class _HomeState extends State<Home> {
     required VoidCallback onTap,
     required Color startColor,
     required Color endColor,
+    required double cardHeight,
+    required double imageSize,
+    required double titleFontSize,
+    required double subtitleFontSize,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -440,7 +489,7 @@ class _HomeState extends State<Home> {
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: Container(
-          height: 180, // Height for large offer cards
+          height: cardHeight,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [startColor, endColor],
@@ -449,11 +498,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.1).round()),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
+              BoxShadow(
+                color: Colors.black.withAlpha((255 * 0.1).round()),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
             ],
           ),
           child: Column(
@@ -463,8 +512,8 @@ class _HomeState extends State<Home> {
                 padding: const EdgeInsets.only(top: 15.0),
                 child: Image.asset(
                   imagePath,
-                  height: 80,
-                  width: 80,
+                  height: imageSize,
+                  width: imageSize,
                   fit: BoxFit.contain,
                   color: Colors.white,
                 ),
@@ -476,13 +525,13 @@ class _HomeState extends State<Home> {
                     Text(
                       title,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
                     ),
                   ],
                 ),
@@ -503,6 +552,12 @@ class _HomeState extends State<Home> {
     required Color startColor,
     required Color endColor,
     required String buttonText,
+    required double cardHeight,
+    required double imageSize,
+    required double titleFontSize,
+    required double subtitleFontSize,
+    required EdgeInsetsGeometry buttonPadding,
+    required TextStyle? buttonTextStyle,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -511,7 +566,7 @@ class _HomeState extends State<Home> {
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: Container(
-          height: 100, // Height for super offer card
+          height: cardHeight,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [startColor, endColor],
@@ -520,11 +575,11 @@ class _HomeState extends State<Home> {
             ),
             borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.1).round()),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
+              BoxShadow(
+                color: Colors.black.withAlpha((255 * 0.1).round()),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
             ],
           ),
           child: Row(
@@ -533,8 +588,8 @@ class _HomeState extends State<Home> {
                 padding: const EdgeInsets.all(15.0),
                 child: Image.asset(
                   imagePath,
-                  height: 50,
-                  width: 50,
+                  height: imageSize,
+                  width: imageSize,
                   fit: BoxFit.contain,
                   color: Colors.white,
                 ),
@@ -546,12 +601,12 @@ class _HomeState extends State<Home> {
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
                     ),
                   ],
                 ),
@@ -561,10 +616,10 @@ class _HomeState extends State<Home> {
                 child: CustomButton(
                   text: buttonText,
                   onPressed: onTap,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: buttonPadding,
                   startColor: Colors.white,
                   endColor: Colors.white,
-                  textStyle: TextStyle(color: startColor, fontWeight: FontWeight.bold),
+                  textStyle: buttonTextStyle,
                 ),
               ),
             ],
@@ -582,12 +637,15 @@ class _HomeState extends State<Home> {
     required VoidCallback onTap,
     required Color startColor,
     required Color endColor,
+    required double imageSize,
+    required double titleFontSize,
+    required double subtitleFontSize,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        elevation: 0.0, // Remove default elevation
-        color: Colors.transparent, // Make card transparent to show container's decoration
+        elevation: 0.0,
+        color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
@@ -596,13 +654,13 @@ class _HomeState extends State<Home> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20.0), // More rounded corners
+            borderRadius: BorderRadius.circular(20.0),
             boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha((255 * 0.1).round()), // Subtle shadow
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
+              BoxShadow(
+                color: Colors.black.withAlpha((255 * 0.1).round()),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: Column(
@@ -610,22 +668,22 @@ class _HomeState extends State<Home> {
             children: [
               Image.asset(
                 imagePath,
-                height: 60, // Adjusted image size
-                width: 60,
+                height: imageSize,
+                width: imageSize,
                 fit: BoxFit.contain,
-                color: Colors.white, // Tint image white for better contrast on gradient
+                color: Colors.white,
               ),
               const SizedBox(height: 10),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold), // White text for contrast
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
               ),
               const SizedBox(height: 5),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70), // Lighter white for subtitle
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
               ),
             ],
           ),

@@ -633,116 +633,137 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     return SafeArea(
       child: Scaffold(
         backgroundColor: const Color(0xFF1A1A1A), // Dark background color
-        body: Stack(
-          children: [
-            // Background grid pattern (optional, can be added with a CustomPainter or image)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _GridPainter(),
-              ),
-            ),
-            Column(
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+
+            // Responsive padding and spacing
+            final horizontalPadding = isSmallScreen ? 12.0 : 20.0;
+            final verticalSpacing = isSmallScreen ? 8.0 : 12.0;
+            final appBarIconSize = isSmallScreen ? 24.0 : 28.0;
+            final appBarTitleFontSize = isSmallScreen ? 20.0 : 24.0;
+            final infoBarFontSize = isSmallScreen ? 16.0 : 18.0;
+            final infoBarIconSize = isSmallScreen ? 20.0 : 24.0;
+            final cashOutButtonPadding = isSmallScreen ? EdgeInsets.symmetric(horizontal: 15, vertical: 8) : EdgeInsets.symmetric(horizontal: 20, vertical: 10);
+            final cashOutButtonFontSize = isSmallScreen ? 14.0 : 16.0;
+            final gridSpacing = isSmallScreen ? 4.0 : 8.0;
+            final cellBorderRadius = isSmallScreen ? 8.0 : 12.0;
+            final cellContentSize = isSmallScreen ? 25.0 : 40.0;
+            final cellTextFontSize = isSmallScreen ? 16.0 : 20.0;
+
+            return Stack(
               children: [
-                // Custom App Bar
-                _buildCustomAppBar(context),
-                // Top Info Bar (Mine Counter, Timer, Cash Out)
-                _buildTopInfoBar(context),
-                Expanded(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300), // Subtle animation duration
-                    transitionBuilder: (Widget child, Animation<double> animation) {
-                      return FadeTransition(opacity: animation, child: child); // Fade transition
-                    },
-                    child: GridView.builder(
-                      key: ValueKey('minesweeper_board_${_rows}_$_cols'), // Key to trigger animation on size change
-                      padding: const EdgeInsets.all(8.0), // Increased padding for the board
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: _cols,
-                        childAspectRatio: 1.0,
-                        crossAxisSpacing: 8.0, // Increased spacing
-                        mainAxisSpacing: 8.0, // Increased spacing
-                      ),
-                      itemCount: _rows * _cols,
-                      itemBuilder: (context, index) {
-                        int r = index ~/ _cols;
-                        int c = index % _cols;
-                        MinesweeperCell cell = board[r][c];
-
-                        Widget? cellContent;
-                        Color textColor = Colors.white; // Default text color for dark theme
-
-                        List<BoxShadow> shadows;
-                        BorderRadius borderRadius = BorderRadius.circular(12.0); // More rounded edges
-
-                        if (cell.isRevealed) {
-                          if (cell.hasMine) {
-                            // Revealed mine
-                            cellContent = Image.asset(
-                              'assets/bomb.png',
-                              width: 40,
-                              height: 40,
-                              fit: BoxFit.contain,
-                            );
-                            shadows = _getPressedInShadows();
-                          } else {
-                            // Revealed non-mine cell, display coin value
-                            textColor = _getAdjacentMineColor(cell.adjacentMines); // Use existing color logic for coin numbers
-                            cellContent = Text(
-                              '${cell.adjacentMines}', // adjacentMines now holds coin value
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20, // Slightly larger font
-                                color: textColor,
-                              ),
-                            );
-                            shadows = _getPressedInShadows();
-                          }
-                        } else if (cell.isFlagged) {
-                          // Flagged cell
-                          cellContent = Image.asset(
-                            'assets/minesweeper.png', // Using the provided image for flag
-                            width: 30,
-                            height: 30,
-                            fit: BoxFit.contain,
-                            color: Colors.redAccent, // Red flag
-                          );
-                          shadows = _getRaisedShadows();
-                        } else {
-                          // Unrevealed cell
-                          shadows = _getRaisedShadows();
-                        }
-
-                        return GestureDetector(
-                          onTap: () => _revealCell(r, c),
-                          onLongPress: () => _toggleFlag(r, c),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2C2C2C), // Darker cell background
-                              borderRadius: borderRadius,
-                              boxShadow: shadows,
-                              border: Border.all(
-                                color: Colors.blueGrey.shade700, // Subtle border
-                                width: 1.0,
-                              ),
-                            ),
-                            alignment: Alignment.center,
-                            child: cellContent,
-                          ),
-                        );
-                      },
-                    ),
+                // Background grid pattern (optional, can be added with a CustomPainter or image)
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _GridPainter(),
                   ),
                 ),
-                if (_adService.bannerAd != null)
-                  SizedBox(
-                    width: _adService.bannerAd!.size.width.toDouble(),
-                    height: _adService.bannerAd!.size.height.toDouble(),
-                    child: AdWidget(ad: _adService.bannerAd!),
-                  ),
+                Column(
+                  children: [
+                    // Custom App Bar
+                    _buildCustomAppBar(context, horizontalPadding, appBarIconSize, appBarTitleFontSize),
+                    // Top Info Bar (Mine Counter, Timer, Cash Out)
+                    _buildTopInfoBar(context, horizontalPadding, verticalSpacing, infoBarFontSize, infoBarIconSize, cashOutButtonPadding, cashOutButtonFontSize),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300), // Subtle animation duration
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(opacity: animation, child: child); // Fade transition
+                        },
+                        child: GridView.builder(
+                          key: ValueKey('minesweeper_board_${_rows}_$_cols'), // Key to trigger animation on size change
+                          padding: EdgeInsets.all(gridSpacing * 2), // Increased padding for the board
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: _cols,
+                            childAspectRatio: 1.0,
+                            crossAxisSpacing: gridSpacing, // Increased spacing
+                            mainAxisSpacing: gridSpacing, // Increased spacing
+                          ),
+                          itemCount: _rows * _cols,
+                          itemBuilder: (context, index) {
+                            int r = index ~/ _cols;
+                            int c = index % _cols;
+                            MinesweeperCell cell = board[r][c];
+
+                            Widget? cellContent;
+                            Color textColor = Colors.white; // Default text color for dark theme
+
+                            List<BoxShadow> shadows;
+                            BorderRadius borderRadius = BorderRadius.circular(cellBorderRadius); // More rounded edges
+
+                            if (cell.isRevealed) {
+                              if (cell.hasMine) {
+                                // Revealed mine
+                                cellContent = Image.asset(
+                                  'assets/bomb.png',
+                                  width: cellContentSize,
+                                  height: cellContentSize,
+                                  fit: BoxFit.contain,
+                                );
+                                shadows = _getPressedInShadows();
+                              } else {
+                                // Revealed non-mine cell, display coin value
+                                textColor = _getAdjacentMineColor(cell.adjacentMines); // Use existing color logic for coin numbers
+                                cellContent = Text(
+                                  '${cell.adjacentMines}', // adjacentMines now holds coin value
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: cellTextFontSize, // Slightly larger font
+                                    color: textColor,
+                                  ),
+                                );
+                                shadows = _getPressedInShadows();
+                              }
+                            } else if (cell.isFlagged) {
+                              // Flagged cell
+                              cellContent = Image.asset(
+                                'assets/minesweeper.png', // Using the provided image for flag
+                                width: cellContentSize * 0.75,
+                                height: cellContentSize * 0.75,
+                                fit: BoxFit.contain,
+                                color: Colors.redAccent, // Red flag
+                              );
+                              shadows = _getRaisedShadows();
+                            } else {
+                              // Unrevealed cell
+                              shadows = _getRaisedShadows();
+                            }
+
+                            return GestureDetector(
+                              onTap: () => _revealCell(r, c),
+                              onLongPress: () => _toggleFlag(r, c),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2C2C2C), // Darker cell background
+                                  borderRadius: borderRadius,
+                                  boxShadow: shadows,
+                                  border: Border.all(
+                                    color: Colors.blueGrey.shade700, // Subtle border
+                                    width: 1.0,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: cellContent,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    if (_adService.bannerAd != null)
+                      SizedBox(
+                        width: _adService.bannerAd!.size.width.toDouble(),
+                        height: _adService.bannerAd!.size.height.toDouble(),
+                        child: AdWidget(ad: _adService.bannerAd!),
+                      ),
+                  ],
+                ),
               ],
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
@@ -799,23 +820,23 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     }
   }
 
-  Widget _buildCustomAppBar(BuildContext context) {
+  Widget _buildCustomAppBar(BuildContext context, double horizontalPadding, double iconSize, double titleFontSize) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.white, size: iconSize),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
-          const Text(
+          Text(
             'MINESWEEPER',
             style: TextStyle(
               fontFamily: 'Calinastiya demo',
-              fontSize: 24,
+              fontSize: titleFontSize,
               fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 2,
@@ -824,11 +845,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
           Row(
             children: [
               IconButton(
-                icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings05, color: Colors.white, size: iconSize * 0.85),
                 onPressed: _showDifficultySettingsDialog,
               ),
               IconButton(
-                icon: HugeIcon(icon: HugeIcons.strokeRoundedRefresh, color: Colors.white, size: 28), // Replaced Icon with HugeIcon
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedRefresh, color: Colors.white, size: iconSize * 0.85),
                 onPressed: () => _initializeGame(_selectedRows, _selectedCols, _selectedMines),
               ),
             ],
@@ -838,10 +859,10 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
     );
   }
 
-  Widget _buildTopInfoBar(BuildContext context) {
+  Widget _buildTopInfoBar(BuildContext context, double horizontalPadding, double verticalSpacing, double fontSize, double iconSize, EdgeInsetsGeometry buttonPadding, double buttonFontSize) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+      margin: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalSpacing),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalSpacing + 2),
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2C), // Dark background for the info bar
         borderRadius: BorderRadius.circular(15.0),
@@ -865,7 +886,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
         children: [
           // Mine Counter
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding / 2, vertical: verticalSpacing / 2),
             decoration: BoxDecoration(
               color: const Color(0xFF3A3A3A), // Slightly lighter dark for inner chip
               borderRadius: BorderRadius.circular(10),
@@ -874,16 +895,16 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
               children: [
                 Image.asset(
                   'assets/bomb.png', // Using the provided image for bomb
-                  width: 24,
-                  height: 24,
+                  width: iconSize,
+                  height: iconSize,
                   fit: BoxFit.contain,
                   color: Colors.redAccent, // Red bomb icon
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: verticalSpacing),
                 Text(
                   '${_numMines - minesFlagged}',
-                  style: const TextStyle(
-                    fontSize: 18,
+                  style: TextStyle(
+                    fontSize: fontSize,
                     fontWeight: FontWeight.bold,
                     color: Colors.redAccent, // Red text for mine count
                   ),
@@ -893,19 +914,19 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
           ),
           // Timer
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding / 2, vertical: verticalSpacing / 2),
             decoration: BoxDecoration(
               color: const Color(0xFF3A3A3A), // Slightly lighter dark for inner chip
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                HugeIcon(icon: HugeIcons.strokeRoundedTime01, size: 24, color: Colors.lightBlueAccent), // Replaced Icon with HugeIcon
-                const SizedBox(width: 8),
+                HugeIcon(icon: HugeIcons.strokeRoundedTime04, size: iconSize, color: Colors.lightBlueAccent),
+                SizedBox(width: verticalSpacing),
                 Text(
                   '$timerSeconds s',
-                  style: const TextStyle(
-                    fontSize: 18,
+                  style: TextStyle(
+                    fontSize: fontSize,
                     fontWeight: FontWeight.bold,
                     color: Colors.lightBlueAccent, // Blue text for timer
                   ),
@@ -918,13 +939,13 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
             CustomButton(
               text: 'CASH OUT',
               onPressed: _cashOut,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: buttonPadding,
               startColor: const Color(0xFFFBC02D), // Yellow color
               endColor: const Color(0xFFF9A825), // Slightly darker yellow
-              textStyle: const TextStyle(
+              textStyle: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: buttonFontSize,
               ),
               boxShadow: [
                 BoxShadow(

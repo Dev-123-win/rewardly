@@ -161,37 +161,50 @@ class OnboardingPageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(40.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            imagePath,
-            height: 200,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final isSmallScreen = screenWidth < 600;
+
+        final imageSize = isSmallScreen ? 150.0 : 200.0;
+        final titleFontSize = isSmallScreen ? 24.0 : 28.0;
+        final descriptionFontSize = isSmallScreen ? 16.0 : 18.0;
+        final verticalSpacing = isSmallScreen ? 30.0 : 40.0;
+        final horizontalPadding = isSmallScreen ? 20.0 : 40.0;
+
+        return Padding(
+          padding: EdgeInsets.all(horizontalPadding),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                imagePath,
+                height: imageSize,
+              ),
+              SizedBox(height: verticalSpacing),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              SizedBox(height: verticalSpacing * 0.5),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: descriptionFontSize,
+                  color: Colors.grey,
+                  fontFamily: 'Lato',
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 40),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Poppins',
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
-              fontFamily: 'Lato',
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

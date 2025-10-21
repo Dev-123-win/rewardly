@@ -613,7 +613,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
           elevation: 0,
           actions: [
             IconButton(
-              icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01), // Replaced Icon with HugeIcon
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings05), // Replaced Icon with HugeIcon
               onPressed: _showDifficultySettingsDialog,
               color: Theme.of(context).primaryColorDark,
             ),
@@ -760,7 +760,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
               if (_isLoadingAd)
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.6), // Darker overlay
+                    color: Colors.black.withAlpha((255 * 0.6).round()), // Darker overlay
                     child: const Center(
                       child: CircularProgressIndicator(color: Colors.white),
                     ),
@@ -812,7 +812,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                             vertical: 15, horizontal: 20),
                         decoration: BoxDecoration(
                           color: selectedMode == mode
-                              ? Theme.of(context).primaryColor.withOpacity(0.8)
+                              ? Theme.of(context).primaryColor.withAlpha((255 * 0.8).round())
                               : Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(15),
                           border: Border.all(
@@ -826,14 +826,14 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                   BoxShadow(
                                     color: Theme.of(context)
                                         .primaryColor
-                                        .withOpacity(0.3),
+                                        .withAlpha((255 * 0.3).round()),
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withAlpha((255 * 0.05).round()),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),

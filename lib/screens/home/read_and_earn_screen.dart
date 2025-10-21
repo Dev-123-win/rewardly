@@ -217,6 +217,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
           _isAdLoading = false;
         });
         final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+        if (!mounted) return; // Check mounted again after async operation
         await userDataProvider.updateUserCoins(_currentReadTask!.coins);
 
         if (!mounted) return;
@@ -225,7 +226,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
         );
         _generateNewReadTask(); // Generate a new task after claiming
       },
-      onAdFailedToShow: () {
+      onAdFailedToShow: () async { // Made async to allow await
         LoggerService.error('ReadAndEarnScreen: _claimCoins - Interstitial ad failed to show.');
         if (!mounted) return;
         setState(() {
@@ -236,7 +237,8 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
         );
         // Award coins even if ad fails to show
         final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-        userDataProvider.updateUserCoins(_currentReadTask!.coins);
+        if (!mounted) return; // Check mounted again after async operation
+        await userDataProvider.updateUserCoins(_currentReadTask!.coins); // Await the update
         _generateNewReadTask(); // Generate a new task after claiming
       },
     );
@@ -291,13 +293,13 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     Function()? onPressed;
     Color cardColor = kSurfaceColor;
     List<BoxShadow> boxShadow = kNeumorphicShadows;
-    dynamic icon = HugeIcons.strokeRoundedBook01; // Changed to HugeIcon
+    dynamic icon = HugeIcons.strokeRoundedBook01;
     Color iconColor = kAccentColor;
     String statusText = 'Start Reading';
 
     if (_isReading) {
       statusText = 'Reading... ${_secondsRemaining ~/ 60}:${(_secondsRemaining % 60).toString().padLeft(2, '0')}';
-      icon = HugeIcons.strokeRoundedTime01; // Changed to HugeIcon
+      icon = HugeIcons.strokeRoundedTime01;
       iconColor = kPrimaryColor;
       onPressed = null; // Disable button while reading
     } else {
@@ -307,57 +309,110 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       };
     }
 
-    return GestureDetector(
-      onTap: onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
-        padding: const EdgeInsets.all(kDefaultPadding),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(kDefaultBorderRadius),
-          boxShadow: boxShadow,
-        ),
-        child: Row(
-          children: [
-            HugeIcon(icon: icon, color: iconColor, size: 30), // Replaced Icon with HugeIcon
-            const SizedBox(width: kDefaultPadding),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _currentReadTask!.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: kTextColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Earn ${_currentReadTask!.coins} Coins',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: kTextColor,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    statusText,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: iconColor,
-                        ),
-                  ),
-                ],
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 600; // Define what constitutes a "small screen"
+
+        return GestureDetector(
+          onTap: onPressed,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+            padding: const EdgeInsets.all(kDefaultPadding),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(kDefaultBorderRadius),
+              boxShadow: boxShadow,
             ),
-            if (!_isReading)
-              ScaleTransition(
-                scale: _cardScaleAnimation,
-                child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor), // Replaced Icon with HugeIcon
-              ),
-          ],
-        ),
-      ),
+            child: isSmallScreen
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HugeIcon(icon: icon, color: iconColor, size: 30),
+                      const SizedBox(height: kDefaultPadding / 2),
+                      Flexible(
+                        child: Text(
+                          _currentReadTask!.title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: kTextColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Flexible(
+                        child: Text(
+                          'Earn ${_currentReadTask!.coins} Coins',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: kTextColor,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Flexible(
+                        child: Text(
+                          statusText,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: iconColor,
+                              ),
+                        ),
+                      ),
+                      if (!_isReading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: kDefaultPadding),
+                          child: ScaleTransition(
+                            scale: _cardScaleAnimation,
+                            child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor),
+                          ),
+                        ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      HugeIcon(icon: icon, color: iconColor, size: 30),
+                      const SizedBox(width: kDefaultPadding),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentReadTask!.title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: kTextColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Earn ${_currentReadTask!.coins} Coins',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: kTextColor,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              statusText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: iconColor,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_isReading)
+                        ScaleTransition(
+                          scale: _cardScaleAnimation,
+                          child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor),
+                        ),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 }

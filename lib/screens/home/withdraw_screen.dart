@@ -98,187 +98,210 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
-              // Current Balance Display
-              Center(
-                child: Card(
-                  elevation: 0.0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 25),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Your Current Balance',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '₹${totalBalanceINR.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 52,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 5.0,
-                                color: Colors.black.withAlpha((255 * 0.25).round()),
-                                offset: const Offset(2.0, 2.0),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+
+            final horizontalPadding = isSmallScreen ? 20.0 : constraints.maxWidth * 0.1;
+            final verticalSpacing = isSmallScreen ? 25.0 : 40.0;
+            final titleFontSize = isSmallScreen ? 22.0 : 28.0;
+            final subtitleFontSize = isSmallScreen ? 16.0 : 18.0;
+            final balanceFontSize = isSmallScreen ? 42.0 : 52.0;
+            final cardPadding = isSmallScreen ? 18.0 : 25.0;
+            final buttonVerticalPadding = isSmallScreen ? 15.0 : 18.0;
+            final buttonTextFontSize = isSmallScreen ? 16.0 : 18.0;
+            final methodCardIconSize = isSmallScreen ? 24.0 : 30.0;
+            final methodCardTextFontSize = isSmallScreen ? 16.0 : 18.0;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalSpacing),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: isSmallScreen ? 20 : 30),
+                  // Current Balance Display
+                  Center(
+                    child: Card(
+                      elevation: 0.0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: cardPadding + 5, horizontal: cardPadding),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Your Current Balance',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600], fontSize: subtitleFontSize),
+                            ),
+                            SizedBox(height: isSmallScreen ? 8 : 10),
+                            Text(
+                              '₹${totalBalanceINR.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: balanceFontSize,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 5.0,
+                                    color: Colors.black.withAlpha((255 * 0.25).round()),
+                                    offset: const Offset(2.0, 2.0),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            Text(
+                              '($currentCoins coins)',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black45, fontSize: isSmallScreen ? 14 : 16),
+                            ),
+                          ],
                         ),
-                        Text(
-                          '($currentCoins coins)',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black45),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              // Minimum Withdrawal Progress
-              Card(
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
-                child: Padding(
-                  padding: const EdgeInsets.all(18.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  SizedBox(height: verticalSpacing),
+                  // Minimum Withdrawal Progress
+                  Card(
+                    elevation: 0.0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+                    child: Padding(
+                      padding: EdgeInsets.all(cardPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Withdrawal Goal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: subtitleFontSize),
+                          ),
+                          SizedBox(height: isSmallScreen ? 10 : 15),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: currentCoins / _minWithdrawalCoins.toDouble(),
+                              backgroundColor: Colors.grey[300],
+                              color: Theme.of(context).primaryColor,
+                              minHeight: isSmallScreen ? 10 : 12,
+                            ),
+                          ),
+                          SizedBox(height: isSmallScreen ? 8 : 10),
+                          Text(
+                            '${((currentCoins / _minWithdrawalCoins.toDouble()) * 100).toStringAsFixed(0)}% towards your goal',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 12 : 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  Text(
+                    'Choose Withdrawal Method',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                  ),
+                  SizedBox(height: isSmallScreen ? 20 : 25),
+                  // Withdrawal Method Selection
+                  Column(
                     children: [
-                      Text(
-                        'Withdrawal Goal: $_minWithdrawalCoins coins (₹${(_minWithdrawalCoins / 1000).toStringAsFixed(2)})',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+                      _buildMethodCard(
+                        context,
+                        method: WithdrawalMethod.bank,
+                        icon: Icons.account_balance,
+                        label: 'Withdraw to Bank',
+                        isSelected: _selectedMethod == WithdrawalMethod.bank,
+                        onTap: () {
+                          setState(() {
+                            _selectedMethod = WithdrawalMethod.bank;
+                            _loadPreferredDetailsForMethod(WithdrawalMethod.bank);
+                          });
+                        },
+                        iconSize: methodCardIconSize,
+                        labelFontSize: methodCardTextFontSize,
+                        isSmallScreen: isSmallScreen,
                       ),
-                      const SizedBox(height: 15),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: currentCoins / _minWithdrawalCoins.toDouble(),
-                          backgroundColor: Colors.grey[300],
-                          color: Theme.of(context).primaryColor,
-                          minHeight: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '${((currentCoins / _minWithdrawalCoins.toDouble()) * 100).toStringAsFixed(0)}% towards your goal',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                      SizedBox(height: isSmallScreen ? 10 : 15), // Vertical spacing between cards
+                      _buildMethodCard(
+                        context,
+                        method: WithdrawalMethod.upi,
+                        icon: Icons.payment,
+                        label: 'Withdraw to UPI',
+                        isSelected: _selectedMethod == WithdrawalMethod.upi,
+                        onTap: () {
+                          setState(() {
+                            _selectedMethod = WithdrawalMethod.upi;
+                            _loadPreferredDetailsForMethod(WithdrawalMethod.upi);
+                          });
+                        },
+                        iconSize: methodCardIconSize,
+                        labelFontSize: methodCardTextFontSize,
+                        isSmallScreen: isSmallScreen,
                       ),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              Text(
-                'Choose Withdrawal Method',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 25),
-              // Withdrawal Method Selection
-              Column(
-                children: [
-                  _buildMethodCard(
-                    context,
-                    method: WithdrawalMethod.bank,
-                    icon: Icons.account_balance,
-                    label: 'Withdraw to Bank',
-                    isSelected: _selectedMethod == WithdrawalMethod.bank,
-                    onTap: () {
-                      setState(() {
-                        _selectedMethod = WithdrawalMethod.bank;
-                        _loadPreferredDetailsForMethod(WithdrawalMethod.bank);
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 15), // Vertical spacing between cards
-                  _buildMethodCard(
-                    context,
-                    method: WithdrawalMethod.upi,
-                    icon: Icons.payment,
-                    label: 'Withdraw to UPI',
-                    isSelected: _selectedMethod == WithdrawalMethod.upi,
-                    onTap: () {
-                      setState(() {
-                        _selectedMethod = WithdrawalMethod.upi;
-                        _loadPreferredDetailsForMethod(WithdrawalMethod.upi);
-                      });
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40), // Increased spacing
+                  SizedBox(height: verticalSpacing), // Increased spacing
 
-              // Conditional Input Fields
-              if (_selectedMethod == WithdrawalMethod.bank) _buildBankDetailsInput(context),
-              if (_selectedMethod == WithdrawalMethod.upi) _buildUpiDetailsInput(context),
+                  // Conditional Input Fields
+                  if (_selectedMethod == WithdrawalMethod.bank) _buildBankDetailsInput(context, isSmallScreen),
+                  if (_selectedMethod == WithdrawalMethod.upi) _buildUpiDetailsInput(context, isSmallScreen),
 
-              const SizedBox(height: 40),
+                  SizedBox(height: verticalSpacing),
 
-              // Withdraw Button
-              if (_selectedMethod != WithdrawalMethod.none)
-                Center(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _processWithdrawal(currentCoins),
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      label: Text(
-                        'Initiate Withdrawal',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                  // Withdraw Button
+                  if (_selectedMethod != WithdrawalMethod.none)
+                    Center(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _processWithdrawal(currentCoins),
+                          icon: Icon(Icons.send, color: Colors.white, size: isSmallScreen ? 20 : 24),
+                          label: Text(
+                            'Initiate Withdrawal',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: buttonTextFontSize),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 30 : 50, vertical: buttonVerticalPadding),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 5,
+                          ),
                         ),
-                        elevation: 5,
+                      ),
+                    ),
+
+                  SizedBox(height: verticalSpacing),
+                  // Set Up Auto-Withdrawal
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        // TODO: Implement auto-withdrawal setup logic
+                        _showSnackBar('Auto-Withdrawal setup coming soon!');
+                      },
+                      icon: Icon(Icons.auto_mode, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
+                      label: Text(
+                        'Set Up Auto-Withdrawal',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.underline, fontSize: buttonTextFontSize),
                       ),
                     ),
                   ),
-                ),
-
-              const SizedBox(height: 40),
-              // Set Up Auto-Withdrawal
-              Center(
-                child: TextButton.icon(
-                  onPressed: () {
-                    // TODO: Implement auto-withdrawal setup logic
-                    _showSnackBar('Auto-Withdrawal setup coming soon!');
-                  },
-                  icon: Icon(Icons.auto_mode, color: Theme.of(context).primaryColor),
-                  label: Text(
-                    'Set Up Auto-Withdrawal',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColor, decoration: TextDecoration.underline),
+                  SizedBox(height: verticalSpacing),
+                  Text(
+                    'Recent Activity',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: titleFontSize),
                   ),
-                ),
+                  SizedBox(height: isSmallScreen ? 15 : 20),
+                  // Recent Activity Display
+                  _buildRecentActivityList(uid, userService, isSmallScreen),
+                ],
               ),
-              const SizedBox(height: 40),
-              Text(
-                'Recent Activity',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              // Recent Activity Display
-              _buildRecentActivityList(uid, userService),
-            ],
-          ),
+            );
+          },
         ),
       ),
-    ));
+    );
   }
 
-  Widget _buildRecentActivityList(String uid, UserService userService) {
+  Widget _buildRecentActivityList(String uid, UserService userService, bool isSmallScreen) {
     return StreamBuilder<List<DocumentSnapshot>>(
       stream: userService.getWithdrawalRequestsStream(uid),
       builder: (context, snapshot) {
@@ -292,7 +315,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           return Center(
             child: Text(
               'No recent activity.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 14 : 16),
             ),
           );
         }
@@ -329,27 +352,27 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             }
 
             return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              margin: EdgeInsets.symmetric(vertical: isSmallScreen ? 6.0 : 8.0),
               elevation: 0.0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
                 child: Row(
                   children: [
-                    Icon(statusIcon, color: statusColor, size: 30),
-                    const SizedBox(width: 15),
+                    Icon(statusIcon, color: statusColor, size: isSmallScreen ? 24 : 30),
+                    SizedBox(width: isSmallScreen ? 10 : 15),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Withdrawal of $amount coins',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: isSmallScreen ? 14 : 16),
                           ),
-                          const SizedBox(height: 5),
+                          SizedBox(height: isSmallScreen ? 3 : 5),
                           Text(
                             'Method: ${method.toUpperCase()}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey[700], fontSize: isSmallScreen ? 12 : 14),
                           ),
                         ],
                       ),
@@ -359,12 +382,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       children: [
                         Text(
                           status.toUpperCase(),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 12 : 14),
                         ),
                         if (request['createdAt'] != null)
                           Text(
                             (request['createdAt'] as Timestamp).toDate().toLocal().toString().split(' ')[0],
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500], fontSize: isSmallScreen ? 10 : 12),
                           ),
                       ],
                     ),
@@ -378,79 +401,91 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     );
   }
 
-  Widget _buildBankDetailsInput(BuildContext context) {
+  Widget _buildBankDetailsInput(BuildContext context, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Enter Bank Account Details',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 16 : 18),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
           controller: _bankAccountController,
           decoration: InputDecoration(
             labelText: 'Bank Account Number',
             hintText: 'e.g., 1234567890',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: const Icon(Icons.account_balance_wallet),
+            prefixIcon: Icon(Icons.account_balance_wallet, size: isSmallScreen ? 20 : 24),
+            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
           keyboardType: TextInputType.number,
+          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
           controller: _ifscCodeController,
           decoration: InputDecoration(
             labelText: 'IFSC Code',
             hintText: 'e.g., HDFC0001234',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: const Icon(Icons.code),
+            prefixIcon: Icon(Icons.code, size: isSmallScreen ? 20 : 24),
+            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
+          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
           controller: _accountHolderNameController,
           decoration: InputDecoration(
             labelText: 'Account Holder Name',
             hintText: 'e.g., John Doe',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: const Icon(Icons.person),
+            prefixIcon: Icon(Icons.person, size: isSmallScreen ? 20 : 24),
+            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
+          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
         ),
-        const SizedBox(height: 20),
-        _buildSaveDetailsCheckbox(),
+        SizedBox(height: isSmallScreen ? 15 : 20),
+        _buildSaveDetailsCheckbox(isSmallScreen),
       ],
     );
   }
 
-  Widget _buildUpiDetailsInput(BuildContext context) {
+  Widget _buildUpiDetailsInput(BuildContext context, bool isSmallScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Enter UPI Details',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 16 : 18),
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
           controller: _upiIdController,
           decoration: InputDecoration(
             labelText: 'UPI ID',
             hintText: 'e.g., yourname@bank',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            prefixIcon: const Icon(Icons.qr_code),
+            prefixIcon: Icon(Icons.qr_code, size: isSmallScreen ? 20 : 24),
+            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
           ),
           keyboardType: TextInputType.emailAddress,
+          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
         ),
-        const SizedBox(height: 20),
-        _buildSaveDetailsCheckbox(),
+        SizedBox(height: isSmallScreen ? 15 : 20),
+        _buildSaveDetailsCheckbox(isSmallScreen),
       ],
     );
   }
 
-  Widget _buildSaveDetailsCheckbox() {
+  Widget _buildSaveDetailsCheckbox(bool isSmallScreen) {
     return CheckboxListTile(
-      title: const Text('Save these details for future withdrawals'),
+      title: Text('Save these details for future withdrawals', style: TextStyle(fontSize: isSmallScreen ? 14 : 16)),
       value: _saveDetails,
       onChanged: (bool? value) {
         setState(() {
@@ -532,7 +567,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     if (_saveDetails && userDataProvider.shardedUserService != null) {
       if (_selectedMethod == WithdrawalMethod.bank) {
         userDataProvider.shardedUserService!.savePreferredBankDetails(uid, details);
-      } else if (_selectedMethod == WithdrawalMethod.upi) {
+      } else if (methodString == 'upi') {
         userDataProvider.shardedUserService!.savePreferredUpiDetails(uid, details);
       }
       userDataProvider.shardedUserService!.updateLastUsedWithdrawalMethod(uid, methodString);
@@ -570,6 +605,9 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    required double iconSize,
+    required double labelFontSize,
+    required bool isSmallScreen, // Add isSmallScreen parameter
   }) {
     return Card(
       elevation: 0.0,
@@ -581,7 +619,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           curve: Curves.easeInOut,
           width: double.infinity, // Full width for list-type cards
           decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : Colors.white,
+            color: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.1).round()) : Colors.white,
             borderRadius: BorderRadius.circular(15.0),
             border: Border.all(
               color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
@@ -594,7 +632,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
               children: [
                 Icon(
                   icon,
-                  size: 30, // Adjusted icon size
+                  size: iconSize, // Adjusted icon size
                   color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
                 ),
                 const SizedBox(width: 15), // Spacing between icon and text
@@ -603,12 +641,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: isSelected ? Theme.of(context).primaryColor : Colors.black87,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: labelFontSize,
                       ),
                 ),
                 const Spacer(), // Pushes content to the left and right
                 if (isSelected)
-                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: 24),
+                  Icon(Icons.check_circle, color: Theme.of(context).primaryColor, size: isSmallScreen ? 20 : 24),
               ],
             ),
           ),
@@ -626,46 +664,57 @@ class _WithdrawScreenLoading extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 40),
-            ShimmerLoading.rectangular(height: 150, width: double.infinity),
-            const SizedBox(height: 30),
-            ShimmerLoading.rectangular(height: 28, width: 200),
-            const SizedBox(height: 20),
-            Row(
-              children: const [
-                Expanded(child: ShimmerLoading.rectangular(height: 100, width: 120)),
-                SizedBox(width: 15),
-                Expanded(child: ShimmerLoading.rectangular(height: 100, width: 120)),
-              ],
-            ),
-            const SizedBox(height: 30),
-            ShimmerLoading.rectangular(height: 50),
-            const SizedBox(height: 15),
-            ShimmerLoading.rectangular(height: 50),
-            const SizedBox(height: 15),
-            ShimmerLoading.rectangular(height: 50),
-            const SizedBox(height: 20),
-            ShimmerLoading.rectangular(height: 50),
-            const SizedBox(height: 10),
-            Row(
-              children: const [
-                Expanded(child: ShimmerLoading.rectangular(height: 40)),
-                SizedBox(width: 10),
-                Expanded(child: ShimmerLoading.rectangular(height: 40)),
-                SizedBox(width: 10),
-                Expanded(child: ShimmerLoading.rectangular(height: 40)),
-              ],
-            ),
-            const SizedBox(height: 30),
-            ShimmerLoading.rectangular(height: 50),
-          ],
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isSmallScreen = screenWidth < 600;
+
+            final horizontalPadding = isSmallScreen ? 20.0 : screenWidth * 0.1;
+            final verticalSpacing = isSmallScreen ? 25.0 : 40.0;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalSpacing),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: isSmallScreen ? 20 : 40),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 120 : 150, width: double.infinity),
+                  SizedBox(height: verticalSpacing),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 24 : 28, width: isSmallScreen ? 150 : 200),
+                  SizedBox(height: isSmallScreen ? 15 : 20),
+                  Row(
+                    children: [
+                      Expanded(child: ShimmerLoading.rectangular(height: isSmallScreen ? 80 : 100)),
+                      SizedBox(width: isSmallScreen ? 10 : 15),
+                      Expanded(child: ShimmerLoading.rectangular(height: isSmallScreen ? 80 : 100)),
+                    ],
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 40 : 50),
+                  SizedBox(height: isSmallScreen ? 10 : 15),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 40 : 50),
+                  SizedBox(height: isSmallScreen ? 10 : 15),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 40 : 50),
+                  SizedBox(height: isSmallScreen ? 15 : 20),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 40 : 50),
+                  SizedBox(height: isSmallScreen ? 8 : 10),
+                  Row(
+                    children: [
+                      Expanded(child: ShimmerLoading.rectangular(height: isSmallScreen ? 30 : 40)),
+                      SizedBox(width: isSmallScreen ? 8 : 10),
+                      Expanded(child: ShimmerLoading.rectangular(height: isSmallScreen ? 30 : 40)),
+                      SizedBox(width: isSmallScreen ? 8 : 10),
+                      Expanded(child: ShimmerLoading.rectangular(height: isSmallScreen ? 30 : 40)),
+                    ],
+                  ),
+                  SizedBox(height: verticalSpacing),
+                  ShimmerLoading.rectangular(height: isSmallScreen ? 40 : 50),
+                ],
+              ),
+            );
+          },
         ),
       ),
-    ));
+    );
   }
 }
