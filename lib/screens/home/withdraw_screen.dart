@@ -7,6 +7,7 @@ import '../../providers/user_data_provider.dart';
 import '../../withdrawal_service.dart'; // Import WithdrawalService
 import '../../models/auth_result.dart'; // Import AuthResult
 import '../../user_service.dart'; // Import UserService
+import '../../tooltip_service.dart'; // Import CustomTooltip
 
 enum WithdrawalMethod { bank, upi, none }
 
@@ -204,38 +205,50 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   // Withdrawal Method Selection
                   Column(
                     children: [
-                      _buildMethodCard(
-                        context,
-                        method: WithdrawalMethod.bank,
-                        icon: HugeIcons.strokeRoundedBank,
-                        label: 'Withdraw to Bank',
-                        isSelected: _selectedMethod == WithdrawalMethod.bank,
-                        onTap: () {
-                          setState(() {
-                            _selectedMethod = WithdrawalMethod.bank;
-                            _loadPreferredDetailsForMethod(WithdrawalMethod.bank);
-                          });
-                        },
-                        iconSize: methodCardIconSize,
-                        labelFontSize: methodCardTextFontSize,
-                        isSmallScreen: isSmallScreen,
+                      CustomTooltip(
+                        tooltipId: 'withdraw_bank_method',
+                        message: 'Withdraw your earnings directly to your bank account.',
+                        preferBelow: true,
+                        verticalOffset: 60,
+                        child: _buildMethodCard(
+                          context,
+                          method: WithdrawalMethod.bank,
+                          icon: HugeIcons.strokeRoundedBank,
+                          label: 'Withdraw to Bank',
+                          isSelected: _selectedMethod == WithdrawalMethod.bank,
+                          onTap: () {
+                            setState(() {
+                              _selectedMethod = WithdrawalMethod.bank;
+                              _loadPreferredDetailsForMethod(WithdrawalMethod.bank);
+                            });
+                          },
+                          iconSize: methodCardIconSize,
+                          labelFontSize: methodCardTextFontSize,
+                          isSmallScreen: isSmallScreen,
+                        ),
                       ),
                       SizedBox(height: isSmallScreen ? 10 : 15), // Vertical spacing between cards
-                      _buildMethodCard(
-                        context,
-                        method: WithdrawalMethod.upi,
-                        icon: HugeIcons.strokeRoundedCreditCard,
-                        label: 'Withdraw to UPI',
-                        isSelected: _selectedMethod == WithdrawalMethod.upi,
-                        onTap: () {
-                          setState(() {
-                            _selectedMethod = WithdrawalMethod.upi;
-                            _loadPreferredDetailsForMethod(WithdrawalMethod.upi);
-                          });
-                        },
-                        iconSize: methodCardIconSize,
-                        labelFontSize: methodCardTextFontSize,
-                        isSmallScreen: isSmallScreen,
+                      CustomTooltip(
+                        tooltipId: 'withdraw_upi_method',
+                        message: 'Withdraw your earnings using your UPI ID for quick transfers.',
+                        preferBelow: true,
+                        verticalOffset: 60,
+                        child: _buildMethodCard(
+                          context,
+                          method: WithdrawalMethod.upi,
+                          icon: HugeIcons.strokeRoundedCreditCard,
+                          label: 'Withdraw to UPI',
+                          isSelected: _selectedMethod == WithdrawalMethod.upi,
+                          onTap: () {
+                            setState(() {
+                              _selectedMethod = WithdrawalMethod.upi;
+                              _loadPreferredDetailsForMethod(WithdrawalMethod.upi);
+                            });
+                          },
+                          iconSize: methodCardIconSize,
+                          labelFontSize: methodCardTextFontSize,
+                          isSmallScreen: isSmallScreen,
+                        ),
                       ),
                     ],
                   ),

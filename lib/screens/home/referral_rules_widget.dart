@@ -28,7 +28,7 @@ class ReferralRulesWidget extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: horizontalMargin),
                 child: Text(
-                  'Learn more about how it works.',
+                  'How It Works.',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.deepPurple.shade400, fontWeight: FontWeight.bold, fontSize: titleFontSize),
                   textAlign: TextAlign.center,
                 ),
@@ -38,8 +38,8 @@ class ReferralRulesWidget extends StatelessWidget {
             _buildRuleItem(
               context,
               icon: HugeIcons.strokeRoundedCoins01,
-              title: 'What I will get?',
-              description: 'Get 50% lifetime commission of your friends referral rewards.',
+              title: 'Share Your Code',
+              description: 'Send your unique code to friends via WhatsApp, social media, or direct message.',
               isSmallScreen: isSmallScreen,
               iconSize: ruleIconSize,
               iconContainerSize: ruleIconContainerSize,
@@ -52,8 +52,8 @@ class ReferralRulesWidget extends StatelessWidget {
             _buildRuleItem(
               context,
               icon: HugeIcons.strokeRoundedBitcoinBag,
-              title: 'What will my friends get?',
-              description: 'Your friend will get signup bonus upon joining.',
+              title: 'They Sign Up & Get Bonus',
+              description: 'Your friend joins with your code and gets an instant 5k coins welcome bonus!',
               isSmallScreen: isSmallScreen,
               iconSize: ruleIconSize,
               iconContainerSize: ruleIconContainerSize,
@@ -66,8 +66,8 @@ class ReferralRulesWidget extends StatelessWidget {
             _buildRuleItem(
               context,
               icon: HugeIcons.strokeRoundedGift,
-              title: 'What are terms of invites?',
-              description: 'Your friends need to get some coins either by playing game or finishing tasks or answering surveys.',
+              title: 'You Both Earn!',
+              description: 'Get ₹10 instantly or 10000 Coins Instantly!',
               isSmallScreen: isSmallScreen,
               iconSize: ruleIconSize,
               iconContainerSize: ruleIconContainerSize,

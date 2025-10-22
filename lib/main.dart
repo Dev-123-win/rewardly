@@ -12,6 +12,7 @@ import 'ad_service.dart'; // Import AdService
 import 'remote_config_service.dart';
 import 'wrapper.dart';
 import 'theme_provider.dart';
+import 'tooltip_service.dart';
 
 // Define custom gradient for the app
 const LinearGradient appGradient = LinearGradient(
@@ -31,8 +32,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Set system UI overlay style for a white status bar
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.white, // Set status bar color to white
-    statusBarIconBrightness: Brightness.dark, // Use dark icons for better visibility on white
+    statusBarColor: Colors.lightBlue, // Set status bar color to white
+    statusBarIconBrightness: Brightness.light, // Use dark icons for better visibility on white
     statusBarBrightness: Brightness.light, // For iOS
   ));
   // Initialize all sharded Firebase projects
@@ -53,6 +54,9 @@ void main() async {
       providers: [
         ChangeNotifierProvider(
           create: (context) => ThemeProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => TooltipService(),
         ),
         StreamProvider<AuthResult?>.value(
           value: _authService.user, // Use the consistent instance

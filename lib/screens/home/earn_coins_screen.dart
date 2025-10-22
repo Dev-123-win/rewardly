@@ -5,6 +5,7 @@ import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart'; // For neumorphic design
 import '../../logger_service.dart'; // Import LoggerService
+import '../../tooltip_service.dart'; // Import CustomTooltip
 
 class EarnCoinsScreen extends StatefulWidget {
   const EarnCoinsScreen({super.key});
@@ -246,50 +247,60 @@ class _EarnCoinsScreenState extends State<EarnCoinsScreen> with TickerProviderSt
       iconColor = kAccentColor;
     }
 
-    return GestureDetector(
-      onTap: onPressed,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: kDefaultPadding / 2),
-        padding: cardPadding, // Use responsive padding
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(kDefaultBorderRadius),
-          boxShadow: boxShadow,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: iconColor, size: iconSize), // Use responsive icon size
-            const SizedBox(width: kDefaultPadding),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Earn $_coinsPerAd Coins',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: kTextColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: titleFontSize, // Use responsive title font size
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    statusText,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: iconColor,
-                          fontSize: bodyFontSize, // Use responsive body font size
-                        ),
-                  ),
-                ],
+    return CustomTooltip(
+      tooltipId: 'earn_coins_ad_card_$adNumber',
+      message: isUnlocked
+          ? 'Tap to watch this ad and earn $_coinsPerAd coins!'
+          : isWatched
+              ? 'You have already watched this ad today.'
+              : 'Watch previous ads to unlock this one.',
+      preferBelow: true,
+      verticalOffset: 60,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(vertical: kDefaultPadding / 2),
+          padding: cardPadding, // Use responsive padding
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(kDefaultBorderRadius),
+            boxShadow: boxShadow,
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor, size: iconSize), // Use responsive icon size
+              const SizedBox(width: kDefaultPadding),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Earn $_coinsPerAd Coins',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: kTextColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: titleFontSize, // Use responsive title font size
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      statusText,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: iconColor,
+                            fontSize: bodyFontSize, // Use responsive body font size
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (isUnlocked && _secondsRemaining == 0)
-              ScaleTransition(
-                scale: _cardScaleAnimation,
-                child: Icon(Icons.arrow_forward_ios, color: kAccentColor, size: iconSize), // Use responsive icon size
-              ),
-          ],
+              if (isUnlocked && _secondsRemaining == 0)
+                ScaleTransition(
+                  scale: _cardScaleAnimation,
+                  child: Icon(Icons.arrow_forward_ios, color: kAccentColor, size: iconSize), // Use responsive icon size
+                ),
+            ],
+          ),
         ),
       ),
     );

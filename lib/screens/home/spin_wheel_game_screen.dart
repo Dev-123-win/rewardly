@@ -435,19 +435,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                           child: SizedBox(
                             width: wheelSize,
                             height: wheelSize,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withAlpha((255 * 0.2).round()),
-                                    blurRadius: 10,
-                                    spreadRadius: 2,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: FortuneWheel(
+                            child: FortuneWheel(
                                 selected: _selected.stream,
                                 animateFirst: false, // Prevent automatic spin on screen open
                                 physics: NoPanPhysics(), // Disable manual rotation
@@ -485,7 +473,6 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                                   ),
                                 ],
                               ),
-                            ),
                           ),
                         ),
                       ),

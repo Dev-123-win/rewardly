@@ -134,7 +134,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   ),
                   SizedBox(height: verticalSpacing),
                   Text(
-                    'Copy your referral code',
+                    'Your Invite Code',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontSize: subtitleFontSize),
                   ),
@@ -174,7 +174,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     },
                     icon: HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: copyIconSize),
                     label: Text(
-                      'Share with Friends',
+                      'Share & Earn Now!',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: buttonTextFontSize),
                     ),
                     style: ElevatedButton.styleFrom(
