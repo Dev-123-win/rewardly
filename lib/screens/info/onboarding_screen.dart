@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../wrapper.dart'; // Assuming Wrapper is your main entry after onboarding
+import 'package:image_loader_flutter/image_loader_flutter.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -104,7 +105,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           if (_currentPage != onboardingPages.length - 1)
                             TextButton(
                               onPressed: _skipOnboarding,
-                              child: const Text('Skip', style: TextStyle(fontSize: 16)),
+                              child: Text('Skip', style: Theme.of(context).textTheme.bodyLarge),
                             ),
                           const Spacer(),
                           ElevatedButton(
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             child: Text(
                               _currentPage == onboardingPages.length - 1 ? 'Get Started' : 'Next',
-                              style: const TextStyle(fontSize: 16),
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                           ),
                         ],
@@ -167,8 +168,6 @@ class OnboardingPageContent extends StatelessWidget {
         final isSmallScreen = screenWidth < 600;
 
         final imageSize = isSmallScreen ? 150.0 : 200.0;
-        final titleFontSize = isSmallScreen ? 24.0 : 28.0;
-        final descriptionFontSize = isSmallScreen ? 16.0 : 18.0;
         final verticalSpacing = isSmallScreen ? 30.0 : 40.0;
         final horizontalPadding = isSmallScreen ? 20.0 : 40.0;
 
@@ -177,29 +176,26 @@ class OnboardingPageContent extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                imagePath,
+              ImageLoaderFlutterWidgets(
+                image: imagePath,
                 height: imageSize,
+                width: imageSize,
+                fit: BoxFit.contain,
+                circle: false,
+                radius: 0.0,
+                onTap: false,
               ),
               SizedBox(height: verticalSpacing),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Poppins',
-                ),
+                style: Theme.of(context).textTheme.headlineLarge,
               ),
               SizedBox(height: verticalSpacing * 0.5),
               Text(
                 description,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: descriptionFontSize,
-                  color: Colors.grey,
-                  fontFamily: 'Lato',
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey),
               ),
             ],
           ),

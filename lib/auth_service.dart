@@ -34,7 +34,7 @@ class AuthService {
       final FirebaseAuth authInstance = FirebaseAuth.instanceFor(app: FirebaseProjectConfigService.getFirebaseApp(projectId));
       authInstance.authStateChanges().listen((User? user) {
         if (user != null) {
-          _userSubject.add(AuthResult.success(uid: user.uid, projectId: projectId));
+          _userSubject.add(AuthResult.success(uid: user.uid, email: user.email, projectId: projectId));
           _updateFCMTokenForUser(user.uid, projectId); // Update FCM token on auth state change
         } else if (_userSubject.value?.uid == null) { // Check only UID for simplicity in nulling out
           _userSubject.add(null);
@@ -45,7 +45,7 @@ class AuthService {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (user != null) {
         // For the default instance, we don't have a specific projectId from sharding logic
-        _userSubject.add(AuthResult.success(uid: user.uid, projectId: null));
+        _userSubject.add(AuthResult.success(uid: user.uid, email: user.email, projectId: null));
         // We cannot update FCM token for a default project without knowing the shard
       } else if (_userSubject.value?.uid == null) { // Check only UID for simplicity in nulling out
         _userSubject.add(null);
@@ -85,8 +85,8 @@ class AuthService {
           final String? fcmToken = await FirebaseMessaging.instance.getToken(); // Get FCM token
           await UserService(firestoreInstance: targetFirestore).createUserData(user.uid, email, referralCode: referralCode, deviceId: deviceId, projectId: targetProjectId, fcmToken: fcmToken);
           LoggerService.info('AuthService: User data created in Firestore for UID: ${user.uid}');
-          _userSubject.add(AuthResult.success(uid: user.uid, projectId: targetProjectId)); // Add the newly registered user to the stream
-          return AuthResult.success(uid: user.uid, projectId: targetProjectId);
+          _userSubject.add(AuthResult.success(uid: user.uid, email: user.email, projectId: targetProjectId)); // Add the newly registered user to the stream
+          return AuthResult.success(uid: user.uid, email: user.email, projectId: targetProjectId);
         }
         LoggerService.warning('AuthService: User creation failed unexpectedly for $email.');
         return AuthResult.failure(message: 'User creation failed unexpectedly.');
@@ -112,9 +112,9 @@ class AuthService {
         User? user = result.user;
         if (user != null) {
           LoggerService.info('AuthService: Successfully signed in $email to project: $projectId with UID: ${user.uid}');
-          _userSubject.add(AuthResult.success(uid: user.uid, projectId: projectId)); // Add the newly logged-in user to the stream
+          _userSubject.add(AuthResult.success(uid: user.uid, email: user.email, projectId: projectId)); // Add the newly logged-in user to the stream
           _updateFCMTokenForUser(user.uid, projectId); // Update FCM token on successful sign-in
-          return AuthResult.success(uid: user.uid, projectId: projectId);
+          return AuthResult.success(uid: user.uid, email: user.email, projectId: projectId);
         }
       } on FirebaseAuthException catch (e, s) {
         LoggerService.error('AuthService: FirebaseAuthException during sign-in for $email in project $projectId. Code: ${e.code}', e, s);

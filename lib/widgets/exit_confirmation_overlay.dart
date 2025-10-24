@@ -44,8 +44,7 @@ class ExitConfirmationOverlay extends StatelessWidget {
             const SizedBox(height: 25),
             Text(
               'Exit the game?',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     color: Colors.black87, // Dark text for contrast on white
                   ),
               textAlign: TextAlign.center,
@@ -54,7 +53,7 @@ class ExitConfirmationOverlay extends StatelessWidget {
             Text(
               'Are you sure want to exit the game!',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
             ),
             const SizedBox(height: 40),
             SizedBox(
@@ -66,7 +65,6 @@ class ExitConfirmationOverlay extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                   shape: RoundedRectangleBorder(
@@ -85,9 +83,7 @@ class ExitConfirmationOverlay extends StatelessWidget {
                   foregroundColor: Colors.grey.shade700, // Grey color from image
                   backgroundColor: Colors.grey.shade200, // Light grey background for cancel
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  textStyle: Theme.of(context).textTheme.titleLarge,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

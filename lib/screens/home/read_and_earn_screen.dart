@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'dart:async';
 import 'package:provider/provider.dart';
-import 'package:webview_flutter/webview_flutter.dart'; // Added for in-app webview
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'; // Replaced webview_flutter
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart';
@@ -39,9 +39,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
   DateTime? _backgroundTime;
   bool _isAdLoading = false;
   bool _isReading = false;
-  bool _showWebView = false; // New state to control webview visibility
-  late WebViewController _webViewController; // Controller for the webview
-  bool _isLoadingWebView = true; // To show loading indicator for webview
+  // Removed _showWebView, _webViewController, _isLoadingWebView as InAppBrowser handles its own display
 
   // Animation controllers for neumorphic effects and subtle animations
   late AnimationController _cardAnimationController;
@@ -113,7 +111,6 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       _currentReadTask = _availableReadTasks[Random().nextInt(_availableReadTasks.length)];
       _secondsRemaining = _currentReadTask!.durationMinutes * 60;
       _isReading = false;
-      _showWebView = false; // Ensure webview is hidden when a new task is generated
       LoggerService.debug('New read task generated: ${_currentReadTask!.title} for ${_currentReadTask!.durationMinutes} minutes.');
     });
   }
@@ -138,58 +135,18 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     });
   }
 
-  void _launchUrlInApp(String url) {
-    setState(() {
-      _showWebView = true;
-      _isLoadingWebView = true;
-      _webViewController = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0x00000000))
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onProgress: (int progress) {
-              if (mounted) {
-                setState(() {
-                  _isLoadingWebView = progress < 100;
-                });
-              }
-            },
-            onPageStarted: (String url) {
-              LoggerService.debug('WebView page started loading: $url');
-              if (mounted) {
-                setState(() {
-                  _isLoadingWebView = true;
-                });
-              }
-            },
-            onPageFinished: (String url) {
-              LoggerService.debug('WebView page finished loading: $url');
-              if (mounted) {
-                setState(() {
-                  _isLoadingWebView = false;
-                });
-              }
-            },
-            onWebResourceError: (WebResourceError error) {
-              LoggerService.error('WebView resource error: ${error.description}');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error loading page: ${error.description}')),
-                );
-                setState(() {
-                  _isLoadingWebView = false;
-                });
-              }
-            },
-            onNavigationRequest: (NavigationRequest request) {
-              LoggerService.debug('WebView navigating to: ${request.url}');
-              return NavigationDecision.navigate;
-            },
-          ),
-        )
-        ..loadRequest(Uri.parse(url));
-    });
-    LoggerService.debug('Launched URL in app webview: $url');
+  void _launchUrlInApp(String url) async {
+    try {
+      await InAppBrowser.openWithSystemBrowser(url: WebUri(url)); // Changed Uri.parse to WebUri
+      LoggerService.debug('Launched URL in InAppBrowser: $url');
+    } catch (e) {
+      LoggerService.error('Failed to launch URL in InAppBrowser: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch $url')),
+        );
+      }
+    }
   }
 
   void _showClaimCoinsModal() {
@@ -211,9 +168,8 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
             children: [
               Text(
                 'Task Completed!',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: kTextColor,
-                      fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: kDefaultPadding),
@@ -221,7 +177,6 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                 'You earned ${_currentReadTask!.coins} coins!',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: kAccentColor,
-                      fontWeight: FontWeight.bold,
                     ),
               ),
               const SizedBox(height: kDefaultPadding * 2),
@@ -236,9 +191,8 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                 ),
                 child: Text(
                   'Claim Coins',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
                       ),
                 ),
               ),
@@ -306,53 +260,30 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
       child: Scaffold(
         backgroundColor: kBackgroundColor,
         appBar: AppBar(
-          title: Text(_showWebView ? _currentReadTask?.title ?? 'Web View' : 'Read & Earn'),
+          title: const Text('Read & Earn'),
           centerTitle: true,
           backgroundColor: Colors.transparent,
           elevation: 0,
           foregroundColor: kTextColor,
-          leading: _showWebView
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    setState(() {
-                      _showWebView = false;
-                    });
-                  },
-                )
-              : null,
-          actions: _showWebView && _isLoadingWebView
-              ? [
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
-                      color: kPrimaryColor,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ]
-              : null,
         ),
-        body: _showWebView
-            ? WebViewWidget(controller: _webViewController)
-            : Stack(
-                children: [
-                  Center(
-                    child: _currentReadTask == null
-                        ? const CircularProgressIndicator(color: kPrimaryColor)
-                        : _buildReadCard(context),
+        body: Stack(
+          children: [
+            Center(
+              child: _currentReadTask == null
+                  ? const CircularProgressIndicator(color: kPrimaryColor)
+                  : _buildReadCard(context),
+            ),
+            if (_isAdLoading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withAlpha((255 * 0.6).round()),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: kPrimaryColor),
                   ),
-                  if (_isAdLoading)
-                    Positioned.fill(
-                      child: Container(
-                        color: Colors.black.withAlpha((255 * 0.6).round()),
-                        child: const Center(
-                          child: CircularProgressIndicator(color: kPrimaryColor),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
+          ],
+        ),
       ),
     );
   }
@@ -405,9 +336,8 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                         child: Text(
                           _currentReadTask!.title,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                 color: kTextColor,
-                                fontWeight: FontWeight.bold,
                               ),
                         ),
                       ),
@@ -416,7 +346,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                         child: Text(
                           'Earn ${_currentReadTask!.coins} Coins',
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: kTextColor,
                               ),
                         ),
@@ -426,7 +356,7 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                         child: Text(
                           statusText,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                 color: iconColor,
                               ),
                         ),
@@ -451,22 +381,21 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
                           children: [
                             Text(
                               _currentReadTask!.title,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                     color: kTextColor,
-                                    fontWeight: FontWeight.bold,
                                   ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Earn ${_currentReadTask!.coins} Coins',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: kTextColor,
                                   ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               statusText,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: iconColor,
                                   ),
                             ),

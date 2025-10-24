@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 //import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart'; // Import lottie package
+import 'package:image_loader_flutter/image_loader_flutter.dart';
 import '../../auth_service.dart';
 import '../../widgets/custom_button.dart';
 import 'forgot_password.dart';
@@ -79,7 +80,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Email Address',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 20.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 30.0),
                                     hintText: 'Enter your email',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -113,7 +114,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Password',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 20.0),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 30.0),
                                     hintText: 'Enter your password',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -218,13 +219,20 @@ class AuthScreenLoading extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/AppLogo.png', height: 150), // Increased logo size
+                ImageLoaderFlutterWidgets(
+                  image: 'assets/AppLogo.png',
+                  height: 150,
+                  width: 150,
+                  fit: BoxFit.contain,
+                  circle: false,
+                  radius: 0.0,
+                  onTap: false,
+                ), // Increased logo size
                 const SizedBox(height: 40), // Increased spacing
                 Text(
                   'Loading Rewardly...',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: Colors.black87,
-                        fontFamily: 'Poppins', // Changed font family
                         fontWeight: FontWeight.bold, // Made text bold
                       ),
                 ),

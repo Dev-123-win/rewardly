@@ -44,38 +44,20 @@ class ProfileScreen extends StatelessWidget {
                     child: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: isLargeScreen ? 80 : 60, color: Colors.grey.shade600),
                   ),
                   SizedBox(height: isLargeScreen ? 20 : 15),
-                  Text(
-                    authResult?.uid?.split('@')[0] ?? 'No Email',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.black87,
-                          fontSize: isLargeScreen ? 24 : 18,
-                        ),
-                  ),
                   SizedBox(height: isLargeScreen ? 10 : 8),
-                  Card(
-                    elevation: 0.0,
-                    color: Colors.grey.shade100,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
-                    margin: EdgeInsets.symmetric(horizontal: 20),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                      child: Row(
-                        children: [
-                          HugeIcon(icon: HugeIcons.strokeRoundedId, color: Theme.of(context).primaryColor, size: isLargeScreen ? 24 : 20),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              authResult?.uid ?? 'UID not available',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.black87,
-                                fontSize: isLargeScreen ? 16 : 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _buildProfileCard(
+                    context,
+                    title: 'App Id',
+                    value: authResult?.uid ?? 'UID not available',
+                    icon: HugeIcons.strokeRoundedId,
+                  ),
+                  const SizedBox(height: 5),
+                  _buildProfileCard(
+                    context,
+                    title: 'Email',
+                    value: authResult?.email ?? 'Email not available',
+                    icon: HugeIcons.strokeRoundedMail01,
+                    showCheckmark: true,
                   ),
                   SizedBox(height: verticalSpacing),
                   Align(
@@ -157,7 +139,51 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required List<List<dynamic>> icon}) { // Changed type to List<List<dynamic>>
+  Widget _buildProfileCard(BuildContext context, {required String title, required String value, required List<List<dynamic>> icon, bool showCheckmark = false}) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isLargeScreen = screenWidth > 800;
+    return Card(
+      elevation: 0.0,
+      color: Colors.grey.shade100,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+        child: Row(
+          children: [
+            HugeIcon(icon: icon, color: Theme.of(context).primaryColor, size: isLargeScreen ? 24 : 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.black87,
+                      fontSize: isLargeScreen ? 18 : 16,
+                    ),
+                  ),
+                  Text(
+                    value,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                      fontSize: isLargeScreen ? 16 : 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            if (showCheckmark)
+              HugeIcon(icon: HugeIcons.strokeRoundedCheckmarkCircle01, color: Colors.green, size: isLargeScreen ? 24 : 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountOption(BuildContext context, {required String title, required String value, required List<List<dynamic>> icon}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
@@ -174,7 +200,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           Row(
             children: [
-              HugeIcon(icon: icon, color: Colors.amber, size: 20), // Replaced Icon with HugeIcon
+              HugeIcon(icon: icon, color: Colors.amber, size: 20),
               const SizedBox(width: 5),
               Text(
                 value,

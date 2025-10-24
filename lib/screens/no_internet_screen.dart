@@ -18,7 +18,7 @@ class NoInternetScreen extends StatelessWidget {
           final titleFontSize = isSmallScreen ? 20.0 : 28.0;
           final messageFontSize = isSmallScreen ? 14.0 : 16.0;
           final buttonPadding = isSmallScreen ? EdgeInsets.symmetric(horizontal: 20, vertical: 12) : EdgeInsets.symmetric(horizontal: 30, vertical: 15);
-          final buttonTextStyle = isSmallScreen ? TextStyle(fontSize: 16) : TextStyle(fontSize: 18);
+          final buttonTextStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: isSmallScreen ? 16 : 18);
 
           return Center(
             child: Padding(

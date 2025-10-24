@@ -77,10 +77,8 @@ class _CustomButtonState extends State<CustomButton> {
               Text(
                 widget.text,
                 style: widget.textStyle ??
-                    const TextStyle(
+                    Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
                     ),
               ),
             ],

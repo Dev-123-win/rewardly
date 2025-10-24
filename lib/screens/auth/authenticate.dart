@@ -65,7 +65,7 @@ class _AuthenticateState extends State<Authenticate> {
                               child: Center(
                                 child: Text(
                                   'Login',
-                                  style: TextStyle(
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: showSignIn ? Colors.white : Colors.grey.shade700,
                                     fontWeight: FontWeight.bold,
                                     fontSize: tabFontSize,

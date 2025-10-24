@@ -9,6 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerA
 import 'package:lottie/lottie.dart'; // Import Lottie package
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import '../../logger_service.dart'; // Import LoggerService
+import 'package:image_loader_flutter/image_loader_flutter.dart';
 // Removed direct import of UserService as it will be accessed via UserDataProvider
 
 class MinesweeperGameScreen extends StatefulWidget {
@@ -259,7 +260,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                   children: [
                     Text(
                       'Game Settings',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.headlineLarge,
                     ),
                     const SizedBox(height: 20),
 
@@ -268,7 +269,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Select Board Size:',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -289,9 +290,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                           startColor: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
                           endColor: isSelected ? Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()) : Theme.of(context).cardColor,
-                          textStyle: TextStyle(
+                          textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
-                            fontWeight: FontWeight.bold,
                           ),
                           boxShadow: isSelected
                               ? [
@@ -325,7 +325,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'Mines: $tempMines',
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                     SliderTheme(
@@ -335,7 +335,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         thumbColor: Theme.of(context).primaryColorDark,
                         overlayColor: Theme.of(context).primaryColor.withAlpha((255 * 0.2).round()),
                         valueIndicatorColor: Theme.of(context).primaryColor,
-                        valueIndicatorTextStyle: const TextStyle(color: Colors.white),
+                        valueIndicatorTextStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
                       ),
                       child: Slider(
                         value: tempMines.toDouble(),
@@ -364,7 +364,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                           startColor: Colors.grey.shade400,
                           endColor: Colors.grey.shade600,
-                          textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                         ),
                         CustomButton(
                           text: 'Apply',
@@ -381,7 +381,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                           startColor: Theme.of(context).primaryColor,
                           endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()),
-                          textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                         ),
                       ],
                     ),
@@ -571,7 +571,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         },
                         startColor: Colors.green,
                         endColor: Colors.green.withAlpha((255 * 0.7).round()),
-                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -598,7 +598,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                         },
                         startColor: Colors.blueAccent,
                         endColor: Colors.blueAccent.withAlpha((255 * 0.7).round()),
-                        textStyle: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -615,7 +615,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                       },
                       startColor: Theme.of(context).primaryColor,
                       endColor: Theme.of(context).primaryColor.withAlpha((255 * 0.7).round()),
-                      textStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -696,11 +696,14 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                             if (cell.isRevealed) {
                               if (cell.hasMine) {
                                 // Revealed mine
-                                cellContent = Image.asset(
-                                  'assets/bomb.png',
+                                cellContent = ImageLoaderFlutterWidgets(
+                                  image: 'assets/bomb.png',
                                   width: cellContentSize,
                                   height: cellContentSize,
                                   fit: BoxFit.contain,
+                                  circle: false,
+                                  radius: 0.0,
+                                  onTap: false,
                                 );
                                 shadows = _getPressedInShadows();
                               } else {
@@ -708,9 +711,9 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                                 textColor = _getAdjacentMineColor(cell.adjacentMines); // Use existing color logic for coin numbers
                                 cellContent = Text(
                                   '${cell.adjacentMines}', // adjacentMines now holds coin value
-                                  style: TextStyle(
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: cellTextFontSize, // Slightly larger font
+                                    fontSize: cellTextFontSize,
                                     color: textColor,
                                   ),
                                 );
@@ -718,13 +721,15 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                               }
                             } else if (cell.isFlagged) {
                               // Flagged cell
-                              cellContent = Image.asset(
-                                'assets/minesweeper.png', // Using the provided image for flag
+                              cellContent = ImageLoaderFlutterWidgets(
+                                image: 'assets/minesweeper.png', // Using the provided image for flag
                                 width: cellContentSize * 0.75,
                                 height: cellContentSize * 0.75,
                                 fit: BoxFit.contain,
-                                color: Colors.redAccent, // Red flag
-                              );
+                                circle: false,
+                                radius: 0.0,
+                                  onTap: false,
+                                );
                               shadows = _getRaisedShadows();
                             } else {
                               // Unrevealed cell
@@ -834,10 +839,8 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
           ),
           Text(
             'MINESWEEPER',
-            style: TextStyle(
-              fontFamily: 'Calinastiya demo',
+            style: Theme.of(context).textTheme.displayLarge?.copyWith(
               fontSize: titleFontSize,
-              fontWeight: FontWeight.w900,
               color: Colors.white,
               letterSpacing: 2,
             ),
@@ -893,20 +896,22 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
             ),
             child: Row(
               children: [
-                Image.asset(
-                  'assets/bomb.png', // Using the provided image for bomb
+                ImageLoaderFlutterWidgets(
+                  image: 'assets/bomb.png', // Using the provided image for bomb
                   width: iconSize,
                   height: iconSize,
                   fit: BoxFit.contain,
-                  color: Colors.redAccent, // Red bomb icon
+                  circle: false,
+                  radius: 0.0,
+                  onTap: false,
                 ),
                 SizedBox(width: verticalSpacing),
                 Text(
                   '${_numMines - minesFlagged}',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: fontSize,
                     fontWeight: FontWeight.bold,
-                    color: Colors.redAccent, // Red text for mine count
+                    color: Colors.redAccent,
                   ),
                 ),
               ],
@@ -925,10 +930,10 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                 SizedBox(width: verticalSpacing),
                 Text(
                   '$timerSeconds s',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: fontSize,
                     fontWeight: FontWeight.bold,
-                    color: Colors.lightBlueAccent, // Blue text for timer
+                    color: Colors.lightBlueAccent,
                   ),
                 ),
               ],
@@ -942,7 +947,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
               padding: buttonPadding,
               startColor: const Color(0xFFFBC02D), // Yellow color
               endColor: const Color(0xFFF9A825), // Slightly darker yellow
-              textStyle: TextStyle(
+              textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
                 fontSize: buttonFontSize,

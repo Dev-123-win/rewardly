@@ -14,6 +14,7 @@ import 'read_and_earn_screen.dart'; // New import for Read & Earn
 import '../../logger_service.dart';
 import '../../models/auth_result.dart';
 import '../../widgets/custom_button.dart'; // Ensure CustomButton is imported
+import 'package:image_loader_flutter/image_loader_flutter.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -212,7 +213,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                   Expanded(
                                     child: Text(
                                       'Hello, User!',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 18 : 22),
+                                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black, fontSize: isSmallScreen ? 18 : 22),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -249,14 +250,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                     children: [
                                       Text(
                                         'Total Balance',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 16 : 18),
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 16 : 18),
                                       ),
                                       SizedBox(height: isSmallScreen ? 3 : 5),
                                       Text(
                                         '₹${totalBalanceINR.toStringAsFixed(2)}',
-                                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
                                           color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.bold,
                                           fontSize: isSmallScreen ? 30 : 36,
                                         ),
                                       ),
@@ -265,18 +265,20 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                         builder: (context, child) {
                                           return Text(
                                             '(${_coinAnimation.value.toInt()} coins)',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
+                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
                                           );
                                         },
                                       ),
                                     ],
                                   ),
-                                  Image.asset(
-                                    'assets/coin.png',
+                                  ImageLoaderFlutterWidgets(
+                                    image: 'assets/coin.png',
                                     height: isSmallScreen ? 35 : 40,
                                     width: isSmallScreen ? 35 : 40,
                                     fit: BoxFit.contain,
-                                    color: Theme.of(context).primaryColor, // Apply primary color for consistency
+                                    circle: false,
+                                    radius: 0.0,
+                                    onTap: false,
                                   ),
                                 ],
                               ),
@@ -293,7 +295,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Text(
                     'Quick Actions',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: sectionTitleFontSize),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: sectionTitleFontSize),
                   ),
                 ),
                 SizedBox(height: isSmallScreen ? 10 : 15),
@@ -355,7 +357,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Text(
                     'Explore & Earn',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: sectionTitleFontSize),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: sectionTitleFontSize),
                   ),
                 ),
                 SizedBox(height: isSmallScreen ? 10 : 15),
@@ -370,7 +372,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                               context,
                               title: 'Spin & Win',
                               subtitle: 'Try your luck!',
-                              imagePath: 'assets/coin.png',
+                              imagePath: 'assets/spin and win.png',
                               onTap: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
                               },
@@ -388,7 +390,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                               context,
                               title: 'Watch & Earn',
                               subtitle: 'Get coins by watching ads!',
-                              imagePath: 'assets/watch_ads.png',
+                              imagePath: 'assets/watch and earn.png',
                               onTap: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
                               },
@@ -419,7 +421,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                         titleFontSize: isSmallScreen ? 16 : 18,
                         subtitleFontSize: isSmallScreen ? 12 : 14,
                         buttonPadding: isSmallScreen ? EdgeInsets.symmetric(horizontal: 12, vertical: 6) : EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold) : Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                        buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white) : Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                       ),
                       SizedBox(height: isSmallScreen ? 10 : 15),
                       GridView.count(
@@ -433,7 +435,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                             context,
                             title: 'Tic Tac Toe',
                             subtitle: 'Play against NPC!',
-                            imagePath: 'assets/tic_tac_toe.png',
+                            imagePath: 'assets/tictactoe.png',
                             onTap: () {
                               Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
                             },
@@ -513,7 +515,7 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: labelFontSize),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: labelFontSize),
               ),
             ],
           ),
@@ -563,12 +565,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 15.0),
-                child: Image.asset(
-                  imagePath,
+                child: ImageLoaderFlutterWidgets(
+                  image: imagePath,
                   height: imageSize,
                   width: imageSize,
-                  fit: BoxFit.contain,
-                  color: Colors.white,
+                  fit: BoxFit.cover,
+                  circle: false,
+                  radius: 0.0,
+                  onTap: false,
                 ),
               ),
               Padding(
@@ -578,13 +582,13 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                     Text(
                       title,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
                     ),
                   ],
                 ),
@@ -639,12 +643,14 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
             children: [
               Padding(
                 padding: const EdgeInsets.all(15.0),
-                child: Image.asset(
-                  imagePath,
+                child: ImageLoaderFlutterWidgets(
+                  image: imagePath,
                   height: imageSize,
                   width: imageSize,
                   fit: BoxFit.contain,
-                  color: Colors.white,
+                  circle: false,
+                  radius: 0.0,
+                  onTap: false,
                 ),
               ),
               Expanded(
@@ -654,12 +660,12 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
                     ),
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
                     ),
                   ],
                 ),
@@ -719,24 +725,26 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                imagePath,
+              ImageLoaderFlutterWidgets(
+                image: imagePath,
                 height: imageSize,
                 width: imageSize,
                 fit: BoxFit.contain,
-                color: Colors.white,
+                circle: false,
+                radius: 0.0,
+                onTap: false,
               ),
               const SizedBox(height: 10),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
               ),
               const SizedBox(height: 5),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
               ),
             ],
           ),

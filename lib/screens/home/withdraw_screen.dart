@@ -113,7 +113,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             final cardPadding = isSmallScreen ? 18.0 : 25.0;
             final buttonVerticalPadding = isSmallScreen ? 15.0 : 18.0;
             final buttonTextFontSize = isSmallScreen ? 16.0 : 18.0;
-            final methodCardIconSize = isSmallScreen ? 24.0 : 30.0;
+            final methodCardIconSize = isSmallScreen ? 30.0 : 36.0;
             final methodCardTextFontSize = isSmallScreen ? 16.0 : 18.0;
 
             return SingleChildScrollView(
@@ -311,7 +311,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Error loading activity: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+          return Center(child: Text('Error loading activity: ${snapshot.error}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.red)));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return Center(
@@ -369,7 +369,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                         children: [
                           Text(
                             'Withdrawal of $amount coins',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: isSmallScreen ? 14 : 16),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black87, fontSize: isSmallScreen ? 14 : 16),
                           ),
                           SizedBox(height: isSmallScreen ? 3 : 5),
                           Text(
@@ -384,12 +384,12 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                       children: [
                         Text(
                           status.toUpperCase(),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(color: statusColor, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 12 : 14),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: statusColor, fontSize: isSmallScreen ? 12 : 14),
                         ),
                         if (request['createdAt'] != null)
                           Text(
                             (request['createdAt'] as Timestamp).toDate().toLocal().toString().split(' ')[0],
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500], fontSize: isSmallScreen ? 10 : 12),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.grey[500], fontSize: isSmallScreen ? 10 : 12),
                           ),
                       ],
                     ),
@@ -409,7 +409,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       children: [
         Text(
           'Enter Bank Account Details',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 16 : 18),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontSize: isSmallScreen ? 16 : 18),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
@@ -419,11 +419,11 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             hintText: 'e.g., 1234567890',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedWallet03, size: isSmallScreen ? 20 : 24, color: Colors.grey),
-            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
           ),
           keyboardType: TextInputType.number,
-          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
@@ -433,10 +433,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             hintText: 'e.g., HDFC0001234',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedCode, size: isSmallScreen ? 20 : 24, color: Colors.grey),
-            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
           ),
-          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
@@ -446,10 +446,10 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             hintText: 'e.g., John Doe',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedUser, size: isSmallScreen ? 20 : 24, color: Colors.grey),
-            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
           ),
-          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         _buildSaveDetailsCheckbox(isSmallScreen),
@@ -463,7 +463,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       children: [
         Text(
           'Enter UPI Details',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 16 : 18),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black87, fontSize: isSmallScreen ? 16 : 18),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         TextFormField(
@@ -473,11 +473,11 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             hintText: 'e.g., yourname@bank',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedQrCode, size: isSmallScreen ? 20 : 24, color: Colors.grey),
-            labelStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
-            hintStyle: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+            labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
           ),
           keyboardType: TextInputType.emailAddress,
-          style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16),
         ),
         SizedBox(height: isSmallScreen ? 15 : 20),
         _buildSaveDetailsCheckbox(isSmallScreen),
@@ -487,7 +487,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
 
   Widget _buildSaveDetailsCheckbox(bool isSmallScreen) {
     return CheckboxListTile(
-      title: Text('Save these details for future withdrawals', style: TextStyle(fontSize: isSmallScreen ? 14 : 16)),
+      title: Text('Save these details for future withdrawals', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: isSmallScreen ? 14 : 16)),
       value: _saveDetails,
       onChanged: (bool? value) {
         setState(() {

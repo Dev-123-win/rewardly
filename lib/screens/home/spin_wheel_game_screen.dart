@@ -215,7 +215,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                     scale: _coinPulseAnimation,
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Theme.of(context).primaryColorDark),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -223,7 +223,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                   Text(
                     content,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 40),
                   SizedBox(
@@ -236,7 +236,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        textStyle: Theme.of(context).textTheme.titleLarge!,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -293,14 +293,14 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                   const SizedBox(height: 25),
                   Text(
                     'Watch an Ad!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Theme.of(context).primaryColorDark),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 15),
                   Text(
                     'Watch a short ad to get another spin!',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 40),
                   SizedBox(
@@ -351,7 +351,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                         backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
-                        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        textStyle: Theme.of(context).textTheme.titleLarge!,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -475,11 +475,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                       final totalSpins = freeSpins + adSpins;
                       return Text(
                         'Available Spins: $totalSpins',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.blue),
                       );
                     },
                   ),
@@ -514,11 +510,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                                 ),
                                 child: Text(
                                   reward.text,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 24,
-                                  ),
+                                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
                                 ),
                               ),
                           ],
@@ -556,7 +548,7 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                             ),
                             child: _isSpinning
                                 ? const CircularProgressIndicator(color: Colors.white)
-                                : const Text('Spin to Win!'),
+                                : Text('Spin to Win!', style: Theme.of(context).textTheme.titleLarge!.copyWith(color: Colors.white)),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -573,10 +565,10 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                                 ? const CircularProgressIndicator(color: Colors.white)
                                 : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text('Watch Ad for Spin!'),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.play_arrow, size: 24),
+                                    children: [
+                                      Text('Watch Ad for Spin!', style: Theme.of(context).textTheme.titleLarge!.copyWith(color: Colors.white)),
+                                      const SizedBox(width: 8),
+                                      const Icon(Icons.play_arrow, size: 24, color: Colors.white),
                                     ],
                                   ),
                           ),
@@ -683,9 +675,7 @@ class _GradientButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 18),
             child: Center(
               child: DefaultTextStyle(
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
                   color: Colors.white,
                 ),
                 child: child,

@@ -7,6 +7,7 @@ import '../../shared/shimmer_loading.dart';
 import 'referral_rules_widget.dart'; // Import the new widget
 import 'referral_history_screen.dart'; // Import the referral history screen
 import 'package:hugeicons/hugeicons.dart';
+import 'package:image_loader_flutter/image_loader_flutter.dart';
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -107,16 +108,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   Text(
                     'We Share More.\nWe Earn More.',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: titleFontSize),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: titleFontSize),
                   ),
                   SizedBox(height: verticalSpacing * 0.75),
                   Text(
                     'Invite your Friends, Win Rewards!',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: Colors.deepPurple,
-                          fontFamily: 'Calinastiya',
-                          fontWeight: FontWeight.bold,
                           fontSize: subtitleFontSize,
                         ),
                   ),
@@ -127,10 +126,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54, fontSize: bodyFontSize),
                   ),
                   SizedBox(height: verticalSpacing),
-                  Image.asset(
-                    'assets/referral.png',
+                  ImageLoaderFlutterWidgets(
+                    image: 'assets/referral.png',
                     height: imageSize,
+                    width: imageSize,
                     fit: BoxFit.contain,
+                    circle: false,
+                    radius: 0.0,
+                    onTap: false,
                   ),
                   SizedBox(height: verticalSpacing),
                   Text(
@@ -158,9 +161,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            referralCode,
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontWeight: FontWeight.bold, fontSize: referralCodeFontSize),
-                          ),
+                          referralCode,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.deepPurple, letterSpacing: 2, fontSize: referralCodeFontSize),
+                        ),
                           SizedBox(width: isSmallScreen ? 8 : 10),
                           HugeIcon(icon: HugeIcons.strokeRoundedCopy01, color: Colors.deepPurple.shade400, size: copyIconSize),
                         ],
@@ -175,7 +178,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     icon: HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: copyIconSize),
                     label: Text(
                       'Refer Now',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: buttonTextFontSize),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: buttonTextFontSize),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,
@@ -210,7 +213,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                               children: [
                                 Text(
                                   'Here is your\nReferral earning',
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: referralCardTitleFontSize),
+                                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: referralCardTitleFontSize),
                                 ),
                                 SizedBox(height: isSmallScreen ? 8 : 10),
                                 Text(
@@ -231,7 +234,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                               Text(
                                 'Click Here\nTo See You...',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: isSmallScreen ? 12 : 14),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.blue.shade700, fontSize: isSmallScreen ? 12 : 14),
                               ),
                             ],
                           ),

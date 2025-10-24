@@ -73,7 +73,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               labelText: 'Email',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 24.0),
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 30.0),
                               hintText: 'Enter your email',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,
@@ -154,7 +154,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.grey.shade600, size: 20),
+                                HugeIcon(icon: HugeIcons.strokeRoundedArrowLeft01, color: Colors.grey.shade600, size: 28.0),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Back to Sign In',

@@ -459,7 +459,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                     scale: _dialogScaleAnimation,
                     child: Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).primaryColorDark), // Enhanced text style
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Theme.of(context).primaryColorDark), // Enhanced text style
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -467,7 +467,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                   Text(
                     content,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700), // Enhanced text style
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade700), // Enhanced text style
                   ),
                   const SizedBox(height: 40), // Increased spacing
                   if (gameResult == GameResult.win) ...[
@@ -496,7 +496,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                           shape: RoundedRectangleBorder(
@@ -516,9 +515,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: Theme.of(context).primaryColor,
-                          textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          textStyle: Theme.of(context).textTheme.titleLarge,
                         ),
                         child: Text('Watch Ad for ${rewardCoins * 2} Coins'),
                       ),
@@ -536,7 +533,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
                           shape: RoundedRectangleBorder(
@@ -557,9 +553,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                           },
                           style: TextButton.styleFrom(
                             foregroundColor: Theme.of(context).primaryColor,
-                            textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            textStyle: Theme.of(context).textTheme.titleLarge,
                           ),
                           child: Text('Watch Ad for ${rewardCoins * 2} Coins'),
                         ),
@@ -716,7 +710,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                   padding: const EdgeInsets.only(bottom: 10.0, top: 20.0), // Added top padding
                                   child: Text(
                                     'Computer is thinking...',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).primaryColorDark),
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).primaryColorDark),
                                   ),
                                 ),
                               ),
@@ -729,7 +723,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 18),
                                     textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -788,8 +781,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
               title: Text(
                 'Select Difficulty',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: Theme.of(context).primaryColorDark,
                     ),
               ),
@@ -857,7 +849,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                   .textTheme
                                   .titleLarge
                                   ?.copyWith(
-                                    fontWeight: FontWeight.bold,
                                     color: selectedMode == mode
                                         ? Colors.white
                                         : Theme.of(context).primaryColorDark,
@@ -877,7 +868,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                   },
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: Theme.of(context).primaryColorDark),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).primaryColorDark),
                   ),
                 ),
               ],
@@ -914,7 +905,6 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
             'Current Player: ',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Theme.of(context).primaryColorDark,
-                  fontWeight: FontWeight.w600,
                 ),
           ),
           Container(
@@ -939,11 +929,8 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
             child: Center(
               child: Text(
                 currentPlayer == Player.x ? 'X' : 'O',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: Colors.white,
-                  fontFamily: 'Poppins',
                 ),
               ),
             ),
@@ -1108,10 +1095,8 @@ class _AnimatedSymbolState extends State<AnimatedSymbol>
                   : widget.player == Player.o
                       ? 'O'
                       : '',
-              style: TextStyle(
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                 fontSize: widget.fontSize, // Use responsive font size
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Poppins',
                 color: widget.player == Player.x
                     ? Colors.blue.shade800
                     : Colors.red.shade800,
