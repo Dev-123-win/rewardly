@@ -4,10 +4,13 @@ import 'package:firebase_core/firebase_core.dart'; // Import FirebaseApp
 import '../firebase_project_config_service.dart'; // Import FirebaseProjectConfigService
 import '../user_service.dart';
 import '../logger_service.dart'; // Import LoggerService
+import '../local_storage_service.dart'; // Import LocalStorageService
 
 class UserDataProvider with ChangeNotifier {
   DocumentSnapshot? _userData;
   bool _isLoading = true;
+  int _locallyEarnedCoins = 0; // New field for locally accumulated coins
+  final LocalStorageService _localStorageService = LocalStorageService(); // Initialize LocalStorageService
 
   String? _userProjectId; // Store the project ID for the current user
   UserService? _shardedUserService; // UserService instance for the specific project
@@ -20,6 +23,9 @@ class UserDataProvider with ChangeNotifier {
   int get adSpinsEarnedToday => _adSpinsEarnedTodayInApp;
 
   int get adsWatchedToday => (_userData?.data() as Map<String, dynamic>?)?['adsWatchedToday'] as int? ?? 0;
+
+  // Combined total coins getter
+  int get totalCoins => ((_userData?.data() as Map<String, dynamic>?)?['coins'] as int? ?? 0) + _locallyEarnedCoins;
 
   Map<String, dynamic>? get preferredBankDetails => (_userData?.data() as Map<String, dynamic>?)?['preferredBankDetails'] as Map<String, dynamic>?;
   Map<String, dynamic>? get preferredUpiDetails => (_userData?.data() as Map<String, dynamic>?)?['preferredUpiDetails'] as Map<String, dynamic>?;
@@ -40,6 +46,10 @@ class UserDataProvider with ChangeNotifier {
     if (uid != null) {
       try {
         LoggerService.info('UserDataProvider: Attempting to load data for user $uid');
+        // Load locally earned coins on user data load
+        _locallyEarnedCoins = await _localStorageService.getLocallyEarnedCoins(uid);
+        notifyListeners();
+        LoggerService.info('UserDataProvider: Loaded $_locallyEarnedCoins local coins for $uid.');
 
         // Use the provided projectId if available, otherwise try to find it
         if (projectId != null) {
@@ -130,11 +140,14 @@ class UserDataProvider with ChangeNotifier {
     _userProjectId = null;
     _shardedUserService = null;
     _isLoading = false;
+    _locallyEarnedCoins = 0; // Reset local coins on state reset
     notifyListeners();
   }
 
   Future<void> updateUserCoins(int amount) async {
     if (_userData?.id != null && _shardedUserService != null) {
+      // This method should now only be called for Firestore updates,
+      // local updates are handled by addLocallyEarnedCoins in LocalStorageService
       await _shardedUserService!.updateCoins(_userData!.id, amount);
       // No need to explicitly reload, as the stream listener will handle updates
     } else {
@@ -261,29 +274,56 @@ class UserDataProvider with ChangeNotifier {
       return;
     }
 
-    final String lastActiveDate = data['lastActiveDate'] as String? ?? '';
-    int daysActiveCount = data['daysActiveCount'] as int? ?? 0;
-    final String? referredBy = data['referredBy'] as String?;
-    final bool referrerAwarded = data['referrerAwarded'] as bool? ?? false;
+    // Use LocalStorageService for lastActiveDate and daysActiveCount
+    final String? lastActiveDateLocal = await _localStorageService.getLastActiveDate(uid);
+    final String today = DateTime.now().toIso8601String().substring(0, 10);
 
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-
-    if (lastActiveDate != today) {
-      // New distinct day, increment count and update last active date
-      daysActiveCount++;
+    if (lastActiveDateLocal != today) {
+      // New distinct day, increment count and update last active date in Firestore and local storage
+      int daysActiveCount = (data['daysActiveCount'] as int? ?? 0) + 1;
       await _shardedUserService!.updateUserData(uid, {
         'daysActiveCount': daysActiveCount,
         'lastActiveDate': today,
       });
+      await _localStorageService.setLastActiveDate(uid, today);
       LoggerService.info('UserDataProvider: User $uid active for $daysActiveCount distinct days.');
 
-      // Check for referrer reward
-      if (referredBy != null && referredBy.isNotEmpty && daysActiveCount >= 3 && !referrerAwarded) {
+      // Set dailySyncStartTime if it's a new day
+      final int nowMillis = DateTime.now().millisecondsSinceEpoch;
+      await _shardedUserService!.updateUserData(uid, {
+        'dailySyncStartTime': nowMillis,
+      });
+      await _localStorageService.setDailySyncStartTime(uid, nowMillis);
+      LoggerService.info('UserDataProvider: Set daily sync start time for $uid to $nowMillis.');
+
+      // Check for referrer reward (still client-side, but now using updated DAU count)
+      final String? referredBy = data['referredBy'] as String?;
+      final bool referralBonusAwarded = data['referralBonusAwarded'] as bool? ?? false; // Use referralBonusAwarded as per plan
+
+      if (referredBy != null && referredBy.isNotEmpty && daysActiveCount >= 3 && !referralBonusAwarded) {
         LoggerService.info('UserDataProvider: User $uid met referral reward criteria. Awarding referrer $referredBy.');
-        await _shardedUserService!.awardReferrerCoins(uid, referredBy);
+        // The actual awarding will be handled by GitHub Actions,
+        // so we just log here and ensure the flag is set to true in Firestore
+        // once the GitHub Action has processed it.
+        // For now, we assume the GitHub Action will set referralBonusAwarded: true
+        // after processing.
       }
     } else {
       LoggerService.debug('UserDataProvider: User $uid already active today.');
     }
+  }
+
+  // Method to update locally earned coins and notify listeners
+  Future<void> updateLocallyEarnedCoins(String uid, int amount) async {
+    await _localStorageService.addLocallyEarnedCoins(uid, amount);
+    _locallyEarnedCoins = await _localStorageService.getLocallyEarnedCoins(uid);
+    notifyListeners();
+  }
+
+  // Method to reset locally earned coins and notify listeners
+  Future<void> resetLocallyEarnedCoins(String uid) async {
+    await _localStorageService.resetLocallyEarnedCoins(uid);
+    _locallyEarnedCoins = 0;
+    notifyListeners();
   }
 }

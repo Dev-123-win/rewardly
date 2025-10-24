@@ -8,7 +8,6 @@ import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart';
 import '../../logger_service.dart';
 import 'dart:math'; // For random task generation
-import '../../tooltip_service.dart'; // Import CustomTooltip
 
 // Define a model for a read task
 class ReadTask {
@@ -385,108 +384,102 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
         final screenWidth = MediaQuery.of(context).size.width;
         final isSmallScreen = screenWidth < 600; // Define what constitutes a "small screen"
 
-        return CustomTooltip(
-          tooltipId: 'read_and_earn_task_card',
-          message: 'Tap here to start reading and earn coins!',
-          preferBelow: true,
-          verticalOffset: 60,
-          child: GestureDetector(
-            onTap: onPressed,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
-              padding: const EdgeInsets.all(kDefaultPadding),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(kDefaultBorderRadius),
-                boxShadow: boxShadow,
-              ),
-              child: isSmallScreen
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        HugeIcon(icon: icon, color: iconColor, size: 30),
-                        const SizedBox(height: kDefaultPadding / 2),
-                        Flexible(
-                          child: Text(
-                            _currentReadTask!.title,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: kTextColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Flexible(
-                          child: Text(
-                            'Earn ${_currentReadTask!.coins} Coins',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: kTextColor,
-                                ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Flexible(
-                          child: Text(
-                            statusText,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: iconColor,
-                                ),
-                          ),
-                        ),
-                        if (!_isReading)
-                          Padding(
-                            padding: const EdgeInsets.only(top: kDefaultPadding),
-                            child: ScaleTransition(
-                              scale: _cardScaleAnimation,
-                              child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor),
-                            ),
-                          ),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        HugeIcon(icon: icon, color: iconColor, size: 30),
-                        const SizedBox(width: kDefaultPadding),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _currentReadTask!.title,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: kTextColor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+        return GestureDetector(
+          onTap: onPressed,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.symmetric(horizontal: kDefaultPadding),
+            padding: const EdgeInsets.all(kDefaultPadding),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(kDefaultBorderRadius),
+              boxShadow: boxShadow,
+            ),
+            child: isSmallScreen
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      HugeIcon(icon: icon, color: iconColor, size: 30),
+                      const SizedBox(height: kDefaultPadding / 2),
+                      Flexible(
+                        child: Text(
+                          _currentReadTask!.title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: kTextColor,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Earn ${_currentReadTask!.coins} Coins',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: kTextColor,
-                                    ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                statusText,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: iconColor,
-                                    ),
-                              ),
-                            ],
-                          ),
                         ),
-                        if (!_isReading)
-                          ScaleTransition(
+                      ),
+                      const SizedBox(height: 4),
+                      Flexible(
+                        child: Text(
+                          'Earn ${_currentReadTask!.coins} Coins',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: kTextColor,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Flexible(
+                        child: Text(
+                          statusText,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: iconColor,
+                              ),
+                        ),
+                      ),
+                      if (!_isReading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: kDefaultPadding),
+                          child: ScaleTransition(
                             scale: _cardScaleAnimation,
                             child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor),
                           ),
-                      ],
-                    ),
-            ),
+                        ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      HugeIcon(icon: icon, color: iconColor, size: 30),
+                      const SizedBox(width: kDefaultPadding),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _currentReadTask!.title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: kTextColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Earn ${_currentReadTask!.coins} Coins',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: kTextColor,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              statusText,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: iconColor,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_isReading)
+                        ScaleTransition(
+                          scale: _cardScaleAnimation,
+                          child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight01, color: kAccentColor),
+                        ),
+                    ],
+                  ),
           ),
         );
       },

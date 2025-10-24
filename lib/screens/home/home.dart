@@ -14,7 +14,6 @@ import 'read_and_earn_screen.dart'; // New import for Read & Earn
 import '../../logger_service.dart';
 import '../../models/auth_result.dart';
 import '../../widgets/custom_button.dart'; // Ensure CustomButton is imported
-import '../../tooltip_service.dart'; // Import CustomTooltip
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,8 +22,50 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with TickerProviderStateMixin {
   int _selectedIndex = 2; // Set Home as initial selected index
+  late AnimationController _coinAnimationController;
+  late Animation<double> _coinAnimation;
+  int _previousCoins = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _coinAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _coinAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(_coinAnimationController);
+
+    // Listen to UserDataProvider for coin changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+      _previousCoins = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['coins'] as int? ?? 0;
+      _coinAnimation = Tween<double>(begin: _previousCoins.toDouble(), end: _previousCoins.toDouble()).animate(_coinAnimationController);
+
+      userDataProvider.addListener(_onCoinsChanged);
+    });
+  }
+
+  void _onCoinsChanged() {
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    final newCoins = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['coins'] as int? ?? 0;
+
+    if (newCoins != _previousCoins) {
+      _coinAnimation = Tween<double>(begin: _previousCoins.toDouble(), end: newCoins.toDouble()).animate(
+        CurvedAnimation(parent: _coinAnimationController, curve: Curves.easeOut),
+      );
+      _coinAnimationController.forward(from: 0.0);
+      _previousCoins = newCoins;
+    }
+  }
+
+  @override
+  void dispose() {
+    _coinAnimationController.dispose();
+    Provider.of<UserDataProvider>(context, listen: false).removeListener(_onCoinsChanged);
+    super.dispose();
+  }
 
   List<Widget> _buildScreens() {
     return [
@@ -219,13 +260,24 @@ class _HomeState extends State<Home> {
                                           fontSize: isSmallScreen ? 30 : 36,
                                         ),
                                       ),
-                                      Text(
-                                        '($coins coins)',
-                                        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
+                                      AnimatedBuilder(
+                                        animation: _coinAnimation,
+                                        builder: (context, child) {
+                                          return Text(
+                                            '(${_coinAnimation.value.toInt()} coins)',
+                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),
-                                  HugeIcon(icon: HugeIcons.strokeRoundedWallet03, color: Theme.of(context).primaryColor, size: isSmallScreen ? 35 : 40),
+                                  Image.asset(
+                                    'assets/coin.png',
+                                    height: isSmallScreen ? 35 : 40,
+                                    width: isSmallScreen ? 35 : 40,
+                                    fit: BoxFit.contain,
+                                    color: Theme.of(context).primaryColor, // Apply primary color for consistency
+                                  ),
                                 ],
                               ),
                             ),
@@ -251,66 +303,48 @@ class _HomeState extends State<Home> {
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                     children: [
-                      CustomTooltip(
-                        tooltipId: 'home_watch_ads_quick_action',
-                        message: 'Watch short ads to earn coins quickly!',
-                        preferBelow: false,
-                        verticalOffset: 60,
-                        child: _buildQuickActionCard(
-                          context,
-                          icon: HugeIcons.strokeRoundedVideoCameraAi,
-                          label: 'Watch Ads',
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                          },
-                          startColor: Colors.orange.shade400,
-                          endColor: Colors.orange.shade700,
-                          cardWidth: quickActionCardWidth,
-                          iconSize: isSmallScreen ? 25 : 30,
-                          labelFontSize: isSmallScreen ? 12 : 14,
-                        ),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedVideoCameraAi,
+                        label: 'Watch Ads',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                        },
+                        startColor: Colors.orange.shade400,
+                        endColor: Colors.orange.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
                       ),
                       SizedBox(width: isSmallScreen ? 10 : 15),
-                      CustomTooltip(
-                        tooltipId: 'home_invite_friends_quick_action',
-                        message: 'Invite friends and earn bonus coins!',
-                        preferBelow: false,
-                        verticalOffset: 60,
-                        child: _buildQuickActionCard(
-                          context,
-                          icon: HugeIcons.strokeRoundedUserAdd01,
-                          label: 'Invite Friends',
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
-                          },
-                          startColor: Colors.blue.shade400,
-                          endColor: Colors.blue.shade700,
-                          cardWidth: quickActionCardWidth,
-                          iconSize: isSmallScreen ? 25 : 30,
-                          labelFontSize: isSmallScreen ? 12 : 14,
-                        ),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedUserAdd01,
+                        label: 'Invite Friends',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
+                        },
+                        startColor: Colors.blue.shade400,
+                        endColor: Colors.blue.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
                       ),
                       SizedBox(width: isSmallScreen ? 10 : 15),
-                      CustomTooltip(
-                        tooltipId: 'home_redeem_coins_quick_action',
-                        message: 'Exchange your earned coins for exciting rewards!',
-                        preferBelow: false,
-                        verticalOffset: 60,
-                        child: _buildQuickActionCard(
-                          context,
-                          icon: HugeIcons.strokeRoundedGift,
-                          label: 'Redeem Coins',
-                          onTap: () {
-                            setState(() {
-                              _selectedIndex = 0;
-                            });
-                          },
-                          startColor: Colors.green.shade400,
-                          endColor: Colors.green.shade700,
-                          cardWidth: quickActionCardWidth,
-                          iconSize: isSmallScreen ? 25 : 30,
-                          labelFontSize: isSmallScreen ? 12 : 14,
-                        ),
+                      _buildQuickActionCard(
+                        context,
+                        icon: HugeIcons.strokeRoundedGift,
+                        label: 'Redeem Coins',
+                        onTap: () {
+                          setState(() {
+                            _selectedIndex = 0;
+                          });
+                        },
+                        startColor: Colors.green.shade400,
+                        endColor: Colors.green.shade700,
+                        cardWidth: quickActionCardWidth,
+                        iconSize: isSmallScreen ? 25 : 30,
+                        labelFontSize: isSmallScreen ? 12 : 14,
                       ),
                     ],
                   ),
@@ -332,78 +366,60 @@ class _HomeState extends State<Home> {
                       Row(
                         children: [
                           Expanded(
-                            child: CustomTooltip(
-                              tooltipId: 'home_spin_win_offer',
-                              message: 'Spin the wheel and win exciting coin rewards!',
-                              preferBelow: true,
-                              verticalOffset: 60,
-                              child: _buildLargeOfferCard(
-                                context,
-                                title: 'Spin & Win',
-                                subtitle: 'Try your luck!',
-                                imagePath: 'assets/coin.png',
-                                onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
-                                },
-                                startColor: Colors.deepPurple.shade400,
-                                endColor: Colors.deepPurple.shade700,
-                                cardHeight: largeOfferCardHeight,
-                                imageSize: isSmallScreen ? 60 : 80,
-                                titleFontSize: isSmallScreen ? 16 : 18,
-                                subtitleFontSize: isSmallScreen ? 12 : 14,
-                              ),
+                            child: _buildLargeOfferCard(
+                              context,
+                              title: 'Spin & Win',
+                              subtitle: 'Try your luck!',
+                              imagePath: 'assets/coin.png',
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
+                              },
+                              startColor: Colors.deepPurple.shade400,
+                              endColor: Colors.deepPurple.shade700,
+                              cardHeight: largeOfferCardHeight,
+                              imageSize: isSmallScreen ? 60 : 80,
+                              titleFontSize: isSmallScreen ? 16 : 18,
+                              subtitleFontSize: isSmallScreen ? 12 : 14,
                             ),
                           ),
                           SizedBox(width: isSmallScreen ? 10 : 15),
                           Expanded(
-                            child: CustomTooltip(
-                              tooltipId: 'home_watch_earn_offer',
-                              message: 'Watch videos and earn coins!',
-                              preferBelow: true,
-                              verticalOffset: 60,
-                              child: _buildLargeOfferCard(
-                                context,
-                                title: 'Watch & Earn',
-                                subtitle: 'Get coins by watching ads!',
-                                imagePath: 'assets/watch_ads.png',
-                                onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                                },
-                                startColor: Colors.purple.shade400,
-                                endColor: Colors.purple.shade700,
-                                cardHeight: largeOfferCardHeight,
-                                imageSize: isSmallScreen ? 60 : 80,
-                                titleFontSize: isSmallScreen ? 16 : 18,
-                                subtitleFontSize: isSmallScreen ? 12 : 14,
-                              ),
+                            child: _buildLargeOfferCard(
+                              context,
+                              title: 'Watch & Earn',
+                              subtitle: 'Get coins by watching ads!',
+                              imagePath: 'assets/watch_ads.png',
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                              },
+                              startColor: Colors.purple.shade400,
+                              endColor: Colors.purple.shade700,
+                              cardHeight: largeOfferCardHeight,
+                              imageSize: isSmallScreen ? 60 : 80,
+                              titleFontSize: isSmallScreen ? 16 : 18,
+                              subtitleFontSize: isSmallScreen ? 12 : 14,
                             ),
                           ),
                         ],
                       ),
                       SizedBox(height: isSmallScreen ? 10 : 15),
-                      CustomTooltip(
-                        tooltipId: 'home_read_earn_offer',
-                        message: 'Read articles and earn up to 100k coins!',
-                        preferBelow: true,
-                        verticalOffset: 60,
-                        child: _buildSuperOfferCard(
-                          context,
-                          title: 'Read & Earn',
-                          subtitle: 'Earn Upto 100k',
-                          imagePath: 'assets/coin.png',
-                          onTap: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
-                          },
-                          startColor: Colors.orange.shade400,
-                          endColor: Colors.orange.shade700,
-                          buttonText: 'Start Reading',
-                          cardHeight: superOfferCardHeight,
-                          imageSize: isSmallScreen ? 40 : 50,
-                          titleFontSize: isSmallScreen ? 16 : 18,
-                          subtitleFontSize: isSmallScreen ? 12 : 14,
-                          buttonPadding: isSmallScreen ? EdgeInsets.symmetric(horizontal: 12, vertical: 6) : EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold) : Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
+                      _buildSuperOfferCard(
+                        context,
+                        title: 'Read & Earn',
+                        subtitle: 'Earn Upto 100k',
+                        imagePath: 'assets/coin.png',
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
+                        },
+                        startColor: Colors.orange.shade400,
+                        endColor: Colors.orange.shade700,
+                        buttonText: 'Start Reading',
+                        cardHeight: superOfferCardHeight,
+                        imageSize: isSmallScreen ? 40 : 50,
+                        titleFontSize: isSmallScreen ? 16 : 18,
+                        subtitleFontSize: isSmallScreen ? 12 : 14,
+                        buttonPadding: isSmallScreen ? EdgeInsets.symmetric(horizontal: 12, vertical: 6) : EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold) : Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: isSmallScreen ? 10 : 15),
                       GridView.count(
@@ -413,45 +429,33 @@ class _HomeState extends State<Home> {
                         crossAxisSpacing: gridSpacing,
                         mainAxisSpacing: gridSpacing,
                         children: [
-                          CustomTooltip(
-                            tooltipId: 'home_tic_tac_toe_game',
-                            message: 'Challenge the NPC in Tic Tac Toe and win coins!',
-                            preferBelow: true,
-                            verticalOffset: 60,
-                            child: _buildOfferCard(
-                              context,
-                              title: 'Tic Tac Toe',
-                              subtitle: 'Play against NPC!',
-                              imagePath: 'assets/tic_tac_toe.png',
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
-                              },
-                              startColor: Colors.red.shade400,
-                              endColor: Colors.red.shade700,
-                              imageSize: isSmallScreen ? 50 : 60,
-                              titleFontSize: isSmallScreen ? 14 : 16,
-                              subtitleFontSize: isSmallScreen ? 10 : 12,
-                            ),
+                          _buildOfferCard(
+                            context,
+                            title: 'Tic Tac Toe',
+                            subtitle: 'Play against NPC!',
+                            imagePath: 'assets/tic_tac_toe.png',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                            },
+                            startColor: Colors.red.shade400,
+                            endColor: Colors.red.shade700,
+                            imageSize: isSmallScreen ? 50 : 60,
+                            titleFontSize: isSmallScreen ? 14 : 16,
+                            subtitleFontSize: isSmallScreen ? 10 : 12,
                           ),
-                          CustomTooltip(
-                            tooltipId: 'home_minesweeper_game',
-                            message: 'Test your luck and strategy in Minesweeper!',
-                            preferBelow: true,
-                            verticalOffset: 60,
-                            child: _buildOfferCard(
-                              context,
-                              title: 'Minesweeper',
-                              subtitle: 'Find the mines!',
-                              imagePath: 'assets/minesweeper.png',
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
-                              },
-                              startColor: Colors.teal.shade400,
-                              endColor: Colors.teal.shade700,
-                              imageSize: isSmallScreen ? 50 : 60,
-                              titleFontSize: isSmallScreen ? 14 : 16,
-                              subtitleFontSize: isSmallScreen ? 10 : 12,
-                            ),
+                          _buildOfferCard(
+                            context,
+                            title: 'Minesweeper',
+                            subtitle: 'Find the mines!',
+                            imagePath: 'assets/minesweeper.png',
+                            onTap: () {
+                              Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
+                            },
+                            startColor: Colors.teal.shade400,
+                            endColor: Colors.teal.shade700,
+                            imageSize: isSmallScreen ? 50 : 60,
+                            titleFontSize: isSmallScreen ? 14 : 16,
+                            subtitleFontSize: isSmallScreen ? 10 : 12,
                           ),
                         ],
                       ),

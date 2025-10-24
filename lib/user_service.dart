@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:rewardly_app/logger_service.dart';
 
 class UserService {
   final FirebaseFirestore _firestore;
@@ -10,7 +11,7 @@ class UserService {
 
 
   // Create user data on registration
-  Future<void> createUserData(String uid, String email, {String? referralCode, String? deviceId, String? projectId}) async {
+  Future<void> createUserData(String uid, String email, {String? referralCode, String? deviceId, String? projectId, String? fcmToken}) async {
     try {
       await _firestore.runTransaction((transaction) async {
         // Client-side coin awarding for referred users.
@@ -54,6 +55,7 @@ class UserService {
           'daysActiveCount': 0, // Initialize distinct active days to 0
           'lastActiveDate': '', // Initialize last active date as empty
           'referrerAwarded': false, // Initialize to false, to be set true after referrer is awarded
+          'fcmToken': fcmToken, // Store FCM token
         });
       });
     } catch (e, s) {
@@ -69,6 +71,7 @@ class UserService {
         'spinWheelFreeSpinsToday': FieldValue.increment(-1),
       });
     } catch (e, s) {
+      LoggerService.error('Error decrementing free spin wheel spins: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error decrementing free spin wheel spins');
     }
   }
@@ -91,6 +94,7 @@ class UserService {
         });
       });
     } catch (e, s) {
+      LoggerService.error('Error incrementing ad spin wheel spins: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error incrementing ad spin wheel spins');
       rethrow;
     }
@@ -103,6 +107,7 @@ class UserService {
         'spinWheelAdSpinsToday': FieldValue.increment(-1),
       });
     } catch (e, s) {
+      LoggerService.error('Error decrementing ad spin wheel spins: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error decrementing ad spin wheel spins');
     }
   }
@@ -130,6 +135,7 @@ class UserService {
         }
       });
     } catch (e, s) {
+      LoggerService.error('Error resetting spin wheel daily counts client-side: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error resetting spin wheel daily counts client-side');
       rethrow;
     }
@@ -157,6 +163,7 @@ class UserService {
         });
       }
     } catch (e, s) {
+      LoggerService.error('Error updating user coins: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating user coins');
     }
   }
@@ -187,6 +194,7 @@ class UserService {
         }
       });
     } catch (e, s) {
+      LoggerService.error('Error updating ads watched today client-side: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating ads watched today client-side');
       rethrow;
     }
@@ -207,6 +215,7 @@ class UserService {
     try {
       await _firestore.collection('users').doc(uid).update(data);
     } catch (e, s) {
+      LoggerService.error('Error updating user data fields: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating user data fields');
     }
   }
@@ -218,6 +227,7 @@ class UserService {
         'preferredBankDetails': bankDetails,
       });
     } catch (e, s) {
+      LoggerService.error('Error saving preferred bank details: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error saving preferred bank details');
     }
   }
@@ -229,6 +239,7 @@ class UserService {
         'preferredUpiDetails': upiDetails,
       });
     } catch (e, s) {
+      LoggerService.error('Error saving preferred UPI details: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error saving preferred UPI details');
     }
   }
@@ -240,6 +251,7 @@ class UserService {
         'lastUsedWithdrawalMethod': method,
       });
     } catch (e, s) {
+      LoggerService.error('Error updating last used withdrawal method: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error updating last used withdrawal method');
     }
   }
@@ -278,12 +290,13 @@ class UserService {
             'referrerAwarded': true,
           });
           
-          FirebaseCrashlytics.instance.log('Referral reward: User $referredUserId awarded 10000 coins to referrer ${referrerDoc.id}');
+          LoggerService.info('Referral reward: User $referredUserId awarded 10000 coins to referrer ${referrerDoc.id}');
         } else {
-          FirebaseCrashlytics.instance.log('Referral reward: Referrer with code $referrerCode not found for referred user $referredUserId.');
+          LoggerService.warning('Referral reward: Referrer with code $referrerCode not found for referred user $referredUserId.');
         }
       });
     } catch (e, s) {
+      LoggerService.error('Error awarding referrer coins client-side: $e', e, s);
       FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error awarding referrer coins client-side');
       rethrow;
     }

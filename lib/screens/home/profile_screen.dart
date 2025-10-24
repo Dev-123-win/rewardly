@@ -21,8 +21,6 @@ class ProfileScreen extends StatelessWidget {
       return const ProfileScreenLoading();
     }
 
-    // Safely get data map from DocumentSnapshot, or an empty map if null
-    Map<String, dynamic> userDataMap = (userData.data() as Map<String, dynamic>?) ?? {};
 
     return SafeArea(
       child: Scaffold(
@@ -97,7 +95,7 @@ class ProfileScreen extends StatelessWidget {
                   _buildAccountOption(
                     context,
                     title: 'Coins',
-                    value: '${userDataMap['coins'] ?? 0}',
+                    value: '${userDataProvider.totalCoins}', // Use the combined totalCoins from UserDataProvider
                     icon: HugeIcons.strokeRoundedBitcoinBag, // Changed to HugeIcons.strokeRoundedBitcoinBag
                   ),
                   SizedBox(height: verticalSpacing),

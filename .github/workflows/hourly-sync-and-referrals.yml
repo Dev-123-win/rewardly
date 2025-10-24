@@ -1,0 +1,30 @@
+name: Hourly Background Tasks (FCM Sync & Referrals)
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs every hour
+
+jobs:
+  run-background-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Or your preferred Node.js version
+
+      - name: Install Firebase Admin SDK
+        run: npm install firebase-admin
+
+      - name: Run Background Tasks Script
+        env:
+          FIREBASE_ADMIN_SDK_PROD01: ${{ secrets.FIREBASE_ADMIN_SDK_PROD01 }}
+          FIREBASE_ADMIN_SDK_PROD02: ${{ secrets.FIREBASE_ADMIN_SDK_PROD02 }}
+          # ... add all 5 secrets for your sharded projects
+          # FIREBASE_ADMIN_SDK_PROD03: ${{ secrets.FIREBASE_ADMIN_SDK_PROD03 }}
+          # FIREBASE_ADMIN_SDK_PROD04: ${{ secrets.FIREBASE_ADMIN_SDK_PROD04 }}
+          # FIREBASE_ADMIN_SDK_PROD05: ${{ secrets.FIREBASE_ADMIN_SDK_PROD05 }}
+        run: node process_background_tasks.js # Assuming your script is named process_background_tasks.js
