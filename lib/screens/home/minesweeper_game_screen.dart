@@ -9,7 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerA
 import 'package:lottie/lottie.dart'; // Import Lottie package
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import '../../logger_service.dart'; // Import LoggerService
-import 'package:image_loader_flutter/image_loader_flutter.dart';
+
 // Removed direct import of UserService as it will be accessed via UserDataProvider
 
 class MinesweeperGameScreen extends StatefulWidget {
@@ -696,14 +696,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                             if (cell.isRevealed) {
                               if (cell.hasMine) {
                                 // Revealed mine
-                                cellContent = ImageLoaderFlutterWidgets(
-                                  image: 'assets/bomb.png',
+                                cellContent = Image.asset(
+                                  'assets/bomb.png',
                                   width: cellContentSize,
                                   height: cellContentSize,
                                   fit: BoxFit.contain,
-                                  circle: false,
-                                  radius: 0.0,
-                                  onTap: false,
                                 );
                                 shadows = _getPressedInShadows();
                               } else {
@@ -721,15 +718,12 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                               }
                             } else if (cell.isFlagged) {
                               // Flagged cell
-                              cellContent = ImageLoaderFlutterWidgets(
-                                image: 'assets/minesweeper.png', // Using the provided image for flag
+                              cellContent = Image.asset(
+                                'assets/minesweeper.png',
                                 width: cellContentSize * 0.75,
                                 height: cellContentSize * 0.75,
                                 fit: BoxFit.contain,
-                                circle: false,
-                                radius: 0.0,
-                                  onTap: false,
-                                );
+                              );
                               shadows = _getRaisedShadows();
                             } else {
                               // Unrevealed cell
@@ -896,14 +890,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
             ),
             child: Row(
               children: [
-                ImageLoaderFlutterWidgets(
-                  image: 'assets/bomb.png', // Using the provided image for bomb
+                Image.asset(
+                  'assets/bomb.png',
                   width: iconSize,
                   height: iconSize,
                   fit: BoxFit.contain,
-                  circle: false,
-                  radius: 0.0,
-                  onTap: false,
                 ),
                 SizedBox(width: verticalSpacing),
                 Text(

@@ -58,7 +58,7 @@ dependencies:
   url_launcher: ^6.3.0 # Added for launching URLs
   hugeicons: ^1.0.0
   flutter_inappwebview: ^6.0.0 # Replaced webview_flutter with flutter_inappwebview
-  image_loader_flutter: ^0.0.13
+
 
 dev_dependencies:
   flutter_test:

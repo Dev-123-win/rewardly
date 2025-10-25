@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../wrapper.dart'; // Assuming Wrapper is your main entry after onboarding
-import 'package:image_loader_flutter/image_loader_flutter.dart';
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -176,14 +176,11 @@ class OnboardingPageContent extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ImageLoaderFlutterWidgets(
-                image: imagePath,
+              Image.asset(
+                imagePath,
                 height: imageSize,
                 width: imageSize,
                 fit: BoxFit.contain,
-                circle: false,
-                radius: 0.0,
-                onTap: false,
               ),
               SizedBox(height: verticalSpacing),
               Text(

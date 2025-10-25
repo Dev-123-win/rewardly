@@ -3,10 +3,9 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
-import '../../design_system/design_system.dart';
 import '../../design_system/app_icons.dart';
-import '../../widgets/page_transitions.dart';
 import '../../screens/notifications/notification_center_screen.dart';
+import '../../widgets/animated_tap.dart';
 import 'earn_coins_screen.dart';
 import 'referral_screen.dart';
 import 'profile_screen.dart';
@@ -17,7 +16,7 @@ import 'spin_wheel_game_screen.dart';
 import 'read_and_earn_screen.dart';
 import '../../models/auth_result.dart';
 import '../../widgets/custom_button.dart';
-import 'package:image_loader_flutter/image_loader_flutter.dart';
+
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -27,91 +26,42 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with TickerProviderStateMixin {
-  int _selectedIndex = 2; // Set Home as initial selected index
-  late AnimationController _coinAnimationController;
-  late Animation<double> _coinAnimation;
-  int _previousCoins = 0;
+  int _selectedIndex = 2; // Home tab
 
   @override
   void initState() {
     super.initState();
-    _coinAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    );
-    _coinAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(_coinAnimationController);
-
-    // Listen to UserDataProvider for coin changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-      _previousCoins = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['coins'] as int? ?? 0;
-      _coinAnimation = Tween<double>(begin: _previousCoins.toDouble(), end: _previousCoins.toDouble()).animate(_coinAnimationController);
-
-      userDataProvider.addListener(_onCoinsChanged);
-    });
   }
 
-  void _onCoinsChanged() {
-    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-    final newCoins = (userDataProvider.userData?.data() as Map<String, dynamic>?)?['coins'] as int? ?? 0;
-
-    if (newCoins != _previousCoins) {
-      _coinAnimation = Tween<double>(begin: _previousCoins.toDouble(), end: newCoins.toDouble()).animate(
-        CurvedAnimation(parent: _coinAnimationController, curve: Curves.easeOut),
-      );
-      _coinAnimationController.forward(from: 0.0);
-      _previousCoins = newCoins;
-    }
-  }
-
-  @override
-  void dispose() {
-    _coinAnimationController.dispose();
-    Provider.of<UserDataProvider>(context, listen: false).removeListener(_onCoinsChanged);
-    super.dispose();
-  }
 
   List<Widget> _buildScreens() {
     return [
-      Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, _) => userDataProvider.userData == null
-            ? const _LoadingPlaceholder()
-            : const WithdrawScreen(), // Index 0 (Redeem)
-      ),
-      Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, _) => userDataProvider.userData == null
-            ? const _LoadingPlaceholder()
-            : const ReferralScreen(), // Index 1 (Invite)
-      ),
+      const WithdrawScreen(), // Index 0 (Redeem)
+      const ReferralScreen(), // Index 1 (Invite)
       _buildHomePageContent(), // Index 2 (Home)
-      Consumer<UserDataProvider>(
-        builder: (context, userDataProvider, _) => userDataProvider.userData == null
-            ? const _LoadingPlaceholder()
-            : const ProfileScreen(), // Index 3 (Profile)
-      ),
+      const ProfileScreen(), // Index 3 (Profile)
     ];
   }
 
   List<BottomNavigationBarItem> _buildNavBarItems() {
-    List<BottomNavigationBarItem> items = [
+    return [
       BottomNavigationBarItem(
-        icon: HugeIcon(icon: HugeIcons.strokeRoundedGift),
+        icon: HugeIcon(icon: AppIcons.redeem),
         label: 'Redeem',
       ),
       BottomNavigationBarItem(
-        icon: HugeIcon(icon: HugeIcons.strokeRoundedUserAdd01),
+        icon: HugeIcon(icon: AppIcons.invite),
         label: 'Invite',
       ),
       BottomNavigationBarItem(
-        icon: HugeIcon(icon: HugeIcons.strokeRoundedHome01),
+        icon: HugeIcon(icon: AppIcons.home),
         label: 'Home',
       ),
       BottomNavigationBarItem(
-        icon: HugeIcon(icon: HugeIcons.strokeRoundedUser),
+        icon: HugeIcon(icon: AppIcons.profile),
         label: 'Profile',
       ),
     ];
-    return items;
   }
 
   @override
@@ -164,612 +114,214 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
     int coins = (userDataProvider.userData!.data() as Map<String, dynamic>?)?['coins'] ?? 0;
     double totalBalanceINR = coins / 1000.0; // 1000 coins = 1 INR
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = MediaQuery.of(context).size.width;
-        final isSmallScreen = screenWidth < 600;
-        final horizontalPadding = isSmallScreen ? 16.0 : 24.0;
-        final headerTopPadding = isSmallScreen ? 40.0 : 60.0;
-        final headerBottomPadding = isSmallScreen ? 20.0 : 30.0;
-        final sectionTitleFontSize = isSmallScreen ? 20.0 : 24.0;
-        final quickActionCardWidth = isSmallScreen ? 120.0 : 150.0;
-        final largeOfferCardHeight = isSmallScreen ? 180.0 : 220.0;
-        final superOfferCardHeight = isSmallScreen ? 100.0 : 120.0;
-        final gridCrossAxisCount = isSmallScreen ? 2 : 3;
-        final gridSpacing = isSmallScreen ? 15.0 : 20.0;
-
-        return SingleChildScrollView(
-          child: Container(
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                // Custom Header Section
-                Container(
-                  padding: EdgeInsets.only(top: headerTopPadding, left: horizontalPadding, right: horizontalPadding, bottom: headerBottomPadding),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30.0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha((255 * 0.1).round()),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    AnimatedTap(
+                      child: CircleAvatar(
+                        backgroundColor: Colors.grey.shade200,
+                        child: HugeIcon(icon: AppIcons.profile, color: Theme.of(context).primaryColor, size: 28),
                       ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: Color.fromARGB((255 * 0.2).round(), 255, 255, 255),
-                                    child: HugeIcon(icon: HugeIcons.strokeRoundedUser, color: Theme.of(context).primaryColor, size: isSmallScreen ? 24 : 30),
-                                  ),
-                                  SizedBox(width: isSmallScreen ? 8 : 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Hello, User!',
-                                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black, fontSize: isSmallScreen ? 18 : 22),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  SlidePageRoute(
-                                    child: const NotificationCenterScreen(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: DesignSystem.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(DesignSystem.radiusMedium),
-                                ),
-                                child: Center(
-                                  child: HugeIcon(
-                                    icon: AppIcons.notification,
-                                    color: DesignSystem.primary,
-                                    size: AppIcons.sizeMedium,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: isSmallScreen ? 15 : 20),
-                        // Centralized Balance Card
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedIndex = 0;
-                            });
-                          },
-                          child: Card(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
-                            elevation: 0.0,
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: isSmallScreen ? 20 : 25, horizontal: isSmallScreen ? 15 : 20),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Total Balance',
-                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600], fontSize: isSmallScreen ? 16 : 18),
-                                      ),
-                                      SizedBox(height: isSmallScreen ? 3 : 5),
-                                      Text(
-                                        '₹${totalBalanceINR.toStringAsFixed(2)}',
-                                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                          color: Theme.of(context).primaryColor,
-                                          fontSize: isSmallScreen ? 30 : 36,
-                                        ),
-                                      ),
-                                      AnimatedBuilder(
-                                        animation: _coinAnimation,
-                                        builder: (context, child) {
-                                          return Text(
-                                            '(${_coinAnimation.value.toInt()} coins)',
-                                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54, fontSize: isSmallScreen ? 12 : 14),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  ImageLoaderFlutterWidgets(
-                                    image: 'assets/coin.png',
-                                    height: isSmallScreen ? 35 : 40,
-                                    width: isSmallScreen ? 35 : 40,
-                                    fit: BoxFit.contain,
-                                    circle: false,
-                                    radius: 0.0,
-                                    onTap: false,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      onTap: () {
+                        setState(() {
+                          _selectedIndex = 3;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Hello, User!',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.black),
+                    ),
+                  ],
+                ),
+                AnimatedTap(
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withAlpha((255 * 0.1).round()),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: HugeIcon(
+                        icon: AppIcons.notification,
+                        color: Theme.of(context).primaryColor,
+                        size: AppIcons.sizeMedium,
+                      ),
                     ),
                   ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationCenterScreen(),
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(height: isSmallScreen ? 15 : 20),
-                // Quick Actions Section
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Text(
-                    'Quick Actions',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: sectionTitleFontSize),
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 10 : 15),
-                SizedBox(
-                  height: isSmallScreen ? 90 : 110,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    children: [
-                      _buildQuickActionCard(
-                        context,
-                        icon: HugeIcons.strokeRoundedVideoCameraAi,
-                        label: 'Watch Ads',
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                        },
-                        startColor: Colors.orange.shade400,
-                        endColor: Colors.orange.shade700,
-                        cardWidth: quickActionCardWidth,
-                        iconSize: isSmallScreen ? 25 : 30,
-                        labelFontSize: isSmallScreen ? 12 : 14,
-                      ),
-                      SizedBox(width: isSmallScreen ? 10 : 15),
-                      _buildQuickActionCard(
-                        context,
-                        icon: HugeIcons.strokeRoundedUserAdd01,
-                        label: 'Invite Friends',
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
-                        },
-                        startColor: Colors.blue.shade400,
-                        endColor: Colors.blue.shade700,
-                        cardWidth: quickActionCardWidth,
-                        iconSize: isSmallScreen ? 25 : 30,
-                        labelFontSize: isSmallScreen ? 12 : 14,
-                      ),
-                      SizedBox(width: isSmallScreen ? 10 : 15),
-                      _buildQuickActionCard(
-                        context,
-                        icon: HugeIcons.strokeRoundedGift,
-                        label: 'Redeem Coins',
-                        onTap: () {
-                          setState(() {
-                            _selectedIndex = 0;
-                          });
-                        },
-                        startColor: Colors.green.shade400,
-                        endColor: Colors.green.shade700,
-                        cardWidth: quickActionCardWidth,
-                        iconSize: isSmallScreen ? 25 : 30,
-                        labelFontSize: isSmallScreen ? 12 : 14,
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 20 : 30),
-                // Main Offer Grid
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Text(
-                    'Explore & Earn',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(color: Colors.black87, fontSize: sectionTitleFontSize),
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 10 : 15),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildLargeOfferCard(
-                              context,
-                              title: 'Spin & Win',
-                              subtitle: 'Try your luck!',
-                              imagePath: 'assets/spin and win.png',
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
-                              },
-                              startColor: Colors.deepPurple.shade400,
-                              endColor: Colors.deepPurple.shade700,
-                              cardHeight: largeOfferCardHeight,
-                              imageSize: isSmallScreen ? 60 : 80,
-                              titleFontSize: isSmallScreen ? 16 : 18,
-                              subtitleFontSize: isSmallScreen ? 12 : 14,
-                            ),
-                          ),
-                          SizedBox(width: isSmallScreen ? 10 : 15),
-                          Expanded(
-                            child: _buildLargeOfferCard(
-                              context,
-                              title: 'Watch & Earn',
-                              subtitle: 'Get coins by watching ads!',
-                              imagePath: 'assets/watch and earn.png',
-                              onTap: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
-                              },
-                              startColor: Colors.purple.shade400,
-                              endColor: Colors.purple.shade700,
-                              cardHeight: largeOfferCardHeight,
-                              imageSize: isSmallScreen ? 60 : 80,
-                              titleFontSize: isSmallScreen ? 16 : 18,
-                              subtitleFontSize: isSmallScreen ? 12 : 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: isSmallScreen ? 10 : 15),
-                      _buildSuperOfferCard(
-                        context,
-                        title: 'Read & Earn',
-                        subtitle: 'Earn Upto 100k',
-                        imagePath: 'assets/coin.png',
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
-                        },
-                        startColor: Colors.orange.shade400,
-                        endColor: Colors.orange.shade700,
-                        buttonText: 'Start Reading',
-                        cardHeight: superOfferCardHeight,
-                        imageSize: isSmallScreen ? 40 : 50,
-                        titleFontSize: isSmallScreen ? 16 : 18,
-                        subtitleFontSize: isSmallScreen ? 12 : 14,
-                        buttonPadding: isSmallScreen ? EdgeInsets.symmetric(horizontal: 12, vertical: 6) : EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        buttonTextStyle: isSmallScreen ? Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white) : Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
-                      ),
-                      SizedBox(height: isSmallScreen ? 10 : 15),
-                      GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: gridCrossAxisCount,
-                        crossAxisSpacing: gridSpacing,
-                        mainAxisSpacing: gridSpacing,
-                        children: [
-                          _buildOfferCard(
-                            context,
-                            title: 'Tic Tac Toe',
-                            subtitle: 'Play against NPC!',
-                            imagePath: 'assets/tictactoe.png',
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
-                            },
-                            startColor: Colors.red.shade400,
-                            endColor: Colors.red.shade700,
-                            imageSize: isSmallScreen ? 50 : 60,
-                            titleFontSize: isSmallScreen ? 14 : 16,
-                            subtitleFontSize: isSmallScreen ? 10 : 12,
-                          ),
-                          _buildOfferCard(
-                            context,
-                            title: 'Minesweeper',
-                            subtitle: 'Find the mines!',
-                            imagePath: 'assets/minesweeper.png',
-                            onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
-                            },
-                            startColor: Colors.teal.shade400,
-                            endColor: Colors.teal.shade700,
-                            imageSize: isSmallScreen ? 50 : 60,
-                            titleFontSize: isSmallScreen ? 14 : 16,
-                            subtitleFontSize: isSmallScreen ? 10 : 12,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: isSmallScreen ? 15 : 20),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildQuickActionCard(
-    BuildContext context, {
-    required dynamic icon,
-    required String label,
-    required VoidCallback onTap,
-    required Color startColor,
-    required Color endColor,
-    required double cardWidth,
-    required double iconSize,
-    required double labelFontSize,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 0.0,
-        color: Colors.transparent,
-        child: Container(
-          width: cardWidth,
-          padding: const EdgeInsets.all(10.0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            const SizedBox(height: 24),
+            // Coin Balance Card
+            CustomButton(
+              text: '₹${totalBalanceINR.toStringAsFixed(2)}  ($coins coins)',
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 0;
+                });
+              },
+              startColor: Theme.of(context).primaryColor,
+              endColor: Theme.of(context).colorScheme.secondary,
+              width: double.infinity,
+              height: 60,
+              borderRadius: 18,
+              hugeIcon: AppIcons.redeem,
+              textStyle: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
             ),
-            borderRadius: BorderRadius.circular(25.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.1).round()),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              HugeIcon(icon: icon, size: iconSize, color: Colors.white),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: labelFontSize),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLargeOfferCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required String imagePath,
-    required VoidCallback onTap,
-    required Color startColor,
-    required Color endColor,
-    required double cardHeight,
-    required double imageSize,
-    required double titleFontSize,
-    required double subtitleFontSize,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 0.0,
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          height: cardHeight,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            const SizedBox(height: 24),
+            // Quick Actions
+            Text('Quick Actions', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'Watch Ads',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                    },
+                    startColor: Colors.orange.shade400,
+                    endColor: Colors.orange.shade700,
+                    hugeIcon: AppIcons.earn,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomButton(
+                    text: 'Invite',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ReferralScreen()));
+                    },
+                    startColor: Colors.blue.shade400,
+                    endColor: Colors.blue.shade700,
+                    hugeIcon: AppIcons.invite,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomButton(
+                    text: 'Redeem',
+                    onPressed: () {
+                      setState(() {
+                        _selectedIndex = 0;
+                      });
+                    },
+                    startColor: Colors.green.shade400,
+                    endColor: Colors.green.shade700,
+                    hugeIcon: AppIcons.redeem,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
-            borderRadius: BorderRadius.circular(20.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.1).round()),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 15.0),
-                child: ImageLoaderFlutterWidgets(
-                  image: imagePath,
-                  height: imageSize,
-                  width: imageSize,
-                  fit: BoxFit.cover,
-                  circle: false,
-                  radius: 0.0,
-                  onTap: false,
+            const SizedBox(height: 32),
+            // Main Offers
+            Text('Explore & Earn', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'Spin & Win',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const SpinWheelGameScreen()));
+                    },
+                    startColor: Colors.deepPurple.shade400,
+                    endColor: Colors.deepPurple.shade700,
+                    hugeIcon: AppIcons.spinWheel,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: Column(
-                  children: [
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      subtitle,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomButton(
+                    text: 'Watch & Earn',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const EarnCoinsScreen()));
+                    },
+                    startColor: Colors.purple.shade400,
+                    endColor: Colors.purple.shade700,
+                    hugeIcon: AppIcons.earn,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSuperOfferCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required String imagePath,
-    required VoidCallback onTap,
-    required Color startColor,
-    required Color endColor,
-    required String buttonText,
-    required double cardHeight,
-    required double imageSize,
-    required double titleFontSize,
-    required double subtitleFontSize,
-    required EdgeInsetsGeometry buttonPadding,
-    required TextStyle? buttonTextStyle,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 0.0,
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          height: cardHeight,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              ],
             ),
-            borderRadius: BorderRadius.circular(20.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.1).round()),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: ImageLoaderFlutterWidgets(
-                  image: imagePath,
-                  height: imageSize,
-                  width: imageSize,
-                  fit: BoxFit.contain,
-                  circle: false,
-                  radius: 0.0,
-                  onTap: false,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(15.0),
-                child: CustomButton(
-                  text: buttonText,
-                  onPressed: onTap,
-                  padding: buttonPadding,
-                  startColor: Colors.white,
-                  endColor: Colors.white,
-                  textStyle: buttonTextStyle,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOfferCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required String imagePath,
-    required VoidCallback onTap,
-    required Color startColor,
-    required Color endColor,
-    required double imageSize,
-    required double titleFontSize,
-    required double subtitleFontSize,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        elevation: 0.0,
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            const SizedBox(height: 16),
+            CustomButton(
+              text: 'Read & Earn',
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const ReadAndEarnScreen()));
+              },
+              startColor: Colors.orange.shade400,
+              endColor: Colors.orange.shade700,
+              hugeIcon: AppIcons.copy,
+              textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
             ),
-            borderRadius: BorderRadius.circular(20.0),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.1).round()),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ImageLoaderFlutterWidgets(
-                image: imagePath,
-                height: imageSize,
-                width: imageSize,
-                fit: BoxFit.contain,
-                circle: false,
-                radius: 0.0,
-                onTap: false,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontSize: titleFontSize),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70, fontSize: subtitleFontSize),
-              ),
-            ],
-          ),
+            const SizedBox(height: 32),
+            // Games Section
+            Text('Games', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomButton(
+                    text: 'Tic Tac Toe',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const TicTacToeGameScreen()));
+                    },
+                    startColor: Colors.red.shade400,
+                    endColor: Colors.red.shade700,
+                    hugeIcon: AppIcons.ticTacToe,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomButton(
+                    text: 'Minesweeper',
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const MinesweeperGameScreen()));
+                    },
+                    startColor: Colors.teal.shade400,
+                    endColor: Colors.teal.shade700,
+                    hugeIcon: AppIcons.minesweeper,
+                    textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            // Recent Activity (placeholder)
+            Text('Recent Activity', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.black)),
+            const SizedBox(height: 16),
+            ShimmerLoading.rectangular(height: 60, width: double.infinity),
+            const SizedBox(height: 8),
+            ShimmerLoading.rectangular(height: 60, width: double.infinity),
+          ],
         ),
       ),
     );
@@ -812,20 +364,5 @@ class HomeScreenLoading extends StatelessWidget {
       ),
       bottomNavigationBar: const ShimmerLoading.rectangular(height: 56),
     ));
-  }
-}
-
-class _LoadingPlaceholder extends StatelessWidget {
-  const _LoadingPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
-    );
   }
 }

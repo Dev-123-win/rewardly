@@ -9,7 +9,7 @@ import '../../shared/shimmer_loading.dart';
 import 'referral_rules_widget.dart'; // Import the new widget
 import 'referral_history_screen.dart'; // Import the referral history screen
 import 'package:hugeicons/hugeicons.dart';
-import 'package:image_loader_flutter/image_loader_flutter.dart';
+
 
 class ReferralScreenLoading extends StatelessWidget {
   const ReferralScreenLoading({super.key});
@@ -165,14 +165,17 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.black54, fontSize: bodyFontSize),
                       ),
                       SizedBox(height: verticalSpacing),
-                      ImageLoaderFlutterWidgets(
-                        image: 'assets/referral.png',
+                      Image.asset(
+                        'assets/referral.png',
                         height: imageSize,
                         width: imageSize,
                         fit: BoxFit.contain,
-                        circle: false,
-                        radius: 0.0,
-                        onTap: false,
+                      ),
+                      Image.asset(
+                        'assets/referral_banner.png',
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
                       ),
                       SizedBox(height: verticalSpacing),
                       Text(
