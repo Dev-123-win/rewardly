@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert'; // Add this import
 import 'logger_service.dart'; // Assuming you have a logger service
 
 class LocalStorageService {
@@ -54,5 +55,32 @@ class LocalStorageService {
   Future<String?> getLastActiveDate(String uid) async {
     final prefs = await _getPrefs();
     return prefs.getString('$_lastActiveDateKey$uid');
+  }
+
+  static const String _notificationPreferencesKey = 'notificationPreferences_';
+
+  Future<Map<String, bool>> getNotificationPreferences(String uid) async {
+    final prefs = await _getPrefs();
+    final String? preferencesString = prefs.getString('$_notificationPreferencesKey$uid');
+    if (preferencesString != null) {
+      final Map<String, dynamic> decoded = jsonDecode(preferencesString);
+      return decoded.map((key, value) => MapEntry(key, value as bool));
+    }
+    return {
+      'enableNotifications': true,
+      'enableCoinNotifications': true,
+      'enableWithdrawalNotifications': true,
+      'enableReferralNotifications': true,
+      'enableAchievementNotifications': true,
+      'enableSound': true,
+      'enableVibration': true,
+    }; // Default preferences
+  }
+
+  Future<void> saveNotificationPreferences(String uid, Map<String, bool> preferences) async {
+    final prefs = await _getPrefs();
+    final String encoded = jsonEncode(preferences);
+    await prefs.setString('$_notificationPreferencesKey$uid', encoded);
+    LoggerService.info('LocalStorage: Saved notification preferences for $uid: $preferences');
   }
 }

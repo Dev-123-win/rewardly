@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
+import '../../design_system/design_system.dart';
+import '../../design_system/app_icons.dart';
+import '../../widgets/page_transitions.dart';
+import '../../screens/notifications/notification_center_screen.dart';
 import 'earn_coins_screen.dart';
 import 'referral_screen.dart';
 import 'profile_screen.dart';
@@ -10,10 +14,9 @@ import 'withdraw_screen.dart';
 import 'tic_tac_toe_game_screen.dart';
 import 'minesweeper_game_screen.dart';
 import 'spin_wheel_game_screen.dart';
-import 'read_and_earn_screen.dart'; // New import for Read & Earn
-import '../../logger_service.dart';
+import 'read_and_earn_screen.dart';
 import '../../models/auth_result.dart';
-import '../../widgets/custom_button.dart'; // Ensure CustomButton is imported
+import '../../widgets/custom_button.dart';
 import 'package:image_loader_flutter/image_loader_flutter.dart';
 
 class Home extends StatefulWidget {
@@ -220,11 +223,30 @@ class _HomeState extends State<Home> with TickerProviderStateMixin {
                                 ],
                               ),
                             ),
-                            IconButton(
-                              icon: HugeIcon(icon: HugeIcons.strokeRoundedNotification01, color: Theme.of(context).primaryColor, size: isSmallScreen ? 24 : 28),
-                              onPressed: () {
-                                LoggerService.info('Notifications icon tapped');
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  SlidePageRoute(
+                                    child: const NotificationCenterScreen(),
+                                  ),
+                                );
                               },
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: DesignSystem.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(DesignSystem.radiusMedium),
+                                ),
+                                child: Center(
+                                  child: HugeIcon(
+                                    icon: AppIcons.notification,
+                                    color: DesignSystem.primary,
+                                    size: AppIcons.sizeMedium,
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
                         ),

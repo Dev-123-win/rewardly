@@ -197,12 +197,12 @@ class MyApp extends StatelessWidget {
           unselectedItemColor: Colors.grey, // Use grey for unselected items
         ),
         textTheme: const TextTheme(
-          displayLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.bold, height: 40 / 32, letterSpacing: 0), // H1
-          headlineLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.bold, height: 32 / 24, letterSpacing: 0), // H2
-          titleLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, letterSpacing: 0), // H3
-          bodyLarge: const TextStyle(fontFamily: 'Lato', fontSize: 16, fontWeight: FontWeight.normal, height: 24 / 16, letterSpacing: 0), // Body1
-          bodyMedium: const TextStyle(fontFamily: 'Lato', fontSize: 14, fontWeight: FontWeight.normal, height: 20 / 14, letterSpacing: 0), // Body2
-          labelSmall: const TextStyle(fontFamily: 'Lato', fontSize: 12, fontWeight: FontWeight.normal, height: 16 / 12, letterSpacing: 0), // Caption
+          displayLarge: TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.bold, height: 40 / 32, letterSpacing: 0), // H1
+          headlineLarge: TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.bold, height: 32 / 24, letterSpacing: 0), // H2
+          titleLarge: TextStyle(fontFamily: 'Poppins', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, letterSpacing: 0), // H3
+          bodyLarge: TextStyle(fontFamily: 'Lato', fontSize: 16, fontWeight: FontWeight.normal, height: 24 / 16, letterSpacing: 0), // Body1
+          bodyMedium: TextStyle(fontFamily: 'Lato', fontSize: 14, fontWeight: FontWeight.normal, height: 20 / 14, letterSpacing: 0), // Body2
+          labelSmall: TextStyle(fontFamily: 'Lato', fontSize: 12, fontWeight: FontWeight.normal, height: 16 / 12, letterSpacing: 0), // Caption
         ),
       ),
       darkTheme: ThemeData(
@@ -222,12 +222,12 @@ class MyApp extends StatelessWidget {
           unselectedItemColor: Colors.grey, // Use grey for unselected items
         ),
         textTheme: const TextTheme(
-          displayLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.bold, height: 40 / 32, letterSpacing: 0), // H1
-          headlineLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.bold, height: 32 / 24, letterSpacing: 0), // H2
-          titleLarge: const TextStyle(fontFamily: 'Poppins', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, letterSpacing: 0), // H3
-          bodyLarge: const TextStyle(fontFamily: 'Lato', fontSize: 16, fontWeight: FontWeight.normal, height: 24 / 16, letterSpacing: 0), // Body1
-          bodyMedium: const TextStyle(fontFamily: 'Lato', fontSize: 14, fontWeight: FontWeight.normal, height: 20 / 14, letterSpacing: 0), // Body2
-          labelSmall: const TextStyle(fontFamily: 'Lato', fontSize: 12, fontWeight: FontWeight.normal, height: 16 / 12, letterSpacing: 0), // Caption
+          displayLarge: TextStyle(fontFamily: 'Poppins', fontSize: 32, fontWeight: FontWeight.bold, height: 40 / 32, letterSpacing: 0), // H1
+          headlineLarge: TextStyle(fontFamily: 'Poppins', fontSize: 24, fontWeight: FontWeight.bold, height: 32 / 24, letterSpacing: 0), // H2
+          titleLarge: TextStyle(fontFamily: 'Poppins', fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20, letterSpacing: 0), // H3
+          bodyLarge: TextStyle(fontFamily: 'Lato', fontSize: 16, fontWeight: FontWeight.normal, height: 24 / 16, letterSpacing: 0), // Body1
+          bodyMedium: TextStyle(fontFamily: 'Lato', fontSize: 14, fontWeight: FontWeight.normal, height: 20 / 14, letterSpacing: 0), // Body2
+          labelSmall: TextStyle(fontFamily: 'Lato', fontSize: 12, fontWeight: FontWeight.normal, height: 16 / 12, letterSpacing: 0), // Caption
         ),
       ),
       themeMode: Provider.of<ThemeProvider>(context).themeMode,

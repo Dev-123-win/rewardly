@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import for DocumentSnapshot and Timestamp
-import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hugeicons/hugeicons.dart';
 import '../../shared/shimmer_loading.dart';
 import '../../providers/user_data_provider.dart';
-import '../../withdrawal_service.dart'; // Import WithdrawalService
-import '../../models/auth_result.dart'; // Import AuthResult
-import '../../user_service.dart'; // Import UserService
+import '../../withdrawal_service.dart';
+import '../../models/auth_result.dart';
+import '../../user_service.dart';
 
 enum WithdrawalMethod { bank, upi, none }
 

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'dart:async'; // Import for StreamController
+import 'dart:async';
 import 'dart:math';
 
-import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart'; // Import flutter_fortune_wheel
+import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import 'package:confetti/confetti.dart';
-import 'package:lottie/lottie.dart'; // Import Lottie package
+import 'package:lottie/lottie.dart';
+
 
 // Enum for different reward tiers
 enum RewardTier {
@@ -149,15 +150,20 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     }
   }
 
-  void _showWinDialog(WheelReward reward) {
+  Future<void> _showWinDialog(WheelReward reward) async {
     if (!mounted) return;
 
+    bool shouldShowDialog = true;
     if (reward.coins > 0) {
-      _updateUserCoins(reward.coins);
-      _confettiController.play();
-      _coinPulseController.forward(from: 0).whenComplete(() => _coinPulseController.reverse());
+      await _updateUserCoins(reward.coins);
+      if (!mounted) {
+        shouldShowDialog = false;
+      } else {
+        _confettiController.play();
+        _coinPulseController.forward(from: 0).whenComplete(() => _coinPulseController.reverse());
+      }
     }
-    if (!mounted) return; // Check again before showing dialog
+    if (!mounted || !shouldShowDialog) return;
     
     String title;
     String content;
@@ -253,8 +259,11 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     );
   }
 
-  void _showAdRewardDialog(WheelReward reward) {
-    if (!mounted) return;
+  Future<void> _showAdRewardDialog(WheelReward reward) async {
+    if (!mounted) return; // Initial check
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context); // Get before async gap
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false); // Get before async gap
 
     showModalBottomSheet(
       context: context,
@@ -312,38 +321,33 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                           _isSpinning = true; // Indicate ad loading
                         });
                         _adService.showRewardedAd(
-                          onRewardEarned: (int rewardAmount) async {
-                            if (!mounted) return; // Add this line
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // No spin decrement needed, user gets to spin again
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Ad watched! Spin again!')),
-                              );
-                            }
+                          onRewardEarned: (int rewardAmount) {
+                            if (!mounted) return; // Re-check mounted
+                            setState(() {
+                              _isSpinning = false;
+                            });
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(content: Text('Ad watched! Spin again!')),
+                            );
                           },
                           onAdFailedToShow: () async {
-                            if (!mounted) return; // Added this line
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // Ad failed, decrement spin
-                              final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-                              final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                              final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                            if (!mounted) return; // Re-check mounted
+                            setState(() {
+                              _isSpinning = false;
+                            });
+                            // Ad failed, decrement spin
+                            final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                            final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
-                              if (currentFreeSpins > 0) {
-                                await userDataProvider.decrementFreeSpinWheelSpins();
-                              } else if (currentAdSpins > 0) {
-                                await userDataProvider.decrementAdSpinWheelSpins();
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
-                              );
+                            if (currentFreeSpins > 0) {
+                              await userDataProvider.decrementFreeSpinWheelSpins();
+                            } else if (currentAdSpins > 0) {
+                              await userDataProvider.decrementAdSpinWheelSpins();
                             }
+                            if (!mounted) return; // Re-check mounted
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
+                            );
                           },
                         );
                       },
@@ -369,59 +373,63 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
   }
 
   Future<void> _updateUserCoins(int coins) async {
-    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+    if (!mounted) return; // Initial check
+    final currentContext = context; // Capture context
+    final scaffoldMessenger = ScaffoldMessenger.of(currentContext); // Use captured context
+    final userDataProvider = Provider.of<UserDataProvider>(currentContext, listen: false);
     final String? uid = userDataProvider.userData?.id;
 
     if (coins > 0 && uid != null) {
       await userDataProvider.updateLocallyEarnedCoins(uid, coins);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return; // Re-check mounted
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text('You earned $coins coins!')),
       );
     } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return; // Re-check mounted
+      scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Failed to update coins. Please try again.')),
       );
     }
   }
 
   void _watchAdToSpin() {
+    if (!mounted) return; // Initial check
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context); // Get before async gap
+    final userDataProvider = Provider.of<UserDataProvider>(context, listen: false); // Get before async gap
+
     setState(() {
       _isSpinning = true; // Indicate ad loading
     });
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
-        if (mounted) {
-          setState(() {
-            _isSpinning = false;
-          });
-          final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-          // Check if user has earned less than 10 ad spins today
-          if (userDataProvider.adSpinsEarnedToday < 10) {
-            await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('You earned 2 spins!')),
-            );
-          } else {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
-            );
-          }
+        if (!mounted) return; // Re-check mounted
+        setState(() {
+          _isSpinning = false;
+        });
+        // Check if user has earned less than 10 ad spins today
+        if (userDataProvider.adSpinsEarnedToday < 10) {
+          await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
+          if (!mounted) return; // Re-check mounted
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('You earned 2 spins!')),
+          );
+        } else {
+          if (!mounted) return; // Re-check mounted
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
+          );
         }
       },
       onAdFailedToShow: () {
-        if (mounted) {
-          setState(() {
-            _isSpinning = false;
-          });
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
-          );
-        }
+        if (!mounted) return; // Re-check mounted
+        setState(() {
+          _isSpinning = false;
+        });
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
+        );
       },
     );
   }

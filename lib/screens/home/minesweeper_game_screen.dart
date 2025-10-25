@@ -124,7 +124,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
       for (int c = 0; c < _cols; c++) {
         if (!board[r][c].hasMine) {
           // Assign a random number between 1 and 8 (inclusive) as coins
-          board[r][c].adjacentMines = _random.nextInt(8) + 1;
+          board[r][c].coinValue = _random.nextInt(8) + 1;
         }
       }
     }
@@ -196,7 +196,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
       for (int r = 0; r < _rows; r++) {
         for (int c = 0; c < _cols; c++) {
           if (board[r][c].isRevealed && !board[r][c].hasMine) {
-            coinsFromRevealedCells += board[r][c].adjacentMines; // Sum up coin values
+            coinsFromRevealedCells += board[r][c].coinValue; // Sum up coin values
           }
         }
       }
@@ -708,9 +708,9 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                                 shadows = _getPressedInShadows();
                               } else {
                                 // Revealed non-mine cell, display coin value
-                                textColor = _getAdjacentMineColor(cell.adjacentMines); // Use existing color logic for coin numbers
+                                textColor = _getAdjacentMineColor(cell.coinValue); // Use existing color logic for coin numbers
                                 cellContent = Text(
-                                  '${cell.adjacentMines}', // adjacentMines now holds coin value
+                                  '${cell.coinValue}',
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: cellTextFontSize,
@@ -999,12 +999,43 @@ class MinesweeperCell {
   bool hasMine;
   bool isRevealed;
   bool isFlagged;
-  int adjacentMines;
+  int coinValue;
+  AnimationController? revealAnimation;
+  Animation<double>? scaleAnimation;
+  Animation<double>? rotateAnimation;
 
   MinesweeperCell({
     this.hasMine = false,
     this.isRevealed = false,
     this.isFlagged = false,
-    this.adjacentMines = 0,
+    this.coinValue = 0,
+    this.revealAnimation,
+    this.scaleAnimation,
+    this.rotateAnimation,
   });
+
+  void initAnimation(TickerProvider vsync) {
+    revealAnimation = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: vsync,
+    );
+
+    scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: revealAnimation!,
+        curve: Curves.elasticOut,
+      ),
+    );
+
+    rotateAnimation = Tween<double>(begin: -0.5, end: 0.0).animate(
+      CurvedAnimation(
+        parent: revealAnimation!,
+        curve: Curves.elasticOut,
+      ),
+    );
+  }
+
+  void dispose() {
+    revealAnimation?.dispose();
+  }
 }
