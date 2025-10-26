@@ -73,7 +73,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               labelText: 'Email',
                               labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                               floatingLabelBehavior: FloatingLabelBehavior.always,
-                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey),
+                              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 30.0),
                               hintText: 'Enter your email',
                               hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                               filled: true,

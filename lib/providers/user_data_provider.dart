@@ -35,8 +35,8 @@ class UserDataProvider with ChangeNotifier {
   UserDataProvider();
 
   // New method to update the user, called by ChangeNotifierProxyProvider
-  Future<void> updateUser(String? uid, {String? projectId}) async { // Changed return type to Future<void> and added async
-    await _loadUserData(uid, projectId: projectId);
+  void updateUser(String? uid, {String? projectId}) {
+    _loadUserData(uid, projectId: projectId);
   }
 
   Future<void> _loadUserData(String? uid, {String? projectId}) async {

@@ -729,7 +729,7 @@ class _TicTacToeGameScreenState extends State<TicTacToeGameScreen>
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     elevation: 5,
-                                    shadowColor: Theme.of(context).primaryColor.withAlpha((255 * 0.4).round()),
+                                    shadowColor: Theme.of(context).primaryColor.withOpacity(0.4),
                                   ),
                                   child: const Text('START NEW GAME'),
                                 ),

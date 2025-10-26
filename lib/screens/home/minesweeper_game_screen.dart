@@ -9,7 +9,6 @@ import 'package:google_mobile_ads/google_mobile_ads.dart'; // Import for BannerA
 import 'package:lottie/lottie.dart'; // Import Lottie package
 import '../../providers/user_data_provider.dart'; // Import UserDataProvider
 import '../../logger_service.dart'; // Import LoggerService
-
 // Removed direct import of UserService as it will be accessed via UserDataProvider
 
 class MinesweeperGameScreen extends StatefulWidget {
@@ -124,7 +123,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
       for (int c = 0; c < _cols; c++) {
         if (!board[r][c].hasMine) {
           // Assign a random number between 1 and 8 (inclusive) as coins
-          board[r][c].coinValue = _random.nextInt(8) + 1;
+          board[r][c].adjacentMines = _random.nextInt(8) + 1;
         }
       }
     }
@@ -196,7 +195,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
       for (int r = 0; r < _rows; r++) {
         for (int c = 0; c < _cols; c++) {
           if (board[r][c].isRevealed && !board[r][c].hasMine) {
-            coinsFromRevealedCells += board[r][c].coinValue; // Sum up coin values
+            coinsFromRevealedCells += board[r][c].adjacentMines; // Sum up coin values
           }
         }
       }
@@ -705,9 +704,9 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                                 shadows = _getPressedInShadows();
                               } else {
                                 // Revealed non-mine cell, display coin value
-                                textColor = _getAdjacentMineColor(cell.coinValue); // Use existing color logic for coin numbers
+                                textColor = _getAdjacentMineColor(cell.adjacentMines); // Use existing color logic for coin numbers
                                 cellContent = Text(
-                                  '${cell.coinValue}',
+                                  '${cell.adjacentMines}', // adjacentMines now holds coin value
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: cellTextFontSize,
@@ -719,11 +718,11 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
                             } else if (cell.isFlagged) {
                               // Flagged cell
                               cellContent = Image.asset(
-                                'assets/minesweeper.png',
+                                'assets/minesweeper.png', // Using the provided image for flag
                                 width: cellContentSize * 0.75,
                                 height: cellContentSize * 0.75,
                                 fit: BoxFit.contain,
-                              );
+                                );
                               shadows = _getRaisedShadows();
                             } else {
                               // Unrevealed cell
@@ -891,7 +890,7 @@ class _MinesweeperGameScreenState extends State<MinesweeperGameScreen>
             child: Row(
               children: [
                 Image.asset(
-                  'assets/bomb.png',
+                  'assets/bomb.png', // Using the provided image for bomb
                   width: iconSize,
                   height: iconSize,
                   fit: BoxFit.contain,
@@ -990,43 +989,12 @@ class MinesweeperCell {
   bool hasMine;
   bool isRevealed;
   bool isFlagged;
-  int coinValue;
-  AnimationController? revealAnimation;
-  Animation<double>? scaleAnimation;
-  Animation<double>? rotateAnimation;
+  int adjacentMines;
 
   MinesweeperCell({
     this.hasMine = false,
     this.isRevealed = false,
     this.isFlagged = false,
-    this.coinValue = 0,
-    this.revealAnimation,
-    this.scaleAnimation,
-    this.rotateAnimation,
+    this.adjacentMines = 0,
   });
-
-  void initAnimation(TickerProvider vsync) {
-    revealAnimation = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: vsync,
-    );
-
-    scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: revealAnimation!,
-        curve: Curves.elasticOut,
-      ),
-    );
-
-    rotateAnimation = Tween<double>(begin: -0.5, end: 0.0).animate(
-      CurvedAnimation(
-        parent: revealAnimation!,
-        curve: Curves.elasticOut,
-      ),
-    );
-  }
-
-  void dispose() {
-    revealAnimation?.dispose();
-  }
 }

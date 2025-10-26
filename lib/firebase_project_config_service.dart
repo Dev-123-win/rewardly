@@ -7,6 +7,16 @@ import 'firebase_configs/firebase_options_prod_02.dart' as prod02_options;
 import 'firebase_configs/firebase_options_prod_03.dart' as prod03_options;
 import 'firebase_configs/firebase_options_prod_04.dart' as prod04_options;
 import 'firebase_configs/firebase_options_prod_05.dart' as prod05_options;
+import 'firebase_configs/firebase_options_prod_06.dart' as prod06_options;
+import 'firebase_configs/firebase_options_prod_07.dart' as prod07_options;
+import 'firebase_configs/firebase_options_prod_08.dart' as prod08_options;
+import 'firebase_configs/firebase_options_prod_09.dart' as prod09_options;
+import 'firebase_configs/firebase_options_prod_10.dart' as prod10_options;
+import 'firebase_configs/firebase_options_prod_11.dart' as prod11_options;
+import 'firebase_configs/firebase_options_prod_12.dart' as prod12_options;
+import 'firebase_configs/firebase_options_prod_13.dart' as prod13_options;
+import 'firebase_configs/firebase_options_prod_14.dart' as prod14_options;
+import 'firebase_configs/firebase_options_prod_15.dart' as prod15_options;
 
 class FirebaseProjectConfigService {
   static final Map<String, FirebaseOptions> _projectOptions = {
@@ -15,6 +25,16 @@ class FirebaseProjectConfigService {
     'rewardly-5': prod03_options.DefaultFirebaseOptions.android,
     'rewardly-4': prod04_options.DefaultFirebaseOptions.android,
     'rewardly-3': prod05_options.DefaultFirebaseOptions.android,
+    'rewardly-prod06': prod06_options.DefaultFirebaseOptions.android,
+    'rewardly-prod07': prod07_options.DefaultFirebaseOptions.android,
+    'rewardly-prod08': prod08_options.DefaultFirebaseOptions.android,
+    'rewardly-prod09': prod09_options.DefaultFirebaseOptions.android,
+    'rewardly-prod10': prod10_options.DefaultFirebaseOptions.android,
+    'rewardly-prod11': prod11_options.DefaultFirebaseOptions.android,
+    'rewardly-prod12': prod12_options.DefaultFirebaseOptions.android,
+    'rewardly-prod13': prod13_options.DefaultFirebaseOptions.android,
+    'rewardly-prod14': prod14_options.DefaultFirebaseOptions.android,
+    'rewardly-prod15': prod15_options.DefaultFirebaseOptions.android,
   };
 
   static List<String> get projectIds => _projectOptions.keys.toList();

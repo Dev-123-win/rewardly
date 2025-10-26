@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 //import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:lottie/lottie.dart'; // Import lottie package
-
 import '../../auth_service.dart';
 import '../../widgets/custom_button.dart';
 import 'forgot_password.dart';
@@ -46,29 +45,22 @@ class _SignInState extends State<SignIn> {
                   return Center(
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(
-                          horizontal: isLargeScreen ? constraints.maxWidth * 0.2 : 20.0,
-                          vertical: 20.0,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            SizedBox(height: isLargeScreen ? 80 : 40),
-                            Image.asset(
-                              'assets/AppLogo.png',
-                              height: 150,
-                              width: 150,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              'Welcome Back',
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: isLargeScreen ? 36 : 28,
-                                  ),
-                            ),
+                        horizontal: isLargeScreen ? constraints.maxWidth * 0.2 : 20.0,
+                        vertical: 20.0,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          SizedBox(height: isLargeScreen ? 80 : 40),
+                          Text(
+                            'Welcome Back',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isLargeScreen ? 36 : 28,
+                                ),
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Sign in to your account to continue',
@@ -87,7 +79,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Email Address',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01, color: Colors.grey, size: 30.0),
                                     hintText: 'Enter your email',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,
@@ -121,7 +113,7 @@ class _SignInState extends State<SignIn> {
                                     labelText: 'Password',
                                     labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                                     floatingLabelBehavior: FloatingLabelBehavior.always,
-                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey),
+                                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSquareLock01, color: Colors.grey, size: 30.0),
                                     hintText: 'Enter your password',
                                     hintStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade400),
                                     filled: true,

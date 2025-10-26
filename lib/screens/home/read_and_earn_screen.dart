@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart'; // Import HugeIcons
 import 'dart:async';
 import 'package:provider/provider.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart'; // Replaced webview_flutter
+import 'package:url_launcher/url_launcher.dart'; // Added for launching URLs
 import '../../ad_service.dart';
 import '../../providers/user_data_provider.dart';
 import '../../shared/neuromorphic_constants.dart';
@@ -137,10 +137,10 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
 
   void _launchUrlInApp(String url) async {
     try {
-      await InAppBrowser.openWithSystemBrowser(url: WebUri(url)); // Changed Uri.parse to WebUri
-      LoggerService.debug('Launched URL in InAppBrowser: $url');
+      await launchUrl(Uri.parse(url)); // Using url_launcher
+      LoggerService.debug('Launched URL with url_launcher: $url');
     } catch (e) {
-      LoggerService.error('Failed to launch URL in InAppBrowser: $e');
+      LoggerService.error('Failed to launch URL with url_launcher: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not launch $url')),
