@@ -135,17 +135,20 @@ class _ReadAndEarnScreenState extends State<ReadAndEarnScreen> with WidgetsBindi
     });
   }
 
-  void _launchUrlInApp(String url) async {
-    try {
-      await launchUrl(Uri.parse(url)); // Using url_launcher
-      LoggerService.debug('Launched URL with url_launcher: $url');
-    } catch (e) {
-      LoggerService.error('Failed to launch URL with url_launcher: $e');
+  Future<void> _launchUrlInApp(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(
+      url,
+      mode: LaunchMode.inAppWebView,
+    )) {
+      LoggerService.error('Could not launch $url');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not launch $url')),
         );
       }
+    } else {
+      LoggerService.debug('Launched URL in in-app webview: $url');
     }
   }
 

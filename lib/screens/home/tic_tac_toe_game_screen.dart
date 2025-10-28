@@ -1104,7 +1104,7 @@ class _AnimatedSymbolState extends State<AnimatedSymbol>
                   Shadow(
                     offset: const Offset(2.0, 2.0),
                     blurRadius: 3.0,
-                    color: const Color.fromARGB(51, 0, 0, 0),
+                    color: const Color.fromARGB(51, 0, 0, 0).withValues(),
                   ),
                   if (widget.isWinningCell)
                     Shadow(

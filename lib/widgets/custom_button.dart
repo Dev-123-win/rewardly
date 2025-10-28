@@ -14,6 +14,8 @@ class CustomButton extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final dynamic hugeIcon; // Change type to dynamic to accept HugeIconData
   final List<BoxShadow>? boxShadow; // Add boxShadow parameter
+  final Color? borderColor; // New parameter for border color
+  final double? borderWidth; // New parameter for border width
 
   const CustomButton({
     super.key,
@@ -28,6 +30,8 @@ class CustomButton extends StatefulWidget {
     this.padding,
     this.hugeIcon, // Use hugeIcon
     this.boxShadow, // Initialize boxShadow
+    this.borderColor, // Initialize borderColor
+    this.borderWidth, // Initialize borderWidth
   });
 
   @override
@@ -44,24 +48,27 @@ class _CustomButtonState extends State<CustomButton> {
         height: widget.height ?? 50.0,
         padding: widget.padding,
         decoration: BoxDecoration(
-          gradient: LinearGradient( // Use a specific gradient for the button
-            colors: widget.startColor != null && widget.endColor != null
-                ? [widget.startColor!, widget.endColor!]
-                : [
-                    const Color(0xFF6200EE), // Deep Purple
-                    const Color(0xFFBB86FC), // Light Purple
-                  ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          gradient: (widget.startColor != null && widget.endColor != null)
+              ? LinearGradient(
+                  colors: [widget.startColor!, widget.endColor!],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
+              : null, // Set gradient to null if colors are not provided
+          color: (widget.startColor != null && widget.endColor != null)
+              ? null
+              : (widget.startColor ?? const Color(0xFF6200EE)), // Use solid color if gradient is null
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          boxShadow: widget.boxShadow ?? [ // Use provided boxShadow or default
+          boxShadow: widget.boxShadow ?? [
             BoxShadow(
-              color: (widget.startColor ?? const Color(0xFF6200EE)).withAlpha((255 * 0.3).round()), // Shadow matching the button color
+              color: (widget.startColor ?? const Color(0xFF6200EE)).withAlpha((255 * 0.3).round()),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
+          border: (widget.borderColor != null && widget.borderWidth != null)
+              ? Border.all(color: widget.borderColor!, width: widget.borderWidth!)
+              : null, // Add border if parameters are provided
         ),
         child: Center(
           child: Row(

@@ -313,37 +313,34 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
                         });
                         _adService.showRewardedAd(
                           onRewardEarned: (int rewardAmount) async {
-                            if (!mounted) return; // Add this line
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // No spin decrement needed, user gets to spin again
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Ad watched! Spin again!')),
-                              );
-                            }
+                            if (!mounted) return;
+                            setState(() {
+                              _isSpinning = false;
+                            });
+                            // No spin decrement needed, user gets to spin again
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ad watched! Spin again!')),
+                            );
                           },
                           onAdFailedToShow: () async {
-                            if (!mounted) return; // Added this line
-                            if (mounted) {
-                              setState(() {
-                                _isSpinning = false;
-                              });
-                              // Ad failed, decrement spin
-                              final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-                              final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
-                              final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
+                            if (!mounted) return;
+                            setState(() {
+                              _isSpinning = false;
+                            });
+                            // Ad failed, decrement spin
+                            final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+                            final currentFreeSpins = userDataProvider.userData?.get('spinWheelFreeSpinsToday') ?? 0;
+                            final currentAdSpins = userDataProvider.userData?.get('spinWheelAdSpinsToday') ?? 0;
 
-                              if (currentFreeSpins > 0) {
-                                await userDataProvider.decrementFreeSpinWheelSpins();
-                              } else if (currentAdSpins > 0) {
-                                await userDataProvider.decrementAdSpinWheelSpins();
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
-                              );
+                            if (currentFreeSpins > 0) {
+                              await userDataProvider.decrementFreeSpinWheelSpins();
+                            } else if (currentAdSpins > 0) {
+                              await userDataProvider.decrementAdSpinWheelSpins();
                             }
+                            if (!mounted) return; // Check again before using context
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Failed to show ad. Spin consumed.')),
+                            );
                           },
                         );
                       },
@@ -392,36 +389,33 @@ class _SpinWheelGameScreenState extends State<SpinWheelGameScreen>
     });
     _adService.showRewardedAd(
       onRewardEarned: (int rewardAmount) async {
-        if (mounted) {
-          setState(() {
-            _isSpinning = false;
-          });
-          final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
-          // Check if user has earned less than 10 ad spins today
-          if (userDataProvider.adSpinsEarnedToday < 10) {
-            await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('You earned 2 spins!')),
-            );
-          } else {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
-            );
-          }
+        if (!mounted) return;
+        setState(() {
+          _isSpinning = false;
+        });
+        final userDataProvider = Provider.of<UserDataProvider>(context, listen: false);
+        // Check if user has earned less than 10 ad spins today
+        if (userDataProvider.adSpinsEarnedToday < 10) {
+          await userDataProvider.incrementAdSpinWheelSpins(2); // Grant 2 spins
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('You earned 2 spins!')),
+          );
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You have reached the daily limit for ad spins (10 ads).')),
+          );
         }
       },
       onAdFailedToShow: () {
-        if (mounted) {
-          setState(() {
-            _isSpinning = false;
-          });
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
-          );
-        }
+        if (!mounted) return;
+        setState(() {
+          _isSpinning = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to show rewarded ad. Try again.')),
+        );
       },
     );
   }

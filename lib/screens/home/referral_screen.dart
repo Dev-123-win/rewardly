@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart'; // Added share_plus import
+import 'package:share_extend/share_extend.dart'; // Added share_extend import
 import '../../providers/user_data_provider.dart';
 import '../../shared/shimmer_loading.dart';
 import 'referral_rules_widget.dart'; // Import the new widget
@@ -169,7 +169,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   SizedBox(height: verticalSpacing),
                   ElevatedButton.icon(
                     onPressed: () {
-                      Share.share('Join Rewardly and earn rewards! Use my referral code: $referralCode');
+                      ShareExtend.share('Join Rewardly and earn rewards! Use my referral code: $referralCode', 'text', subject: 'Referral Code');
                     },
                     icon: HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: Colors.white, size: copyIconSize),
                     label: Text(
